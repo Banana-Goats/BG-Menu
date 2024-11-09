@@ -42,23 +42,16 @@
 
   <ItemGroup>
     <PackageReference Include="CsvHelper" Version="33.0.1" />
-    <PackageReference Include="EPPlus" Version="7.3.0" />
-    <PackageReference Include="FirebaseAdmin" Version="3.0.0" />
-    <PackageReference Include="Google.Cloud.Firestore" Version="3.8.0" />
+    <PackageReference Include="EPPlus" Version="7.4.2" />
+    <PackageReference Include="FirebaseAdmin" Version="3.1.0" />
+    <PackageReference Include="Google.Cloud.Firestore" Version="3.9.0" />
     <PackageReference Include="Google.Cloud.Storage.V1" Version="4.10.0" />
     <PackageReference Include="PdfPig" Version="0.1.9" />
     <PackageReference Include="PdfSharp" Version="6.1.1" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.6" />
-    <PackageReference Include="System.Data.SQLite" Version="1.0.118" />
+    <PackageReference Include="System.Data.SQLite" Version="1.0.119" />
     <PackageReference Include="System.DirectoryServices" Version="8.0.0" />
-    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="8.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Reference Include="Sap.Data.Hana.v4.5">
-      <HintPath>..\..\..\..\..\..\Program Files\sap\hdbclient\ado.net\v4.5\Sap.Data.Hana.v4.5.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
+    <PackageReference Include="System.DirectoryServices.AccountManagement" Version="8.0.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -68,6 +61,12 @@
     <EmbeddedResource Include="HANA_Client_Dlls\Sap.Data.Hana.v4.5.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Sap.Data.Hana.v4.5">
+      <HintPath>HANA_Client_Dlls\Sap.Data.Hana.v4.5.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

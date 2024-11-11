@@ -199,7 +199,7 @@ namespace BG_Menu.Forms.Sub_Forms
                     // Await all tasks to complete
                     await Task.WhenAll(tasks);
 
-                    MessageBox.Show("Emails copied successfully.");
+                    MessageBox.Show("Emails copied successfully");
                 }
             }
         }

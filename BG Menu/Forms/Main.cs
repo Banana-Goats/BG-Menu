@@ -142,9 +142,7 @@ namespace BG_Menu
         {
             HidePanels();
             Pagelbl.Text = "Home";
-            
-
-
+            LoadFormInPanel(new Forms.Sub_Forms.EmailManager());
         }
 
         private void button2_Click(object sender, EventArgs e)

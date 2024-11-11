@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using Outlook = Microsoft.Office.Interop.Outlook;
 using System.Runtime.InteropServices;
@@ -22,7 +21,7 @@ namespace BG_Menu.Forms.Sub_Forms
 
             // Ensure event handlers are connected
             cmbMailboxes.SelectedIndexChanged += cmbMailboxes_SelectedIndexChanged;
-            button1.Click += btnCopyEmails_Click;
+            btnCopyEmails.Click += btnCopyEmails_Click;
         }
 
         private void SetupDataGridViewColumns()
@@ -171,7 +170,8 @@ namespace BG_Menu.Forms.Sub_Forms
                 {
                     string outputFolderPath = fbd.SelectedPath;
 
-                    List<Task> tasks = new List<Task>();
+                    // Clear the progress textbox
+                    txtProgress.Clear();
 
                     foreach (DataGridViewRow row in dgvFolders.Rows)
                     {
@@ -181,8 +181,9 @@ namespace BG_Menu.Forms.Sub_Forms
                         // Ensure the cells exist and have values
                         var selectCell = row.Cells["Select"];
                         var entryIDCell = row.Cells["EntryID"];
+                        var folderPathCell = row.Cells["FolderPath"];
 
-                        if (selectCell?.Value == null || entryIDCell?.Value == null)
+                        if (selectCell?.Value == null || entryIDCell?.Value == null || folderPathCell?.Value == null)
                             continue;
 
                         bool isChecked = Convert.ToBoolean(selectCell.Value);
@@ -190,28 +191,30 @@ namespace BG_Menu.Forms.Sub_Forms
                         if (isChecked)
                         {
                             string entryID = entryIDCell.Value.ToString();
+                            string displayFolderPath = folderPathCell.Value.ToString();
 
-                            // Run the email copying in a task
-                            tasks.Add(Task.Run(() => CopyEmailsFromFolder(entryID, outputFolderPath)));
+                            // Update progress
+                            AppendProgressText($"Processing folder: {displayFolderPath}");
+
+                            // Copy emails from the folder
+                            await Task.Run(() => CopyEmailsFromFolder(entryID, outputFolderPath, displayFolderPath));
                         }
                     }
 
-                    // Await all tasks to complete
-                    await Task.WhenAll(tasks);
-
-                    MessageBox.Show("Emails copied successfully");
+                    AppendProgressText("Emails copied successfully.");
+                    MessageBox.Show("Emails copied successfully.");
                 }
             }
         }
 
-        private void CopyEmailsFromFolder(string entryID, string outputFolderPath)
+        private void CopyEmailsFromFolder(string entryID, string outputFolderPath, string displayFolderPath)
         {
             try
             {
                 // Ensure that selectedStore is not null
                 if (selectedStore == null)
                 {
-                    MessageBox.Show("Selected store is null.");
+                    AppendProgressText("Selected store is null.");
                     return;
                 }
 
@@ -227,50 +230,124 @@ namespace BG_Menu.Forms.Sub_Forms
 
                 if (folder != null)
                 {
-                    string folderOutputPath = Path.Combine(outputFolderPath, SanitizeFolderName(folder.Name));
+                    // Sanitize the folder name to remove invalid characters
+                    string sanitizedFolderName = SanitizeFolderName(folder.Name);
+
+                    string folderOutputPath = Path.Combine(outputFolderPath, sanitizedFolderName);
                     Directory.CreateDirectory(folderOutputPath);
 
-                    List<Task> saveTasks = new List<Task>();
+                    int emailCount = 0;
 
                     foreach (object item in folder.Items)
                     {
                         if (item is Outlook.MailItem mailItem)
                         {
-                            // Capture variables for closure
-                            var mailItemCopy = mailItem;
-                            var folderPathCopy = folderOutputPath;
+                            emailCount++;
 
-                            // Save email asynchronously
-                            saveTasks.Add(Task.Run(() =>
+                            try
                             {
-                                string subject = string.IsNullOrEmpty(mailItemCopy.Subject) ? "No Subject" : mailItemCopy.Subject;
-                                string outputFileName = Path.Combine(folderPathCopy, CleanFileName(subject) + ".msg");
+                                // Get the received date and format it as DD-MM-YYYY
+                                string receivedDate = mailItem.ReceivedTime.ToString("dd-MM-yyyy");
+
+                                // Get the sender's email address
+                                string senderEmail = GetSenderEmailAddress(mailItem);
+
+                                // Get the subject
+                                string subject = string.IsNullOrEmpty(mailItem.Subject) ? "No Subject" : mailItem.Subject;
+
+                                // Sanitize all parts of the file name
+                                string sanitizedDate = CleanFileName(receivedDate);
+                                string sanitizedSenderEmail = CleanFileName(senderEmail);
+                                string sanitizedSubject = CleanFileName(subject);
+
+                                // Construct the file name
+                                string fileName = $"{sanitizedDate} {sanitizedSenderEmail} {sanitizedSubject}.msg";
+
+                                // Combine with the output folder path
+                                string outputFileName = Path.Combine(folderOutputPath, fileName);
 
                                 // Ensure the file name is unique to prevent overwriting
                                 outputFileName = GetUniqueFileName(outputFileName);
 
                                 // Save email to disk
-                                mailItemCopy.SaveAs(outputFileName, Outlook.OlSaveAsType.olMSG);
+                                mailItem.SaveAs(outputFileName, Outlook.OlSaveAsType.olMSG);
 
+                                // Update progress with email number and file name
+                                AppendProgressText($"Email {emailCount}: {Path.GetFileName(outputFileName)}");
+                            }
+                            catch (Exception ex)
+                            {
+                                AppendProgressText($"Error processing email {emailCount}: {ex.Message}");
+                            }
+                            finally
+                            {
                                 // Release COM object
-                                Marshal.ReleaseComObject(mailItemCopy);
-                            }));
+                                Marshal.ReleaseComObject(mailItem);
+                            }
                         }
                     }
 
-                    // Wait for all save tasks to complete
-                    Task.WaitAll(saveTasks.ToArray());
+                    // Update progress after processing the folder
+                    AppendProgressText($"Copied {emailCount} emails from folder: {displayFolderPath}");
 
                     Marshal.ReleaseComObject(folder);
                 }
                 else
                 {
-                    MessageBox.Show("Folder not found with EntryID: " + entryID);
+                    AppendProgressText($"Folder not found with EntryID: {entryID}");
                 }
             }
             catch (System.Exception ex)
             {
-                MessageBox.Show("Error copying emails: " + ex.Message);
+                AppendProgressText($"Error copying emails from folder {displayFolderPath}: {ex.Message}");
+            }
+        }
+
+        private string GetSenderEmailAddress(Outlook.MailItem mailItem)
+        {
+            try
+            {
+                string senderEmail = string.Empty;
+
+                if (mailItem.SenderEmailType == "SMTP")
+                {
+                    senderEmail = mailItem.SenderEmailAddress;
+                }
+                else if (mailItem.SenderEmailType == "EX")
+                {
+                    Outlook.AddressEntry sender = mailItem.Sender;
+                    if (sender != null)
+                    {
+                        Outlook.ExchangeUser exchUser = sender.GetExchangeUser();
+                        if (exchUser != null)
+                        {
+                            senderEmail = exchUser.PrimarySmtpAddress;
+                        }
+                        else
+                        {
+                            senderEmail = sender.Address;
+                        }
+                    }
+                    else
+                    {
+                        senderEmail = "Unknown Sender";
+                    }
+                }
+                else
+                {
+                    senderEmail = mailItem.SenderEmailAddress;
+                }
+
+                if (string.IsNullOrEmpty(senderEmail))
+                {
+                    senderEmail = "Unknown Sender";
+                }
+
+                return senderEmail;
+            }
+            catch
+            {
+                return "Unknown Sender";
             }
         }
 
@@ -280,16 +357,27 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 fileName = fileName.Replace(c, '_');
             }
+            // Also replace any additional invalid characters
+            fileName = fileName.Replace("/", "_");
+            fileName = fileName.Replace("\\", "_");
+            fileName = fileName.Replace(":", "_");
+            fileName = fileName.Replace("*", "_");
+            fileName = fileName.Replace("?", "_");
+            fileName = fileName.Replace("\"", "_");
+            fileName = fileName.Replace("<", "_");
+            fileName = fileName.Replace(">", "_");
+            fileName = fileName.Replace("|", "_");
+
+            // Trim the file name to a reasonable length
+            if (fileName.Length > 150)
+                fileName = fileName.Substring(0, 150);
+
             return fileName;
         }
 
         private string SanitizeFolderName(string folderName)
         {
-            foreach (char c in Path.GetInvalidFileNameChars())
-            {
-                folderName = folderName.Replace(c, '_');
-            }
-            return folderName;
+            return CleanFileName(folderName);
         }
 
         private string GetUniqueFileName(string filePath)
@@ -306,6 +394,20 @@ namespace BG_Menu.Forms.Sub_Forms
             }
 
             return filePath;
+        }
+
+        private void AppendProgressText(string text)
+        {
+            if (txtProgress.InvokeRequired)
+            {
+                txtProgress.Invoke(new Action(() => {
+                    txtProgress.AppendText(text + Environment.NewLine);
+                }));
+            }
+            else
+            {
+                txtProgress.AppendText(text + Environment.NewLine);
+            }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)

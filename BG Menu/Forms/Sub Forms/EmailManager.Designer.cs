@@ -30,14 +30,23 @@
         {
             cmbMailboxes = new ComboBox();
             dgvFolders = new DataGridView();
-            button1 = new Button();
+            btnCopyEmails = new Button();
+            panel1 = new Panel();
+            splitContainer1 = new SplitContainer();
+            txtProgress = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dgvFolders).BeginInit();
+            panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
             SuspendLayout();
             // 
             // cmbMailboxes
             // 
+            cmbMailboxes.Dock = DockStyle.Left;
             cmbMailboxes.FormattingEnabled = true;
-            cmbMailboxes.Location = new Point(12, 12);
+            cmbMailboxes.Location = new Point(75, 0);
             cmbMailboxes.Name = "cmbMailboxes";
             cmbMailboxes.Size = new Size(326, 23);
             cmbMailboxes.TabIndex = 0;
@@ -47,20 +56,59 @@
             // 
             dgvFolders.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             dgvFolders.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvFolders.Location = new Point(12, 41);
+            dgvFolders.Dock = DockStyle.Fill;
+            dgvFolders.Location = new Point(0, 0);
             dgvFolders.Name = "dgvFolders";
             dgvFolders.RowHeadersVisible = false;
-            dgvFolders.Size = new Size(933, 477);
+            dgvFolders.Size = new Size(687, 506);
             dgvFolders.TabIndex = 1;
             // 
-            // button1
+            // btnCopyEmails
             // 
-            button1.Location = new Point(364, 11);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 2;
-            button1.Text = "Export";
-            button1.UseVisualStyleBackColor = true;
+            btnCopyEmails.Dock = DockStyle.Left;
+            btnCopyEmails.Location = new Point(0, 0);
+            btnCopyEmails.Name = "btnCopyEmails";
+            btnCopyEmails.Size = new Size(75, 24);
+            btnCopyEmails.TabIndex = 2;
+            btnCopyEmails.Text = "Export";
+            btnCopyEmails.UseVisualStyleBackColor = true;
+            // 
+            // panel1
+            // 
+            panel1.Controls.Add(cmbMailboxes);
+            panel1.Controls.Add(btnCopyEmails);
+            panel1.Dock = DockStyle.Top;
+            panel1.Location = new Point(0, 0);
+            panel1.Name = "panel1";
+            panel1.Size = new Size(957, 24);
+            panel1.TabIndex = 3;
+            // 
+            // splitContainer1
+            // 
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(0, 24);
+            splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(dgvFolders);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(txtProgress);
+            splitContainer1.Size = new Size(957, 506);
+            splitContainer1.SplitterDistance = 687;
+            splitContainer1.TabIndex = 4;
+            // 
+            // txtProgress
+            // 
+            txtProgress.Dock = DockStyle.Fill;
+            txtProgress.Location = new Point(0, 0);
+            txtProgress.Multiline = true;
+            txtProgress.Name = "txtProgress";
+            txtProgress.ScrollBars = ScrollBars.Vertical;
+            txtProgress.Size = new Size(266, 506);
+            txtProgress.TabIndex = 0;
             // 
             // EmailManager
             // 
@@ -69,13 +117,18 @@
             BackColor = Color.FromArgb(46, 51, 73);
             BackgroundImageLayout = ImageLayout.None;
             ClientSize = new Size(957, 530);
-            Controls.Add(button1);
-            Controls.Add(dgvFolders);
-            Controls.Add(cmbMailboxes);
+            Controls.Add(splitContainer1);
+            Controls.Add(panel1);
             FormBorderStyle = FormBorderStyle.None;
             Name = "EmailManager";
             Text = "EmailManager";
             ((System.ComponentModel.ISupportInitialize)dgvFolders).EndInit();
+            panel1.ResumeLayout(false);
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel2.ResumeLayout(false);
+            splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -83,6 +136,9 @@
 
         private ComboBox cmbMailboxes;
         private DataGridView dgvFolders;
-        private Button button1;
+        private Button btnCopyEmails;
+        private Panel panel1;
+        private SplitContainer splitContainer1;
+        private TextBox txtProgress;
     }
 }

@@ -76,19 +76,18 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Reference Include="Sap.Data.Hana.v4.5">
-      <HintPath>..\..\..\..\..\..\Program Files\sap\hdbclient\ado.net\v4.5\Sap.Data.Hana.v4.5.dll</HintPath>
-      <Private>True</Private>
-    </Reference>
-  </ItemGroup>
-
-  <ItemGroup>
     <EmbeddedResource Include="HANA_Client_Dlls\libadonetHDB.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
     <EmbeddedResource Include="HANA_Client_Dlls\Sap.Data.Hana.v4.5.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </EmbeddedResource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="Sap.Data.Hana.v4.5">
+      <HintPath>HANA_Client_Dlls\Sap.Data.Hana.v4.5.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
   <ItemGroup>

@@ -23,7 +23,7 @@ namespace BG_Menu.Forms.Sales_Summary
         private List<StoreSales> sales2021;
         private List<StoreSales> sales2020;
         private bool isComboBoxTriggeredSelection = false;
-        private string connectionString = "Server=10.100.230.6:30015;UserID=REPORTSODBC;Password=Meanwhile-Like-Of-Answer-5";
+        private string connectionString = "Server=10.100.230.6:30015;UserID=ELLIOTRENNER;Password=Drop-Local-Poet-Knife-5";
         private ProgressCalculator progressCalculator;
 
         private readonly StorageClient _storageClient;

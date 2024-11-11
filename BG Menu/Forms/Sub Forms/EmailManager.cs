@@ -33,12 +33,18 @@ namespace BG_Menu.Forms.Sub_Forms
             DataGridViewCheckBoxColumn chkColumn = new DataGridViewCheckBoxColumn();
             chkColumn.Name = "Select";
             chkColumn.HeaderText = "Select";
+            chkColumn.Width = 50; // Set the desired width in pixels
+            chkColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.None; // Prevent automatic resizing
+            chkColumn.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter; // Center header text
+            chkColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter; // Center checkbox
             dgvFolders.Columns.Add(chkColumn);
 
             // Create text column for display folder path
             DataGridViewTextBoxColumn txtColumn = new DataGridViewTextBoxColumn();
             txtColumn.Name = "FolderPath";
             txtColumn.HeaderText = "Folder Path";
+            txtColumn.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill; // Fill remaining space
+            txtColumn.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter; // Center header text
             dgvFolders.Columns.Add(txtColumn);
 
             // Create hidden column for EntryID
@@ -61,6 +67,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 foreach (Outlook.Store store in outlookNamespace.Stores)
                 {
                     cmbMailboxes.Items.Add(store.DisplayName);
+                    Marshal.ReleaseComObject(store);
                 }
 
                 if (cmbMailboxes.Items.Count > 0)
@@ -90,7 +97,11 @@ namespace BG_Menu.Forms.Sub_Forms
                     if (store.DisplayName == selectedMailbox)
                     {
                         selectedStore = store;
-                        break;
+                        // Do not release selectedStore here
+                    }
+                    else
+                    {
+                        Marshal.ReleaseComObject(store);
                     }
                 }
 
@@ -101,6 +112,8 @@ namespace BG_Menu.Forms.Sub_Forms
 
                     // Load folders recursively
                     LoadFoldersRecursive(rootFolder);
+
+                    Marshal.ReleaseComObject(rootFolder);
                 }
             }
             catch (System.Exception ex)
@@ -209,6 +222,8 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private void CopyEmailsFromFolder(string entryID, string outputFolderPath, string displayFolderPath)
         {
+            Outlook.MAPIFolder folder = null;
+
             try
             {
                 // Ensure that selectedStore is not null
@@ -226,7 +241,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 }
 
                 // Get the folder using EntryID and StoreID
-                Outlook.MAPIFolder folder = outlookNamespace.GetFolderFromID(entryID, selectedStore.StoreID);
+                folder = outlookNamespace.GetFolderFromID(entryID, selectedStore.StoreID);
 
                 if (folder != null)
                 {
@@ -237,60 +252,95 @@ namespace BG_Menu.Forms.Sub_Forms
                     Directory.CreateDirectory(folderOutputPath);
 
                     int emailCount = 0;
+                    int totalItems = folder.Items.Count;
 
-                    foreach (object item in folder.Items)
+                    for (int i = 1; i <= totalItems; i++)
                     {
-                        if (item is Outlook.MailItem mailItem)
+                        object itemObject = null;
+                        Outlook.MailItem mailItem = null;
+
+                        try
                         {
-                            emailCount++;
+                            itemObject = folder.Items[i];
 
-                            try
+                            if (itemObject is Outlook.MailItem)
                             {
-                                // Get the received date and format it as DD-MM-YYYY
-                                string receivedDate = mailItem.ReceivedTime.ToString("dd-MM-yyyy");
+                                mailItem = itemObject as Outlook.MailItem;
+                                emailCount++;
 
-                                // Get the sender's email address
-                                string senderEmail = GetSenderEmailAddress(mailItem);
+                                try
+                                {
+                                    // Get the received date and format it as DD-MM-YYYY
+                                    string receivedDate = mailItem.ReceivedTime.ToString("dd-MM-yyyy");
 
-                                // Get the subject
-                                string subject = string.IsNullOrEmpty(mailItem.Subject) ? "No Subject" : mailItem.Subject;
+                                    // Get the sender's email address
+                                    string senderEmail = GetSenderEmailAddress(mailItem);
 
-                                // Sanitize all parts of the file name
-                                string sanitizedDate = CleanFileName(receivedDate);
-                                string sanitizedSenderEmail = CleanFileName(senderEmail);
-                                string sanitizedSubject = CleanFileName(subject);
+                                    // Get the subject
+                                    string subject = string.IsNullOrEmpty(mailItem.Subject) ? "No Subject" : mailItem.Subject;
 
-                                // Construct the file name
-                                string fileName = $"{sanitizedDate} {sanitizedSenderEmail} {sanitizedSubject}.msg";
+                                    // Sanitize all parts of the file name
+                                    string sanitizedDate;
+                                    string sanitizedSenderEmail;
+                                    string sanitizedSubject;
 
-                                // Combine with the output folder path
-                                string outputFileName = Path.Combine(folderOutputPath, fileName);
+                                    try
+                                    {
+                                        sanitizedDate = CleanFileName(receivedDate);
+                                        sanitizedSenderEmail = CleanFileName(senderEmail);
+                                        sanitizedSubject = CleanFileName(subject);
+                                    }
+                                    catch (Exception ex)
+                                    {
+                                        // Log error to txtProgress
+                                        AppendProgressText($"(Error) Email {emailCount}: Error cleaning file name.\nSubject: {subject}\nError: {ex.Message}");
+                                        // Continue to next email
+                                        continue;
+                                    }
 
-                                // Ensure the file name is unique to prevent overwriting
-                                outputFileName = GetUniqueFileName(outputFileName);
+                                    // Construct the file name
+                                    string fileName = $"{sanitizedDate} {sanitizedSenderEmail} {sanitizedSubject}.msg";
 
-                                // Save email to disk
-                                mailItem.SaveAs(outputFileName, Outlook.OlSaveAsType.olMSG);
+                                    // Combine with the output folder path
+                                    string outputFileName = Path.Combine(folderOutputPath, fileName);
 
-                                // Update progress with email number and file name
-                                AppendProgressText($"Email {emailCount}: {Path.GetFileName(outputFileName)}");
+                                    // Ensure the file name is unique to prevent overwriting
+                                    outputFileName = GetUniqueFileName(outputFileName);
+
+                                    // Save email to disk
+                                    mailItem.SaveAs(outputFileName, Outlook.OlSaveAsType.olMSG);
+
+                                    // Update progress with email number and file name
+                                    AppendProgressText($"Email {emailCount}: {Path.GetFileName(outputFileName)}");
+                                }
+                                catch (Exception ex)
+                                {
+                                    AppendProgressText($"(Error) Email {emailCount}: {ex.Message}");
+                                }
                             }
-                            catch (Exception ex)
+                        }
+                        catch (Exception ex)
+                        {
+                            AppendProgressText($"(Error) Email {emailCount}: {ex.Message}");
+                        }
+                        finally
+                        {
+                            if (mailItem != null)
                             {
-                                AppendProgressText($"Error processing email {emailCount}: {ex.Message}");
-                            }
-                            finally
-                            {
-                                // Release COM object
                                 Marshal.ReleaseComObject(mailItem);
+                                mailItem = null;
+                            }
+
+                            if (itemObject != null)
+                            {
+                                Marshal.ReleaseComObject(itemObject);
+                                itemObject = null;
                             }
                         }
                     }
 
                     // Update progress after processing the folder
                     AppendProgressText($"Copied {emailCount} emails from folder: {displayFolderPath}");
-
-                    Marshal.ReleaseComObject(folder);
                 }
                 else
                 {
@@ -301,24 +351,34 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 AppendProgressText($"Error copying emails from folder {displayFolderPath}: {ex.Message}");
             }
+            finally
+            {
+                if (folder != null)
+                {
+                    Marshal.ReleaseComObject(folder);
+                    folder = null;
+                }
+            }
         }
 
         private string GetSenderEmailAddress(Outlook.MailItem mailItem)
         {
+            string senderEmail = "Unknown Sender";
+            Outlook.AddressEntry sender = null;
+            Outlook.ExchangeUser exchUser = null;
+
             try
             {
-                string senderEmail = string.Empty;
-
                 if (mailItem.SenderEmailType == "SMTP")
                 {
                     senderEmail = mailItem.SenderEmailAddress;
                 }
                 else if (mailItem.SenderEmailType == "EX")
                 {
-                    Outlook.AddressEntry sender = mailItem.Sender;
+                    sender = mailItem.Sender;
                     if (sender != null)
                     {
-                        Outlook.ExchangeUser exchUser = sender.GetExchangeUser();
+                        exchUser = sender.GetExchangeUser();
                         if (exchUser != null)
                         {
                             senderEmail = exchUser.PrimarySmtpAddress;
@@ -328,31 +388,38 @@ namespace BG_Menu.Forms.Sub_Forms
                             senderEmail = sender.Address;
                         }
                     }
-                    else
-                    {
-                        senderEmail = "Unknown Sender";
-                    }
                 }
                 else
                 {
                     senderEmail = mailItem.SenderEmailAddress;
                 }
-
-                if (string.IsNullOrEmpty(senderEmail))
-                {
-                    senderEmail = "Unknown Sender";
-                }
-
-                return senderEmail;
             }
             catch
             {
-                return "Unknown Sender";
+                senderEmail = "Unknown Sender";
             }
+            finally
+            {
+                if (exchUser != null)
+                {
+                    Marshal.ReleaseComObject(exchUser);
+                    exchUser = null;
+                }
+                if (sender != null)
+                {
+                    Marshal.ReleaseComObject(sender);
+                    sender = null;
+                }
+            }
+
+            return senderEmail;
         }
 
         private string CleanFileName(string fileName)
         {
+            if (string.IsNullOrEmpty(fileName))
+                throw new ArgumentNullException(nameof(fileName), "File name cannot be null or empty.");
+
             foreach (char c in Path.GetInvalidFileNameChars())
             {
                 fileName = fileName.Replace(c, '_');
@@ -413,6 +480,12 @@ namespace BG_Menu.Forms.Sub_Forms
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             base.OnFormClosing(e);
+
+            if (selectedStore != null)
+            {
+                Marshal.ReleaseComObject(selectedStore);
+                selectedStore = null;
+            }
 
             if (outlookNamespace != null)
             {

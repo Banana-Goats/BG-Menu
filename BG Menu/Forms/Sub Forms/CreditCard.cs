@@ -261,6 +261,12 @@ namespace BG_Menu.Forms.Sub_Forms
                     row.Cells["VAT"].Value = "I1";           // VAT 0%
                 }
 
+                else if (baseDescription.Equals("CCL", StringComparison.OrdinalIgnoreCase))
+                {
+                    row.Cells["GLAccount"].Value = "605065"; // IT Expense
+                    row.Cells["Dimension"].Value = "0102";    // Set Dimension to 0102                    
+                }
+
                 // Handle GL Account auto-population (based on GLAccount logic)
                 string glAccountValue = row.Cells["GLAccount"].Value?.ToString();
 
@@ -729,6 +735,14 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 return "Barcode Warehouse";
             }
+            else if (extractedText.Contains("Amazon", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Amazon";
+            }
+            else if (extractedText.Contains("ccl", StringComparison.OrdinalIgnoreCase))
+            {
+                return "CCL";
+            }
             else
             {
                 return "Unknown Supplier";
@@ -786,6 +800,32 @@ namespace BG_Menu.Forms.Sub_Forms
                         return matchBarcode.Groups[1].Value; // Extracted total charges (e.g., "156.85")
                     }
                     break;
+
+                case "Amazon":
+                    // Updated regex pattern to match "Total £22.46" format
+                    var matchAmazon = Regex.Match(extractedText, @"Total\s*£\s*([0-9]*\.?[0-9]+)");
+                    if (matchAmazon.Success)
+                    {
+                        return matchAmazon.Groups[1].Value; // Extracted pre-VAT total (e.g., "22.46")
+                    }
+                    break;
+
+                case "CCL":
+                    // Regex to match "SUBTOTAL 69.99" format for CCL
+                    var matchCclSubtotal = Regex.Match(extractedText, @"SUBTOTAL\s*([0-9]*\.?[0-9]+)");
+                    if (matchCclSubtotal.Success)
+                    {
+                        return matchCclSubtotal.Groups[1].Value; // Extracted subtotal (e.g., "69.99")
+                    }
+
+                    // Regex to match "TOTAL inc. VAT £ 92.98" format for CCL
+                    var matchCclTotalIncVat = Regex.Match(extractedText, @"TOTAL inc\. VAT\s*£\s*([0-9]*\.?[0-9]+)");
+                    if (matchCclTotalIncVat.Success)
+                    {
+                        return matchCclTotalIncVat.Groups[1].Value; // Extracted total including VAT (e.g., "92.98")
+                    }
+                    break;
+
 
                 // Add more cases for other suppliers as needed
 

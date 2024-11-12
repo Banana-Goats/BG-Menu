@@ -32,6 +32,8 @@
             dgvFolders = new DataGridView();
             btnCopyEmails = new Button();
             panel1 = new Panel();
+            btnPauseResume = new Button();
+            btnCleanFilenames = new Button();
             splitContainer1 = new SplitContainer();
             txtProgress = new TextBox();
             ((System.ComponentModel.ISupportInitialize)dgvFolders).BeginInit();
@@ -75,6 +77,8 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(btnPauseResume);
+            panel1.Controls.Add(btnCleanFilenames);
             panel1.Controls.Add(cmbMailboxes);
             panel1.Controls.Add(btnCopyEmails);
             panel1.Dock = DockStyle.Top;
@@ -82,6 +86,27 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(957, 24);
             panel1.TabIndex = 3;
+            // 
+            // btnPauseResume
+            // 
+            btnPauseResume.Dock = DockStyle.Left;
+            btnPauseResume.Location = new Point(476, 0);
+            btnPauseResume.Name = "btnPauseResume";
+            btnPauseResume.Size = new Size(75, 24);
+            btnPauseResume.TabIndex = 4;
+            btnPauseResume.Text = "Pause";
+            btnPauseResume.UseVisualStyleBackColor = true;
+            // 
+            // btnCleanFilenames
+            // 
+            btnCleanFilenames.Dock = DockStyle.Left;
+            btnCleanFilenames.Location = new Point(401, 0);
+            btnCleanFilenames.Name = "btnCleanFilenames";
+            btnCleanFilenames.Size = new Size(75, 24);
+            btnCleanFilenames.TabIndex = 3;
+            btnCleanFilenames.Text = "Clean File's";
+            btnCleanFilenames.UseVisualStyleBackColor = true;
+            btnCleanFilenames.Click += btnCleanFilenames_Click;
             // 
             // splitContainer1
             // 
@@ -140,5 +165,7 @@
         private Panel panel1;
         private SplitContainer splitContainer1;
         private TextBox txtProgress;
+        private Button btnCleanFilenames;
+        private Button btnPauseResume;
     }
 }

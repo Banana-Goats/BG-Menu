@@ -31,6 +31,8 @@
             panel1 = new Panel();
             btnFileServer = new Button();
             pnlServiceTools = new Panel();
+            button7 = new Button();
+            button6 = new Button();
             button3 = new Button();
             btnFSM = new Button();
             btnBudgetsExtract = new Button();
@@ -106,7 +108,7 @@
             btnFileServer.ForeColor = Color.FromArgb(158, 161, 176);
             btnFileServer.Image = Properties.Resources.Folder;
             btnFileServer.ImageAlign = ContentAlignment.MiddleLeft;
-            btnFileServer.Location = new Point(0, 790);
+            btnFileServer.Location = new Point(0, 900);
             btnFileServer.Margin = new Padding(2);
             btnFileServer.Name = "btnFileServer";
             btnFileServer.RightToLeft = RightToLeft.No;
@@ -120,6 +122,8 @@
             // pnlServiceTools
             // 
             pnlServiceTools.AutoSize = true;
+            pnlServiceTools.Controls.Add(button7);
+            pnlServiceTools.Controls.Add(button6);
             pnlServiceTools.Controls.Add(button3);
             pnlServiceTools.Controls.Add(btnFSM);
             pnlServiceTools.Controls.Add(btnBudgetsExtract);
@@ -127,9 +131,55 @@
             pnlServiceTools.Dock = DockStyle.Top;
             pnlServiceTools.Location = new Point(0, 570);
             pnlServiceTools.Name = "pnlServiceTools";
-            pnlServiceTools.Size = new Size(203, 220);
+            pnlServiceTools.Size = new Size(203, 330);
             pnlServiceTools.TabIndex = 13;
             pnlServiceTools.Visible = false;
+            // 
+            // button7
+            // 
+            button7.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button7.BackgroundImageLayout = ImageLayout.Stretch;
+            button7.Dock = DockStyle.Top;
+            button7.FlatAppearance.BorderSize = 0;
+            button7.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button7.FlatStyle = FlatStyle.Flat;
+            button7.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button7.ForeColor = Color.FromArgb(158, 161, 176);
+            button7.Image = Properties.Resources.Phone;
+            button7.ImageAlign = ContentAlignment.MiddleLeft;
+            button7.Location = new Point(0, 275);
+            button7.Margin = new Padding(2);
+            button7.Name = "button7";
+            button7.RightToLeft = RightToLeft.No;
+            button7.Size = new Size(203, 55);
+            button7.TabIndex = 10;
+            button7.Text = "Stock Take";
+            button7.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button7.UseVisualStyleBackColor = true;
+            button7.Click += button7_Click;
+            // 
+            // button6
+            // 
+            button6.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button6.BackgroundImageLayout = ImageLayout.Stretch;
+            button6.Dock = DockStyle.Top;
+            button6.FlatAppearance.BorderSize = 0;
+            button6.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button6.FlatStyle = FlatStyle.Flat;
+            button6.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button6.ForeColor = Color.FromArgb(158, 161, 176);
+            button6.Image = Properties.Resources.Phone;
+            button6.ImageAlign = ContentAlignment.MiddleLeft;
+            button6.Location = new Point(0, 220);
+            button6.Margin = new Padding(2);
+            button6.Name = "button6";
+            button6.RightToLeft = RightToLeft.No;
+            button6.Size = new Size(203, 55);
+            button6.TabIndex = 9;
+            button6.Text = "Emails";
+            button6.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button6.UseVisualStyleBackColor = true;
+            button6.Click += button6_Click;
             // 
             // button3
             // 
@@ -258,7 +308,7 @@
             btnAdminSettings.ForeColor = Color.FromArgb(158, 161, 176);
             btnAdminSettings.Image = Properties.Resources.Admin;
             btnAdminSettings.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAdminSettings.Location = new Point(0, 845);
+            btnAdminSettings.Location = new Point(0, 955);
             btnAdminSettings.Margin = new Padding(2);
             btnAdminSettings.Name = "btnAdminSettings";
             btnAdminSettings.RightToLeft = RightToLeft.No;
@@ -281,7 +331,7 @@
             btnSettings.ForeColor = Color.FromArgb(158, 161, 176);
             btnSettings.Image = Properties.Resources.Settings;
             btnSettings.ImageAlign = ContentAlignment.MiddleLeft;
-            btnSettings.Location = new Point(0, 900);
+            btnSettings.Location = new Point(0, 1010);
             btnSettings.Margin = new Padding(2);
             btnSettings.Name = "btnSettings";
             btnSettings.RightToLeft = RightToLeft.No;
@@ -319,7 +369,7 @@
             // BtnSpacerPnl
             // 
             BtnSpacerPnl.Dock = DockStyle.Bottom;
-            BtnSpacerPnl.Location = new Point(0, 955);
+            BtnSpacerPnl.Location = new Point(0, 1065);
             BtnSpacerPnl.Name = "BtnSpacerPnl";
             BtnSpacerPnl.Size = new Size(203, 5);
             BtnSpacerPnl.TabIndex = 10;
@@ -731,5 +781,7 @@
         private Button btnFSM;
         private Button btnFileServer;
         private Button button3;
+        private Button button6;
+        private Button button7;
     }
 }

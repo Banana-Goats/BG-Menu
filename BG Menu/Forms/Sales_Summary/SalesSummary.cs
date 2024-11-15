@@ -125,8 +125,8 @@ namespace BG_Menu.Forms.Sales_Summary
                 Debug.WriteLine($"Processing store: {storeName}");
 
                 var filteredRows = dataTable.AsEnumerable()
-                    .Where(row => row.Field<DateTime>("DocDate") >= startDate
-                                  && row.Field<DateTime>("DocDate") <= endDate
+                    .Where(row => row.Field<DateTime>("TaxDate") >= startDate
+                                  && row.Field<DateTime>("TaxDate") <= endDate
                                   && warehouseNames.Contains(row.Field<string>("WhsName"), StringComparer.OrdinalIgnoreCase)
                                   && (excludeItemGroup == null || row.Field<string>("ItmsGrpNam") != excludeItemGroup)
                                   && (includeItemGroup == null || row.Field<string>("ItmsGrpNam") == includeItemGroup));
@@ -284,8 +284,8 @@ namespace BG_Menu.Forms.Sales_Summary
             decimal totalNet = 0;
 
             var filteredRows = dataTable.AsEnumerable()
-                .Where(row => row.Field<DateTime>("DocDate") >= startDate
-                              && row.Field<DateTime>("DocDate") <= endDate
+                .Where(row => row.Field<DateTime>("TaxDate") >= startDate
+                              && row.Field<DateTime>("TaxDate") <= endDate
                               && warehouseNames.Contains(row.Field<string>("WhsName"), StringComparer.OrdinalIgnoreCase)
                               && (excludeItemGroup == null || row.Field<string>("ItmsGrpNam") != excludeItemGroup));
 
@@ -657,23 +657,23 @@ namespace BG_Menu.Forms.Sales_Summary
 
                     string query = @"
                     SELECT 
-                        T1.""DocDate"",
+                        T1.""TaxDate"",
                         T1.""ItmsGrpNam"",
                         T1.""WhsName"",
                         T1.""NET""
                     FROM 
                         ""sap.sboawuknewlive.cloud::MASTER_SALES"" T1
                     WHERE 
-                        T1.""DocDate"" >= '2024-09-01'
+                        T1.""TaxDate"" >= '2024-09-01'
                     ORDER BY 
-                        T1.""DocDate"" ASC";
+                        T1.""TaxDate"" ASC";
 
                     HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
                     dataTable = new DataTable();  // Assign to class-level variable
                     dataTable.Clear();
                     adapter.Fill(dataTable);
 
-                    dataTable.Columns["DocDate"].DataType = typeof(DateTime);
+                    dataTable.Columns["TaxDate"].DataType = typeof(DateTime);
 
                 }
                 catch (Exception ex)
@@ -859,23 +859,23 @@ namespace BG_Menu.Forms.Sales_Summary
                     // Update the query to use the selected date
                     string query = $@"
                                     SELECT 
-                                        T1.""DocDate"",
+                                        T1.""TaxDate"",
                                         T1.""ItmsGrpNam"",
                                         T1.""WhsName"",
                                         T1.""NET""
                                     FROM 
                                         ""sap.sboawuknewlive.cloud::MASTER_SALES"" T1
                                     WHERE 
-                                        T1.""DocDate"" >= '{selectedDate:yyyy-MM-dd}'  -- Use selected date
+                                        T1.""TaxDate"" >= '{selectedDate:yyyy-MM-dd}'  -- Use selected date
                                     ORDER BY 
-                                        T1.""DocDate"" ASC";
+                                        T1.""TaxDate"" ASC";
 
                     HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
                     dataTable = new DataTable();  // Assign to class-level variable
                     dataTable.Clear();
                     adapter.Fill(dataTable);
 
-                    dataTable.Columns["DocDate"].DataType = typeof(DateTime);
+                    dataTable.Columns["TaxDate"].DataType = typeof(DateTime);
                 }
                 catch (Exception ex)
                 {

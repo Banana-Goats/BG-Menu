@@ -140,9 +140,7 @@ namespace BG_Menu
 
         private void button1_Click(object sender, EventArgs e)
         {
-            HidePanels();
-            Pagelbl.Text = "Home";
-            LoadFormInPanel(new Forms.Sub_Forms.EmailManager());
+
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -156,6 +154,13 @@ namespace BG_Menu
         private void button3_Click(object sender, EventArgs e)
         {
             ShowPanels(pnlActiveDirectory);
+        }
+
+        private void button6_Click(object sender, EventArgs e)
+        {
+            HidePanels();
+            Pagelbl.Text = "Emails";
+            LoadFormInPanel(new Forms.Sub_Forms.EmailManager());
         }
 
         private void btnStoreManagement_Click(object sender, EventArgs e)
@@ -397,6 +402,11 @@ namespace BG_Menu
             currentForm = form;
         }
 
-        
+        private void button7_Click(object sender, EventArgs e)
+        {
+            HidePanels();
+            Pagelbl.Text = "Home";
+            LoadFormInPanel(new Forms.Sub_Forms.Meraki());
+        }
     }
 }

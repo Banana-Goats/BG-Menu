@@ -8,6 +8,7 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -17,7 +18,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private Outlook.NameSpace outlookNamespace;
         private Outlook.Store selectedStore;
 
-        // Add a ManualResetEventSlim for pause/resume functionality
+        // ManualResetEventSlim for pause/resume functionality
         private ManualResetEventSlim pauseEvent;
 
         public EmailManager()
@@ -29,15 +30,11 @@ namespace BG_Menu.Forms.Sub_Forms
             // Ensure event handlers are connected
             cmbMailboxes.SelectedIndexChanged += cmbMailboxes_SelectedIndexChanged;
             btnCopyEmails.Click += btnCopyEmails_Click;
-
-            // Add event handler for the new button
             btnCleanFilenames.Click += btnCleanFilenames_Click;
-
-            // Add event handler for Pause/Resume button
             btnPauseResume.Click += btnPauseResume_Click;
 
-            // Initialize the pauseEvent
-            pauseEvent = new ManualResetEventSlim(true); // Initially not paused
+            // Initialize the pauseEvent (initially not paused)
+            pauseEvent = new ManualResetEventSlim(true);
         }
 
         private void SetupDataGridViewColumns()
@@ -231,6 +228,14 @@ namespace BG_Menu.Forms.Sub_Forms
                         }
                     }
 
+                    if (selectedFolders.Count == 0)
+                    {
+                        AppendProgressText("No folders selected. Operation canceled.");
+                        MessageBox.Show("No folders selected.");
+                        btnCopyEmails.Enabled = true;
+                        return;
+                    }
+
                     // Process all selected folders in a single Task.Run
                     await Task.Run(() =>
                     {
@@ -246,6 +251,10 @@ namespace BG_Menu.Forms.Sub_Forms
 
                     AppendProgressText("Emails copied successfully.");
                     MessageBox.Show("Emails copied successfully.");
+                }
+                else
+                {
+                    AppendProgressText("Operation canceled by user.");
                 }
             }
 
@@ -272,6 +281,10 @@ namespace BG_Menu.Forms.Sub_Forms
                     AppendProgressText("Filename cleaning completed.");
                     MessageBox.Show("Filename cleaning completed.");
                 }
+                else
+                {
+                    AppendProgressText("Filename cleaning operation canceled by user.");
+                }
             }
         }
 
@@ -279,20 +292,56 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             try
             {
-                // Get all .msg files in the folder
-                string[] files = Directory.GetFiles(folderPath, "*.msg", SearchOption.TopDirectoryOnly);
+                // List all files in the folder
+                string[] allFiles = Directory.GetFiles(folderPath, "*.*", SearchOption.TopDirectoryOnly);
 
-                foreach (string filePath in files)
+                if (allFiles.Length == 0)
+                {
+                    AppendProgressText("No files found in the specified folder.");
+                    return;
+                }
+
+                AppendProgressText($"Total files found: {allFiles.Length}");
+
+                foreach (string filePath in allFiles)
+                {
+                    string fileName = Path.GetFileName(filePath);
+                    AppendProgressText($"Found file: {fileName}");
+                }
+
+                // Proceed to filter .msg files
+                string[] msgFiles = Directory.GetFiles(folderPath, "*.msg", SearchOption.TopDirectoryOnly);
+
+                if (msgFiles.Length == 0)
+                {
+                    AppendProgressText("No .msg files found in the specified folder.");
+                    return;
+                }
+
+                foreach (string filePath in msgFiles)
                 {
                     try
                     {
                         string fileName = Path.GetFileName(filePath);
                         string newFileName = RemoveInternetMessageIDFromFilename(fileName);
 
+                        // Log the original and new filenames
+                        AppendProgressText($"Original Filename: {fileName}");
+                        AppendProgressText($"Proposed New Filename: {newFileName}");
+
                         if (string.IsNullOrEmpty(newFileName) || newFileName == fileName)
                         {
                             // No change needed
+                            AppendProgressText("No changes required for this file.\n");
                             continue;
+                        }
+
+                        // Remove read-only attribute if set
+                        FileInfo fi = new FileInfo(filePath);
+                        if (fi.IsReadOnly)
+                        {
+                            fi.IsReadOnly = false;
+                            AppendProgressText($"Removed read-only attribute from: {fileName}");
                         }
 
                         // Ensure the new file name is unique
@@ -301,11 +350,11 @@ namespace BG_Menu.Forms.Sub_Forms
                         // Rename the file
                         File.Move(filePath, newFilePath);
 
-                        AppendProgressText($"Renamed: {fileName} -> {Path.GetFileName(newFilePath)}");
+                        AppendProgressText($"Renamed: {fileName} -> {Path.GetFileName(newFilePath)}\n");
                     }
                     catch (Exception ex)
                     {
-                        AppendProgressText($"(Error) Failed to rename file {Path.GetFileName(filePath)}: {ex.Message}");
+                        AppendProgressText($"(Error) Failed to rename file {Path.GetFileName(filePath)}: {ex.Message}\n");
                     }
                 }
 
@@ -318,7 +367,7 @@ namespace BG_Menu.Forms.Sub_Forms
             }
             catch (Exception ex)
             {
-                AppendProgressText($"(Error) Failed to clean filenames in folder {folderPath}: {ex.Message}");
+                AppendProgressText($"(Error) Failed to clean filenames in folder {folderPath}: {ex.Message}\n");
             }
         }
 
@@ -326,29 +375,27 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             try
             {
-                // Split the file name by spaces
-                string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
-                string extension = Path.GetExtension(fileName);
+                // Assuming the shortHash is at the beginning followed by a space
+                // Example: ABCD1234 01-01-2024 sender@example.com Test Email.msg
+                // Desired: 01-01-2024 sender@example.com Test Email.msg
 
-                // Find the first space after the InternetMessageID
-                int firstSpaceIndex = fileNameWithoutExtension.IndexOf(' ');
-
-                if (firstSpaceIndex > 0)
+                // Split the filename by the first space
+                int firstSpaceIndex = fileName.IndexOf(' ');
+                if (firstSpaceIndex <= 0)
                 {
-                    // Remove the InternetMessageID part
-                    string newFileName = fileNameWithoutExtension.Substring(firstSpaceIndex + 1).Trim();
-
-                    // Reconstruct the file name
-                    return $"{newFileName}{extension}";
-                }
-                else
-                {
-                    // File name does not contain InternetMessageID; return as is
+                    // Filename doesn't match the expected format; return as is
                     return fileName;
                 }
+
+                // Extract the portion after the first space
+                string newFileName = fileName.Substring(firstSpaceIndex + 1);
+
+                return newFileName;
             }
-            catch
+            catch (Exception ex)
             {
+                // Log the exception
+                AppendProgressText($"(Error) Exception in RemoveInternetMessageIDFromFilename for file {fileName}: {ex.Message}");
                 // In case of any error, return the original file name
                 return fileName;
             }
@@ -433,54 +480,73 @@ namespace BG_Menu.Forms.Sub_Forms
                                         internetMessageID = GenerateHash(uniqueString);
                                     }
 
+                                    // Generate a hash from the EntryID to ensure uniqueness
+                                    string entryIDHash = GenerateHash(mailItem.EntryID);
+
+                                    // Shorten the hash to the first 8 characters
+                                    string shortHash = entryIDHash.Substring(0, 8);
+
                                     // Sanitize all parts of the file name
                                     string sanitizedDate = CleanFileName(receivedDate);
                                     string sanitizedSenderEmail = CleanFileName(senderEmail);
                                     string sanitizedSubject = CleanFileName(subject);
-                                    string sanitizedMessageID = CleanFileName(internetMessageID);
 
-                                    // Truncate the subject to prevent long file names
+                                    // Truncate the sender email and subject to prevent long file names
+                                    if (sanitizedSenderEmail.Length > 50)
+                                        sanitizedSenderEmail = sanitizedSenderEmail.Substring(0, 50);
+
                                     if (sanitizedSubject.Length > 50)
                                         sanitizedSubject = sanitizedSubject.Substring(0, 50);
 
-                                    // Construct the file name
-                                    string fileName = $"{sanitizedMessageID} {sanitizedDate} {sanitizedSenderEmail} {sanitizedSubject}.msg";
+                                    // Construct the file name with a shorter identifier
+                                    string fileName = $"{shortHash} {sanitizedDate} {sanitizedSenderEmail} {sanitizedSubject}.msg";
+
+                                    // Log the unsanitized filename
+                                    AppendProgressText($"Original Filename: {fileName}");
+
+                                    // Sanitize the entire filename again to ensure no residual invalid characters
+                                    fileName = CleanFileName(fileName);
+
+                                    // Log the sanitized filename
+                                    AppendProgressText($"Sanitized Filename: {fileName}");
+
+                                    // Limit the total filename length to prevent exceeding path length limits
+                                    if (fileName.Length > 200)
+                                        fileName = fileName.Substring(0, 200 - ".msg".Length) + ".msg";
 
                                     // Combine with the output folder path
                                     string outputFileName = Path.Combine(folderOutputPath, fileName);
 
-                                    // Check if the email has already been exported
-                                    if (File.Exists(outputFileName))
-                                    {
-                                        AppendProgressText($"Email {emailCount}: Already exported. Skipping.");
-                                        continue;
-                                    }
+                                    // Log the output filename
+                                    AppendProgressText($"Attempting to save Email {emailCount} to: {outputFileName}");
+
+                                    // Ensure the file name is unique
+                                    outputFileName = GetUniqueFileName(outputFileName);
 
                                     // Save email to disk
                                     try
                                     {
                                         mailItem.SaveAs(outputFileName, Outlook.OlSaveAsType.olMSG);
+                                        // Update progress with email number and file name
+                                        AppendProgressText($"Email {emailCount}: Saved as {Path.GetFileName(outputFileName)}\n");
                                     }
                                     catch (Exception ex)
                                     {
-                                        AppendProgressText($"(Error) Failed to save email {emailCount}: Date: {receivedDate}, Sender: {senderEmail}, Subject: {subject}\nError: {ex.Message}");
+                                        AppendProgressText($"(Error) Failed to save email {emailCount}: Date: {receivedDate}, Sender: {senderEmail}, Subject: {subject}\nError: {ex.Message}\n");
                                         continue;
                                     }
-
-                                    // Update progress with email number and file name
-                                    AppendProgressText($"Email {emailCount}: {Path.GetFileName(outputFileName)}");
                                 }
                                 catch (Exception ex)
                                 {
                                     // Include date, sender, and subject in error message
-                                    AppendProgressText($"(Error) Email {emailCount}: Date: {receivedDate}, Sender: {senderEmail}, Subject: {subject}\nError: {ex.Message}");
+                                    AppendProgressText($"(Error) Email {emailCount}: Date: {receivedDate}, Sender: {senderEmail}, Subject: {subject}\nError: {ex.Message}\n");
                                 }
                             }
                         }
                         catch (Exception ex)
                         {
                             // Include date, sender, and subject in error message
-                            AppendProgressText($"(Error) Email {emailCount}: Error accessing mail item properties.\nError: {ex.Message}");
+                            AppendProgressText($"(Error) Email {emailCount}: Error accessing mail item properties.\nError: {ex.Message}\n");
                         }
                         finally
                         {
@@ -491,7 +557,7 @@ namespace BG_Menu.Forms.Sub_Forms
                             }
                             catch (Exception ex)
                             {
-                                AppendProgressText($"(Error) Failed to get next item: {ex.Message}");
+                                AppendProgressText($"(Error) Failed to get next item: {ex.Message}\n");
                                 nextItem = null;
                             }
 
@@ -512,16 +578,16 @@ namespace BG_Menu.Forms.Sub_Forms
                     }
 
                     // Update progress after processing the folder
-                    AppendProgressText($"Copied {emailCount} emails from folder: {displayFolderPath}");
+                    AppendProgressText($"Copied {emailCount} emails from folder: {displayFolderPath}\n");
                 }
                 else
                 {
-                    AppendProgressText($"Folder not found with EntryID: {entryID}");
+                    AppendProgressText($"Folder not found with EntryID: {entryID}\n");
                 }
             }
             catch (Exception ex)
             {
-                AppendProgressText($"Error copying emails from folder {displayFolderPath}: {ex.Message}");
+                AppendProgressText($"Error copying emails from folder {displayFolderPath}: {ex.Message}\n");
             }
             finally
             {
@@ -550,7 +616,7 @@ namespace BG_Menu.Forms.Sub_Forms
             }
             catch (Exception ex)
             {
-                AppendProgressText($"(Error) Failed to get Internet Message ID: {ex.Message}");
+                AppendProgressText($"(Error) Failed to get Internet Message ID: {ex.Message}\n");
                 internetMessageID = null;
             }
             finally
@@ -650,27 +716,32 @@ namespace BG_Menu.Forms.Sub_Forms
             if (string.IsNullOrEmpty(fileName))
                 throw new ArgumentNullException(nameof(fileName), "File name cannot be null or empty.");
 
-            // Remove invalid characters by replacing them with an empty string
+            // Separate the filename and extension
+            string fileNameWithoutExtension = Path.GetFileNameWithoutExtension(fileName);
+            string extension = Path.GetExtension(fileName);
+
+            // Remove invalid characters from the filename part
             string invalidChars = new string(Path.GetInvalidFileNameChars()) + @"<>:""/\|?*";
 
             foreach (char c in invalidChars)
             {
-                fileName = fileName.Replace(c.ToString(), "");
+                fileNameWithoutExtension = fileNameWithoutExtension.Replace(c.ToString(), "");
             }
 
             // Additional characters to remove
             string[] additionalInvalidStrings = { "/", "\\", ":", "*", "?", "\"", "<", ">", "|", "\0", "(", ")", "[", "]", "{", "}", "@", "#", "%", "&", "$", "!", "'", "`", "~" };
             foreach (string invalidStr in additionalInvalidStrings)
             {
-                fileName = fileName.Replace(invalidStr, "");
+                fileNameWithoutExtension = fileNameWithoutExtension.Replace(invalidStr, "");
             }
 
-            // Trim the file name to a reasonable length
-            int maxLength = 100; // Adjust as necessary
-            if (fileName.Length > maxLength)
-                fileName = fileName.Substring(0, maxLength);
+            // Trim the filename to a reasonable length to avoid exceeding path length limits
+            int maxLength = 200 - extension.Length; // Adjust as necessary
+            if (fileNameWithoutExtension.Length > maxLength)
+                fileNameWithoutExtension = fileNameWithoutExtension.Substring(0, maxLength);
 
-            return fileName;
+            // Reconstruct the filename with the extension
+            return $"{fileNameWithoutExtension}{extension}";
         }
 
         private string SanitizeFolderName(string folderName)
@@ -739,6 +810,13 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 Marshal.ReleaseComObject(outlookApp);
                 outlookApp = null;
+            }
+
+            // Dispose the pauseEvent
+            if (pauseEvent != null)
+            {
+                pauseEvent.Dispose();
+                pauseEvent = null;
             }
         }
 

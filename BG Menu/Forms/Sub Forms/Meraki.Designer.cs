@@ -31,12 +31,12 @@
             textBoxProductNumber = new TextBox();
             dataGridViewProducts = new DataGridView();
             panel1 = new Panel();
-            label8 = new Label();
             checkBoxShowDiscrepancies = new Class.Design.Custom_Items.ToggleSlider();
-            label6 = new Label();
-            label5 = new Label();
+            label8 = new Label();
             checkBoxShowSerializedBatchItems = new Class.Design.Custom_Items.ToggleSlider();
+            label6 = new Label();
             checkBoxShowAllProducts = new Class.Design.Custom_Items.ToggleSlider();
+            label5 = new Label();
             comboBoxWarehouses = new ComboBox();
             comboBoxDatabases = new ComboBox();
             PrintDesc = new Button();
@@ -96,12 +96,12 @@
             // 
             // panel1
             // 
-            panel1.Controls.Add(label8);
             panel1.Controls.Add(checkBoxShowDiscrepancies);
-            panel1.Controls.Add(label6);
-            panel1.Controls.Add(label5);
+            panel1.Controls.Add(label8);
             panel1.Controls.Add(checkBoxShowSerializedBatchItems);
+            panel1.Controls.Add(label6);
             panel1.Controls.Add(checkBoxShowAllProducts);
+            panel1.Controls.Add(label5);
             panel1.Controls.Add(comboBoxWarehouses);
             panel1.Controls.Add(comboBoxDatabases);
             panel1.Controls.Add(textBoxProductNumber);
@@ -111,97 +111,105 @@
             panel1.Size = new Size(973, 24);
             panel1.TabIndex = 2;
             // 
-            // label8
-            // 
-            label8.AutoSize = true;
-            label8.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label8.ForeColor = SystemColors.ButtonHighlight;
-            label8.Location = new Point(831, 4);
-            label8.Name = "label8";
-            label8.Size = new Size(87, 17);
-            label8.TabIndex = 8;
-            label8.Text = "Discrep Only";
-            // 
             // checkBoxShowDiscrepancies
             // 
             checkBoxShowDiscrepancies.AutoSize = true;
             checkBoxShowDiscrepancies.Checked = true;
             checkBoxShowDiscrepancies.CheckState = CheckState.Checked;
-            checkBoxShowDiscrepancies.Location = new Point(925, 2);
+            checkBoxShowDiscrepancies.Dock = DockStyle.Left;
+            checkBoxShowDiscrepancies.Location = new Point(910, 0);
             checkBoxShowDiscrepancies.MinimumSize = new Size(45, 22);
             checkBoxShowDiscrepancies.Name = "checkBoxShowDiscrepancies";
             checkBoxShowDiscrepancies.OffBackColor = Color.Gray;
             checkBoxShowDiscrepancies.OffToggleColor = Color.Gainsboro;
             checkBoxShowDiscrepancies.OnBackColor = Color.MediumSlateBlue;
             checkBoxShowDiscrepancies.OnToggleColor = Color.WhiteSmoke;
-            checkBoxShowDiscrepancies.Size = new Size(45, 22);
+            checkBoxShowDiscrepancies.Size = new Size(45, 24);
             checkBoxShowDiscrepancies.TabIndex = 7;
             checkBoxShowDiscrepancies.UseVisualStyleBackColor = true;
             // 
-            // label6
+            // label8
             // 
-            label6.AutoSize = true;
-            label6.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label6.ForeColor = SystemColors.ButtonHighlight;
-            label6.Location = new Point(689, 4);
-            label6.Name = "label6";
-            label6.Size = new Size(81, 17);
-            label6.TabIndex = 6;
-            label6.Text = "Hide Serials";
-            // 
-            // label5
-            // 
-            label5.AutoSize = true;
-            label5.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            label5.ForeColor = SystemColors.ButtonHighlight;
-            label5.Location = new Point(570, 4);
-            label5.Name = "label5";
-            label5.Size = new Size(62, 17);
-            label5.TabIndex = 5;
-            label5.Text = "Show All";
+            label8.Dock = DockStyle.Left;
+            label8.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label8.ForeColor = SystemColors.ButtonHighlight;
+            label8.Location = new Point(813, 0);
+            label8.Name = "label8";
+            label8.Size = new Size(97, 24);
+            label8.TabIndex = 8;
+            label8.Text = "Discrep Only";
+            label8.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // checkBoxShowSerializedBatchItems
             // 
             checkBoxShowSerializedBatchItems.AutoSize = true;
             checkBoxShowSerializedBatchItems.Checked = true;
             checkBoxShowSerializedBatchItems.CheckState = CheckState.Checked;
-            checkBoxShowSerializedBatchItems.Location = new Point(776, 2);
+            checkBoxShowSerializedBatchItems.Dock = DockStyle.Left;
+            checkBoxShowSerializedBatchItems.Location = new Point(768, 0);
             checkBoxShowSerializedBatchItems.MinimumSize = new Size(45, 22);
             checkBoxShowSerializedBatchItems.Name = "checkBoxShowSerializedBatchItems";
             checkBoxShowSerializedBatchItems.OffBackColor = Color.Gray;
             checkBoxShowSerializedBatchItems.OffToggleColor = Color.Gainsboro;
             checkBoxShowSerializedBatchItems.OnBackColor = Color.MediumSlateBlue;
             checkBoxShowSerializedBatchItems.OnToggleColor = Color.WhiteSmoke;
-            checkBoxShowSerializedBatchItems.Size = new Size(45, 22);
+            checkBoxShowSerializedBatchItems.Size = new Size(45, 24);
             checkBoxShowSerializedBatchItems.TabIndex = 4;
             checkBoxShowSerializedBatchItems.UseVisualStyleBackColor = true;
+            // 
+            // label6
+            // 
+            label6.Dock = DockStyle.Left;
+            label6.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label6.ForeColor = SystemColors.ButtonHighlight;
+            label6.Location = new Point(677, 0);
+            label6.Name = "label6";
+            label6.Size = new Size(91, 24);
+            label6.TabIndex = 6;
+            label6.Text = "Hide Serials";
+            label6.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // checkBoxShowAllProducts
             // 
             checkBoxShowAllProducts.AutoSize = true;
-            checkBoxShowAllProducts.Location = new Point(638, 1);
+            checkBoxShowAllProducts.Dock = DockStyle.Left;
+            checkBoxShowAllProducts.Location = new Point(632, 0);
             checkBoxShowAllProducts.MinimumSize = new Size(45, 22);
             checkBoxShowAllProducts.Name = "checkBoxShowAllProducts";
             checkBoxShowAllProducts.OffBackColor = Color.Gray;
             checkBoxShowAllProducts.OffToggleColor = Color.Gainsboro;
             checkBoxShowAllProducts.OnBackColor = Color.MediumSlateBlue;
             checkBoxShowAllProducts.OnToggleColor = Color.WhiteSmoke;
-            checkBoxShowAllProducts.Size = new Size(45, 22);
+            checkBoxShowAllProducts.Size = new Size(45, 24);
             checkBoxShowAllProducts.TabIndex = 3;
             checkBoxShowAllProducts.UseVisualStyleBackColor = true;
             // 
+            // label5
+            // 
+            label5.Dock = DockStyle.Left;
+            label5.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            label5.ForeColor = SystemColors.ButtonHighlight;
+            label5.Location = new Point(554, 0);
+            label5.Name = "label5";
+            label5.Size = new Size(78, 24);
+            label5.TabIndex = 5;
+            label5.Text = "Show All";
+            label5.TextAlign = ContentAlignment.MiddleCenter;
+            // 
             // comboBoxWarehouses
             // 
+            comboBoxWarehouses.Dock = DockStyle.Left;
             comboBoxWarehouses.FormattingEnabled = true;
-            comboBoxWarehouses.Location = new Point(315, 0);
+            comboBoxWarehouses.Location = new Point(305, 0);
             comboBoxWarehouses.Name = "comboBoxWarehouses";
             comboBoxWarehouses.Size = new Size(249, 23);
             comboBoxWarehouses.TabIndex = 2;
             // 
             // comboBoxDatabases
             // 
+            comboBoxDatabases.Dock = DockStyle.Left;
             comboBoxDatabases.FormattingEnabled = true;
-            comboBoxDatabases.Location = new Point(188, 0);
+            comboBoxDatabases.Location = new Point(184, 0);
             comboBoxDatabases.Name = "comboBoxDatabases";
             comboBoxDatabases.Size = new Size(121, 23);
             comboBoxDatabases.TabIndex = 1;
@@ -388,6 +396,7 @@
             dataGridViewUnlistedProducts.Dock = DockStyle.Fill;
             dataGridViewUnlistedProducts.Location = new Point(0, 27);
             dataGridViewUnlistedProducts.Name = "dataGridViewUnlistedProducts";
+            dataGridViewUnlistedProducts.RowHeadersVisible = false;
             dataGridViewUnlistedProducts.Size = new Size(392, 329);
             dataGridViewUnlistedProducts.TabIndex = 1;
             // 

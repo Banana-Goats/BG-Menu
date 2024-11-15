@@ -57,6 +57,7 @@ namespace BG_Menu.Forms.Sub_Forms
                     // UK Stores
                     {"Birkenhead", "Birkenhead"},
                     {"Burton", "Burton"},
+                    {"Cheltenham", "Cheltenham"},
                     {"Chester", "Chester"},
                     {"Congleton", "Congleton"},
                     {"Crewe", "Crewe"},

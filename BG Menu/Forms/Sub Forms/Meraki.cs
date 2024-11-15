@@ -48,6 +48,9 @@ namespace BG_Menu.Forms.Sub_Forms
 
         public Meraki()
         {
+            string hanaClientPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "HANA_Client_Dlls");
+            Environment.SetEnvironmentVariable("PATH", hanaClientPath + ";" + Environment.GetEnvironmentVariable("PATH"));
+
             InitializeComponent();
             SetupStatusLabel();
             SetupDataGridView();
@@ -59,11 +62,8 @@ namespace BG_Menu.Forms.Sub_Forms
 
             unlistedProductBindingSource.DataSource = unlistedProductList;
             dataGridViewUnlistedProducts.DataSource = unlistedProductBindingSource;
-        }
+        }        
 
-        /// <summary>
-        /// Initializes and configures the status label for user feedback.
-        /// </summary>
         private void SetupStatusLabel()
         {
             labelStatus = new Label
@@ -206,7 +206,12 @@ namespace BG_Menu.Forms.Sub_Forms
                 {
                     connection.Open();
 
-                    string query = $@"SELECT ""WhsCode"", ""WhsName"" FROM ""{databaseName}"".""OWHS""";
+                    // Updated SQL query with ORDER BY clause
+                    string query = $@"
+                SELECT ""WhsCode"", ""WhsName"" 
+                FROM ""{databaseName}"".""OWHS""
+                ORDER BY ""WhsName"" ASC"; // Sorting by Warehouse Name
+
                     HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
                     DataTable dataTable = new DataTable();
                     adapter.Fill(dataTable);

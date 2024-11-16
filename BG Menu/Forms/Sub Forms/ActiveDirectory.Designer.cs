@@ -42,9 +42,16 @@
             pictureBox4 = new PictureBox();
             pictureBox5 = new PictureBox();
             panel4 = new Panel();
+            button3 = new Button();
+            button1 = new Button();
+            btnImportCSV = new Button();
             pictureBox6 = new PictureBox();
             txtNewPassword = new TextBox();
             button2 = new Button();
+            dgvUsers = new DataGridView();
+            ADImportdsg = new DataGridView();
+            splitContainer1 = new SplitContainer();
+            splitContainer2 = new SplitContainer();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
@@ -52,6 +59,16 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox5).BeginInit();
             panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox6).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dgvUsers).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)ADImportdsg).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
+            splitContainer2.Panel1.SuspendLayout();
+            splitContainer2.Panel2.SuspendLayout();
+            splitContainer2.SuspendLayout();
             SuspendLayout();
             // 
             // txtUsername
@@ -60,7 +77,7 @@
             txtUsername.BorderStyle = BorderStyle.None;
             txtUsername.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold);
             txtUsername.ForeColor = SystemColors.Window;
-            txtUsername.Location = new Point(64, 55);
+            txtUsername.Location = new Point(65, 13);
             txtUsername.Name = "txtUsername";
             txtUsername.Size = new Size(335, 28);
             txtUsername.TabIndex = 1;
@@ -71,7 +88,7 @@
             txtEmail.BorderStyle = BorderStyle.None;
             txtEmail.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold);
             txtEmail.ForeColor = SystemColors.Window;
-            txtEmail.Location = new Point(64, 155);
+            txtEmail.Location = new Point(65, 113);
             txtEmail.Name = "txtEmail";
             txtEmail.Size = new Size(335, 28);
             txtEmail.TabIndex = 2;
@@ -82,7 +99,7 @@
             txtDescription.BorderStyle = BorderStyle.None;
             txtDescription.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold);
             txtDescription.ForeColor = SystemColors.Window;
-            txtDescription.Location = new Point(64, 105);
+            txtDescription.Location = new Point(65, 63);
             txtDescription.Name = "txtDescription";
             txtDescription.Size = new Size(335, 28);
             txtDescription.TabIndex = 3;
@@ -92,7 +109,7 @@
             chkAccountLocked.AutoSize = true;
             chkAccountLocked.Checked = true;
             chkAccountLocked.CheckState = CheckState.Checked;
-            chkAccountLocked.Location = new Point(67, 214);
+            chkAccountLocked.Location = new Point(68, 172);
             chkAccountLocked.MinimumSize = new Size(45, 22);
             chkAccountLocked.Name = "chkAccountLocked";
             chkAccountLocked.OffBackColor = Color.FromArgb(24, 30, 54);
@@ -134,7 +151,7 @@
             // panel1
             // 
             panel1.BackColor = Color.White;
-            panel1.Location = new Point(64, 192);
+            panel1.Location = new Point(65, 150);
             panel1.Name = "panel1";
             panel1.Size = new Size(335, 1);
             panel1.TabIndex = 11;
@@ -142,7 +159,7 @@
             // panel2
             // 
             panel2.BackColor = Color.White;
-            panel2.Location = new Point(64, 142);
+            panel2.Location = new Point(65, 100);
             panel2.Name = "panel2";
             panel2.Size = new Size(335, 1);
             panel2.TabIndex = 12;
@@ -150,7 +167,7 @@
             // panel3
             // 
             panel3.BackColor = Color.White;
-            panel3.Location = new Point(64, 92);
+            panel3.Location = new Point(65, 50);
             panel3.Name = "panel3";
             panel3.Size = new Size(335, 1);
             panel3.TabIndex = 13;
@@ -158,7 +175,7 @@
             // pictureBox2
             // 
             pictureBox2.Image = Properties.Resources.User;
-            pictureBox2.Location = new Point(12, 55);
+            pictureBox2.Location = new Point(13, 13);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(39, 38);
             pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
@@ -168,7 +185,7 @@
             // pictureBox3
             // 
             pictureBox3.Image = Properties.Resources.Info;
-            pictureBox3.Location = new Point(12, 105);
+            pictureBox3.Location = new Point(13, 63);
             pictureBox3.Name = "pictureBox3";
             pictureBox3.Size = new Size(39, 38);
             pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
@@ -178,7 +195,7 @@
             // pictureBox4
             // 
             pictureBox4.Image = Properties.Resources.Mail;
-            pictureBox4.Location = new Point(12, 155);
+            pictureBox4.Location = new Point(13, 113);
             pictureBox4.Name = "pictureBox4";
             pictureBox4.Size = new Size(39, 38);
             pictureBox4.SizeMode = PictureBoxSizeMode.Zoom;
@@ -188,7 +205,7 @@
             // pictureBox5
             // 
             pictureBox5.Image = Properties.Resources.Lock;
-            pictureBox5.Location = new Point(12, 206);
+            pictureBox5.Location = new Point(13, 164);
             pictureBox5.Name = "pictureBox5";
             pictureBox5.Size = new Size(39, 38);
             pictureBox5.SizeMode = PictureBoxSizeMode.Zoom;
@@ -197,6 +214,9 @@
             // 
             // panel4
             // 
+            panel4.Controls.Add(button3);
+            panel4.Controls.Add(button1);
+            panel4.Controls.Add(btnImportCSV);
             panel4.Controls.Add(pictureBox1);
             panel4.Controls.Add(cmbUsers);
             panel4.Dock = DockStyle.Top;
@@ -205,10 +225,76 @@
             panel4.Size = new Size(989, 39);
             panel4.TabIndex = 18;
             // 
+            // button3
+            // 
+            button3.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button3.BackgroundImageLayout = ImageLayout.Zoom;
+            button3.Dock = DockStyle.Left;
+            button3.FlatAppearance.BorderColor = Color.White;
+            button3.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button3.FlatStyle = FlatStyle.Flat;
+            button3.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button3.ForeColor = Color.White;
+            button3.ImageAlign = ContentAlignment.MiddleLeft;
+            button3.Location = new Point(248, 0);
+            button3.Margin = new Padding(2);
+            button3.Name = "button3";
+            button3.RightToLeft = RightToLeft.No;
+            button3.Size = new Size(124, 39);
+            button3.TabIndex = 25;
+            button3.Text = "Email";
+            button3.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += BtnSendEmail_Click;
+            // 
+            // button1
+            // 
+            button1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button1.BackgroundImageLayout = ImageLayout.Zoom;
+            button1.Dock = DockStyle.Left;
+            button1.FlatAppearance.BorderColor = Color.White;
+            button1.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button1.FlatStyle = FlatStyle.Flat;
+            button1.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button1.ForeColor = Color.White;
+            button1.ImageAlign = ContentAlignment.MiddleLeft;
+            button1.Location = new Point(124, 0);
+            button1.Margin = new Padding(2);
+            button1.Name = "button1";
+            button1.RightToLeft = RightToLeft.No;
+            button1.Size = new Size(124, 39);
+            button1.TabIndex = 24;
+            button1.Text = "Load";
+            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
+            // btnImportCSV
+            // 
+            btnImportCSV.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnImportCSV.BackgroundImageLayout = ImageLayout.Zoom;
+            btnImportCSV.Dock = DockStyle.Left;
+            btnImportCSV.FlatAppearance.BorderColor = Color.White;
+            btnImportCSV.FlatAppearance.MouseOverBackColor = Color.Silver;
+            btnImportCSV.FlatStyle = FlatStyle.Flat;
+            btnImportCSV.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnImportCSV.ForeColor = Color.White;
+            btnImportCSV.ImageAlign = ContentAlignment.MiddleLeft;
+            btnImportCSV.Location = new Point(0, 0);
+            btnImportCSV.Margin = new Padding(2);
+            btnImportCSV.Name = "btnImportCSV";
+            btnImportCSV.RightToLeft = RightToLeft.No;
+            btnImportCSV.Size = new Size(124, 39);
+            btnImportCSV.TabIndex = 23;
+            btnImportCSV.Text = "Import";
+            btnImportCSV.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnImportCSV.UseVisualStyleBackColor = true;
+            btnImportCSV.Click += btnImportCSV_Click;
+            // 
             // pictureBox6
             // 
             pictureBox6.Image = Properties.Resources.Password;
-            pictureBox6.Location = new Point(12, 256);
+            pictureBox6.Location = new Point(13, 214);
             pictureBox6.Name = "pictureBox6";
             pictureBox6.Size = new Size(39, 38);
             pictureBox6.SizeMode = PictureBoxSizeMode.Zoom;
@@ -218,11 +304,10 @@
             // txtNewPassword
             // 
             txtNewPassword.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold);
-            txtNewPassword.Location = new Point(64, 259);
+            txtNewPassword.Location = new Point(65, 217);
             txtNewPassword.Name = "txtNewPassword";
             txtNewPassword.Size = new Size(206, 35);
             txtNewPassword.TabIndex = 20;
-            txtNewPassword.UseSystemPasswordChar = true;
             // 
             // button2
             // 
@@ -234,7 +319,7 @@
             button2.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
             button2.ForeColor = Color.White;
             button2.ImageAlign = ContentAlignment.MiddleLeft;
-            button2.Location = new Point(275, 259);
+            button2.Location = new Point(276, 217);
             button2.Margin = new Padding(2);
             button2.Name = "button2";
             button2.RightToLeft = RightToLeft.No;
@@ -245,27 +330,85 @@
             button2.UseVisualStyleBackColor = true;
             button2.Click += button2_Click;
             // 
+            // dgvUsers
+            // 
+            dgvUsers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dgvUsers.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvUsers.Dock = DockStyle.Fill;
+            dgvUsers.Location = new Point(0, 0);
+            dgvUsers.Name = "dgvUsers";
+            dgvUsers.RowHeadersVisible = false;
+            dgvUsers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvUsers.Size = new Size(287, 569);
+            dgvUsers.TabIndex = 22;
+            // 
+            // ADImportdsg
+            // 
+            ADImportdsg.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            ADImportdsg.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            ADImportdsg.Dock = DockStyle.Fill;
+            ADImportdsg.Location = new Point(0, 0);
+            ADImportdsg.Name = "ADImportdsg";
+            ADImportdsg.RowHeadersVisible = false;
+            ADImportdsg.SelectionMode = DataGridViewSelectionMode.CellSelect;
+            ADImportdsg.Size = new Size(275, 569);
+            ADImportdsg.TabIndex = 23;
+            // 
+            // splitContainer1
+            // 
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(0, 39);
+            splitContainer1.Name = "splitContainer1";
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(pictureBox2);
+            splitContainer1.Panel1.Controls.Add(txtUsername);
+            splitContainer1.Panel1.Controls.Add(txtEmail);
+            splitContainer1.Panel1.Controls.Add(button2);
+            splitContainer1.Panel1.Controls.Add(txtDescription);
+            splitContainer1.Panel1.Controls.Add(txtNewPassword);
+            splitContainer1.Panel1.Controls.Add(chkAccountLocked);
+            splitContainer1.Panel1.Controls.Add(pictureBox6);
+            splitContainer1.Panel1.Controls.Add(panel1);
+            splitContainer1.Panel1.Controls.Add(panel2);
+            splitContainer1.Panel1.Controls.Add(pictureBox5);
+            splitContainer1.Panel1.Controls.Add(panel3);
+            splitContainer1.Panel1.Controls.Add(pictureBox4);
+            splitContainer1.Panel1.Controls.Add(pictureBox3);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(splitContainer2);
+            splitContainer1.Size = new Size(989, 569);
+            splitContainer1.SplitterDistance = 419;
+            splitContainer1.TabIndex = 24;
+            // 
+            // splitContainer2
+            // 
+            splitContainer2.Dock = DockStyle.Fill;
+            splitContainer2.Location = new Point(0, 0);
+            splitContainer2.Name = "splitContainer2";
+            // 
+            // splitContainer2.Panel1
+            // 
+            splitContainer2.Panel1.Controls.Add(dgvUsers);
+            // 
+            // splitContainer2.Panel2
+            // 
+            splitContainer2.Panel2.Controls.Add(ADImportdsg);
+            splitContainer2.Size = new Size(566, 569);
+            splitContainer2.SplitterDistance = 287;
+            splitContainer2.TabIndex = 24;
+            // 
             // ActiveDirectory
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(46, 51, 73);
             ClientSize = new Size(989, 608);
-            Controls.Add(button2);
-            Controls.Add(txtNewPassword);
-            Controls.Add(pictureBox6);
+            Controls.Add(splitContainer1);
             Controls.Add(panel4);
-            Controls.Add(pictureBox5);
-            Controls.Add(pictureBox4);
-            Controls.Add(pictureBox3);
-            Controls.Add(pictureBox2);
-            Controls.Add(panel3);
-            Controls.Add(panel2);
-            Controls.Add(panel1);
-            Controls.Add(chkAccountLocked);
-            Controls.Add(txtDescription);
-            Controls.Add(txtEmail);
-            Controls.Add(txtUsername);
             FormBorderStyle = FormBorderStyle.None;
             Name = "ActiveDirectory";
             Text = "ActiveDirectory";
@@ -276,8 +419,18 @@
             ((System.ComponentModel.ISupportInitialize)pictureBox5).EndInit();
             panel4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pictureBox6).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dgvUsers).EndInit();
+            ((System.ComponentModel.ISupportInitialize)ADImportdsg).EndInit();
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel1.PerformLayout();
+            splitContainer1.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
+            splitContainer2.Panel1.ResumeLayout(false);
+            splitContainer2.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
+            splitContainer2.ResumeLayout(false);
             ResumeLayout(false);
-            PerformLayout();
         }
 
         #endregion
@@ -298,5 +451,12 @@
         private PictureBox pictureBox6;
         private TextBox txtNewPassword;
         private Button button2;
+        private DataGridView dgvUsers;
+        private Button btnImportCSV;
+        private Button button1;
+        private DataGridView ADImportdsg;
+        private SplitContainer splitContainer1;
+        private SplitContainer splitContainer2;
+        private Button button3;
     }
 }

@@ -44,6 +44,8 @@ namespace BG_Menu.Forms.Sub_Forms
             checkBoxTill.CheckedChanged += CheckBoxFilter_CheckedChanged;
             checkBoxTablet.CheckedChanged += CheckBoxFilter_CheckedChanged;
             checkBoxLaptop.CheckedChanged += CheckBoxFilter_CheckedChanged;
+
+            dataGridView1.CellClick += DataGridView1_CellClick;
         }
 
         private void InitializeDataGridView()
@@ -119,6 +121,20 @@ namespace BG_Menu.Forms.Sub_Forms
                 HeaderText = "Sender Version",
                 SortMode = DataGridViewColumnSortMode.NotSortable
             });
+            dataGridView1.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "PendingUpdates",
+                HeaderText = "Pending Updates",
+                SortMode = DataGridViewColumnSortMode.NotSortable
+            });
+            dataGridView1.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                DataPropertyName = "LatestSharepointFile",
+                HeaderText = "Latest SharePoint File",
+                SortMode = DataGridViewColumnSortMode.NotSortable,
+                DefaultCellStyle = new DataGridViewCellStyle { Format = "dd-MM-yyyy" } // Format the date as desired
+            });
+
 
             foreach (DataGridViewColumn column in dataGridView1.Columns)
             {
@@ -160,7 +176,7 @@ namespace BG_Menu.Forms.Sub_Forms
                     StorageInfo = "-",
                     WindowsOS = "-",
                     BuildNumber = "-",
-                    SenderVersion = "-"
+                    SenderVersion = "-",                    
                 };
                 SetRowColor(machineData); // Set initial row color
                 machineDataList.Add(machineData);
@@ -224,9 +240,9 @@ namespace BG_Menu.Forms.Sub_Forms
 
             try
             {
-                // Assuming the data format is (MainData)|MachineName|WANIP|ISP|CPUInfo|RAMInfo|StorageInfo|WindowsOS|BuildNumber|SenderVersion
+                // Assuming the data format is (MainData)|MachineName|WANIP|ISP|CPUInfo|RAMInfo|StorageInfo|WindowsOS|BuildNumber|SenderVersion|PendingUpdates|LatestSharepointFile
                 string[] parts = data.Split('|');
-                if (parts.Length < 10)
+                if (parts.Length < 12)
                 {
                     return;
                 }
@@ -240,6 +256,8 @@ namespace BG_Menu.Forms.Sub_Forms
                 string windowsOS = parts[7];
                 string buildNumber = parts[8];
                 string senderVersion = parts[9];
+                string pendingUpdates = parts[10];
+                DateTime? latestSharepointFile = DateTime.TryParse(parts[11], out DateTime parsedDate) ? parsedDate : (DateTime?)null;
                 DateTime dateTimeReceived = DateTime.Now;
 
                 var machine = machineDataList.FirstOrDefault(m => m.MachineName == machineName);
@@ -255,6 +273,8 @@ namespace BG_Menu.Forms.Sub_Forms
                     machine.BuildNumber = buildNumber;
                     machine.SenderVersion = senderVersion;
                     machine.DateTimeReceived = dateTimeReceived;
+                    machine.PendingUpdates = pendingUpdates;
+                    machine.LatestSharepointFile = latestSharepointFile;
 
                     SetRowColor(machine);
                 }
@@ -273,7 +293,9 @@ namespace BG_Menu.Forms.Sub_Forms
                         WindowsOS = windowsOS,
                         BuildNumber = buildNumber,
                         SenderVersion = senderVersion,
-                        DateTimeReceived = dateTimeReceived
+                        DateTimeReceived = dateTimeReceived,
+                        PendingUpdates = pendingUpdates,
+                        LatestSharepointFile = latestSharepointFile
                     };
 
                     SetRowColor(newMachine);
@@ -576,6 +598,49 @@ namespace BG_Menu.Forms.Sub_Forms
                     e.FormattingApplied = true;
                 }
             }
+
+            else if (columnName == "PendingUpdates")
+            {
+                if (!string.IsNullOrEmpty(machine.PendingUpdates) && machine.PendingUpdates != "None")
+                {
+                    e.Value = "Yes";
+                    e.CellStyle.BackColor = Color.Tomato;
+
+                    // Assign a tooltip for cells with pending updates
+                    string tooltipText = machine.PendingUpdates;
+                    dataGridView1[e.ColumnIndex, e.RowIndex].ToolTipText = tooltipText;
+                }
+                else
+                {
+                    e.Value = "No";
+                    e.CellStyle.BackColor = machine.RowColor;
+                    dataGridView1[e.ColumnIndex, e.RowIndex].ToolTipText = string.Empty; // Clear any existing tooltip
+                }
+            }
+        }
+
+        private void DataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Ensure the clicked cell is within valid bounds
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
+            {
+                // Get the clicked cell and corresponding MachineData object
+                var columnName = dataGridView1.Columns[e.ColumnIndex].DataPropertyName;
+                if (columnName == "PendingUpdates")
+                {
+                    var machine = machineDataList[e.RowIndex];
+                    if (!string.IsNullOrEmpty(machine.PendingUpdates) && machine.PendingUpdates != "None")
+                    {
+                        // Show the pending updates in a message box
+                        MessageBox.Show(machine.PendingUpdates, "Pending Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    else
+                    {
+                        // No updates available
+                        MessageBox.Show("No pending updates.", "Pending Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                }
+            }
         }
 
         protected override void OnFormClosing(FormClosingEventArgs e)
@@ -605,6 +670,9 @@ namespace BG_Menu.Forms.Sub_Forms
         public Color RowColor { get; set; }
         [Browsable(false)] // Hide SortOrder from DataGridView columns
         public int SortOrder { get; set; }
+
+        public string PendingUpdates { get; set; }
+        public DateTime? LatestSharepointFile { get; set; }
     }
 
     // Updated SortableBindingList<T> class

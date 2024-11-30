@@ -76,6 +76,7 @@
             panel1.AutoScroll = true;
             panel1.BackColor = Color.FromArgb(24, 30, 54);
             panel1.Controls.Add(btnFileServer);
+            panel1.Controls.Add(button7);
             panel1.Controls.Add(pnlServiceTools);
             panel1.Controls.Add(btnTools);
             panel1.Controls.Add(btnAdminSettings);
@@ -122,7 +123,7 @@
             // pnlServiceTools
             // 
             pnlServiceTools.AutoSize = true;
-            pnlServiceTools.Controls.Add(button7);
+            
             pnlServiceTools.Controls.Add(button6);
             pnlServiceTools.Controls.Add(button3);
             pnlServiceTools.Controls.Add(btnFSM);

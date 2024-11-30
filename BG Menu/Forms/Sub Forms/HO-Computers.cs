@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Management;
+using System.Net;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.DirectoryServices.AccountManagement;
+using System.Data.SqlClient;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -31,37 +34,113 @@ namespace BG_Menu.Forms.Sub_Forms
 
             var tasks = new List<Task>();
 
-            for (int i = 1; i <= 99; i++)
-            {
-                string machineName = $"WS-{i.ToString("D2")}";
+            // Define patterns to match
+            var patterns = new List<string>
+    {
+        "WS-{0:D2}",    // Matches WS-??
+        "LT-{0:D2}",    // Matches LT-??
+        "ABL000{0:D1}"    // Matches ABL0???
+    };
 
-                var task = Task.Run(() =>
+            foreach (var pattern in patterns)
+            {
+                int start = pattern.Contains("D2") ? 1 : 0; // D2 pattern starts from 1; D3 pattern starts from 0
+                int end = pattern.Contains("D2") ? 99 : 999; // D2 has 2 digits; D3 has 3 digits
+
+                for (int i = start; i <= end; i++)
                 {
-                    var info = GetMachineInfo(machineName);
-                    this.Invoke(new Action(() =>
+                    string machineName = string.Format(pattern, i);
+
+                    var task = Task.Run(async () =>
                     {
-                        if (info.Values.All(value => value != "N/A")) // Only add rows without "N/A"
+                        var info = GetMachineInfo(machineName);
+
+                        // Check if the CPU field has valid data
+                        if (!string.IsNullOrEmpty(info["CPU"]) && info["CPU"] != "N/A")
                         {
-                            dataGridViewPCInfo.Rows.Add(
+                            // Add data to the DataGridView
+                            this.Invoke(new Action(() =>
+                            {
+                                dataGridViewPCInfo.Rows.Add(
+                                    machineName,
+                                    info["User"],
+                                    info["Description"],
+                                    info["CPU"],
+                                    info["RAM"],
+                                    info["HDD"],
+                                    info["OS"],
+                                    info["Build"]
+                                );
+
+                                // Sort the DataGridView by the MachineName column
+                                dataGridViewPCInfo.Sort(dataGridViewPCInfo.Columns["MachineName"], System.ComponentModel.ListSortDirection.Ascending);
+                            }));
+
+                            // Save data to SQL Server
+                            await SaveToDatabaseAsync(
                                 machineName,
-                                info["User"],
-                                info["Description"],
+                                info["User"],  // Maps to Location
                                 info["CPU"],
                                 info["RAM"],
-                                info["HDD"],
-                                info["OS"],
-                                info["Build"]
+                                info["HDD"],   // Maps to StorageInfo
+                                info["OS"],    // Maps to WindowsOS
+                                info["Build"]  // Maps to BuildNumber
                             );
-                            // Sort the DataGridView by the MachineName column immediately after adding each row
-                            dataGridViewPCInfo.Sort(dataGridViewPCInfo.Columns["MachineName"], System.ComponentModel.ListSortDirection.Ascending);
                         }
-                    }));
-                });
+                    });
 
-                tasks.Add(task);
+                    tasks.Add(task);
+                }
             }
 
             await Task.WhenAll(tasks);
+        }
+               
+
+        private async Task SaveToDatabaseAsync(string machineName, string location, string cpu, string ram, string storageInfo, string os, string buildNumber)
+        {
+            // Replace with your actual connection string
+            string connectionString = "Server=bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+
+            string query = @"
+        MERGE INTO MachineData AS target
+        USING (SELECT @MachineName AS MachineName) AS source
+        ON target.MachineName = source.MachineName
+        WHEN MATCHED THEN
+            UPDATE SET
+                Location = @Location,
+                CPUInfo = @CPU,
+                RAMInfo = @RAM,
+                StorageInfo = @StorageInfo,
+                WindowsOS = @OS,
+                BuildNumber = @BuildNumber
+        WHEN NOT MATCHED THEN
+            INSERT (MachineName, Location, CPUInfo, RAMInfo, StorageInfo, WindowsOS, BuildNumber)
+            VALUES (@MachineName, @Location, @CPU, @RAM, @StorageInfo, @OS, @BuildNumber);";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    // Add parameters
+                    command.Parameters.AddWithValue("@MachineName", machineName ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@Location", location ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@CPU", cpu ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@RAM", ram ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@StorageInfo", storageInfo ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@OS", os ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@BuildNumber", buildNumber ?? (object)DBNull.Value);
+
+                    // Open the connection and execute the query
+                    await connection.OpenAsync();
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error saving to database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private Dictionary<string, string> GetMachineInfo(string machineName)
@@ -94,7 +173,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 machineInfo["User"] = user;
                 machineInfo["Description"] = description;
             }
-            catch (Exception ex)
+            catch
             {
                 machineInfo["CPU"] = "N/A";
                 machineInfo["RAM"] = "N/A";

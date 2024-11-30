@@ -177,6 +177,7 @@
             // 
             comboBox1.BackColor = SystemColors.Control;
             comboBox1.Dock = DockStyle.Fill;
+            comboBox1.Enabled = false;
             comboBox1.FlatStyle = FlatStyle.Flat;
             comboBox1.Font = new Font("Microsoft Sans Serif", 13.25F, FontStyle.Bold);
             comboBox1.ForeColor = Color.Black;
@@ -357,6 +358,7 @@
             listBoxWeeks.BackColor = SystemColors.Control;
             listBoxWeeks.Dock = DockStyle.Fill;
             listBoxWeeks.DrawMode = DrawMode.OwnerDrawFixed;
+            listBoxWeeks.Enabled = false;
             listBoxWeeks.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
             listBoxWeeks.ForeColor = Color.Black;
             listBoxWeeks.FormattingEnabled = true;

@@ -140,7 +140,9 @@ namespace BG_Menu
 
         private void button1_Click(object sender, EventArgs e)
         {
-
+            HidePanels();
+            Pagelbl.Text = "DashBoard";
+            LoadFormInPanel(new Forms.Sub_Forms.DashBoard());
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -369,6 +371,15 @@ namespace BG_Menu
             else
             {
                 btnTools.Visible = false;
+            }
+
+            if (userPermissions.Contains("stocktake"))
+            {
+                button7.Visible = true;
+            }
+            else
+            {
+                button7.Visible = false;
             }
 
             // Add more buttons and permission checks as needed

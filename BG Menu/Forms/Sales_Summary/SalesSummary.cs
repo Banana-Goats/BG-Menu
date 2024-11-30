@@ -617,6 +617,9 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private void button1_Click(object sender, EventArgs e)
         {
+            comboBox1.Enabled = true;
+            listBoxWeeks.Enabled = true;
+            
             // Refresh Data
             ExecuteAndDisplayQuery();
             SelectCurrentMonthInComboBox();

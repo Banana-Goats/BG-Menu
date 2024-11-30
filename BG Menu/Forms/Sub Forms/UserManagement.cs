@@ -2,6 +2,8 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Data.SqlClient;
+using System.Data;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -16,9 +18,13 @@ namespace BG_Menu.Forms.Sub_Forms
         private ConcurrentQueue<Func<Task>> updateQueue = new ConcurrentQueue<Func<Task>>();
         private bool isProcessingQueue = false;
 
+        private string connectionString = string.Empty;
+
+        private PopupForm popupForm; // Keep a reference to the popup form
+
         public UserManagement(FirestoreDb db)
         {
-            InitializeComponent();
+            InitializeComponent();            
 
             firestoreDb = db;
 
@@ -33,6 +39,8 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridViewStoresFranchises.CurrentCellDirtyStateChanged += DataGridViewStoresFranchises_CurrentCellDirtyStateChanged;
             dataGridViewStoresFranchises.CellValueChanged += DataGridViewStoresFranchises_CellValueChanged;
         }
+
+        #region Manage
 
         private async void LoadUsers()
         {
@@ -414,8 +422,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        
-
         private void btnUserAdd_Click(object sender, EventArgs e)
         {
             AddUserForm addUserForm = new AddUserForm(firestoreDb);
@@ -498,7 +504,7 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private void ClearUserDetails()
         {
-            
+
             // Also clear any selection or related data in grids
             foreach (DataGridViewRow row in dataGridViewPermissions.Rows)
             {
@@ -510,6 +516,80 @@ namespace BG_Menu.Forms.Sub_Forms
                 row.Cells["SelectUKStore"].Value = false;
                 row.Cells["SelectFranchiseStore"].Value = false;
                 row.Cells["SelectFranchise"].Value = false;
+            }
+        }
+
+        #endregion
+
+        private void btnSetLogin_Click(object sender, EventArgs e)
+        {
+            using (SQLLogin loginForm = new SQLLogin())
+            {
+                if (loginForm.ShowDialog() == DialogResult.OK)
+                {
+                    // Construct connection string using login info
+                    connectionString = $"Server=bananagoats.co.uk;Database=Ableworld;User Id={loginForm.Username};Password={loginForm.Password};";
+                    MessageBox.Show("Login details saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+        }
+
+        private void BtnExecute_Click(object sender, EventArgs e)
+        {
+            if (string.IsNullOrEmpty(connectionString))
+            {
+                MessageBox.Show("Please set the login credentials first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string query = txtQuery1.Text;
+
+            // Validate the query
+            if (string.IsNullOrWhiteSpace(query))
+            {
+                MessageBox.Show("The query cannot be empty. Please enter a valid SQL query.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        SqlDataAdapter adapter = new SqlDataAdapter(command);
+                        DataTable dataTable = new DataTable();
+
+                        connection.Open(); // Open the connection
+                        adapter.Fill(dataTable); // Fill the DataTable with query results
+
+                        if (dataTable.Rows.Count > 0)
+                        {
+                            // Check if the popup form is already open
+                            if (popupForm == null || popupForm.IsDisposed)
+                            {
+                                // Create and show a new popup form
+                                popupForm = new PopupForm();
+                                popupForm.SetData(dataTable); // Pass the DataTable to the popup form
+                                popupForm.Show();
+                            }
+                            else
+                            {
+                                // Update the existing popup form's data
+                                popupForm.SetData(dataTable);
+                                popupForm.BringToFront(); // Bring the popup to the front
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Query executed successfully, but no data was returned.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error executing query: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }

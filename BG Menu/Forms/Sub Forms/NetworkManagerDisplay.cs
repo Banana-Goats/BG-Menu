@@ -11,6 +11,9 @@ using System.Threading;
 using System.Windows.Forms;
 using System.Reflection;
 using Timer = System.Threading.Timer;
+using Newtonsoft.Json;
+using System.Net.Http;
+using System.Data.SqlClient;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -303,6 +306,8 @@ namespace BG_Menu.Forms.Sub_Forms
                 }
 
                 ApplyRowFilter(); // Apply the filter after updating data
+
+                SendDataToSqlDatabase(machineName, machine.Location, wanIp, isp, cpuInfo, ramInfo, storageInfo, windowsOS, buildNumber, senderVersion, pendingUpdates, latestSharepointFile, dateTimeReceived);
             }
             catch (Exception ex)
             {
@@ -601,8 +606,19 @@ namespace BG_Menu.Forms.Sub_Forms
 
             else if (columnName == "PendingUpdates")
             {
-                if (!string.IsNullOrEmpty(machine.PendingUpdates) && machine.PendingUpdates != "None")
+                // Refined check for PendingUpdates to handle variations of "None" with spaces or different cases
+                string pendingUpdatesValue = machine.PendingUpdates?.Trim() ?? string.Empty;
+
+                if (string.IsNullOrEmpty(pendingUpdatesValue) || pendingUpdatesValue.Equals("None", StringComparison.OrdinalIgnoreCase))
                 {
+                    // If "None" or empty, display "No" with the default background color (row color)
+                    e.Value = "No";
+                    e.CellStyle.BackColor = machine.RowColor;
+                    dataGridView1[e.ColumnIndex, e.RowIndex].ToolTipText = string.Empty; // Clear any existing tooltip
+                }
+                else
+                {
+                    // If there's actual update information, display "Yes" with a Tomato background color
                     e.Value = "Yes";
                     e.CellStyle.BackColor = Color.Tomato;
 
@@ -610,12 +626,8 @@ namespace BG_Menu.Forms.Sub_Forms
                     string tooltipText = machine.PendingUpdates;
                     dataGridView1[e.ColumnIndex, e.RowIndex].ToolTipText = tooltipText;
                 }
-                else
-                {
-                    e.Value = "No";
-                    e.CellStyle.BackColor = machine.RowColor;
-                    dataGridView1[e.ColumnIndex, e.RowIndex].ToolTipText = string.Empty; // Clear any existing tooltip
-                }
+
+                e.FormattingApplied = true;
             }
         }
 
@@ -640,6 +652,84 @@ namespace BG_Menu.Forms.Sub_Forms
                         MessageBox.Show("No pending updates.", "Pending Updates", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                 }
+            }
+        }
+
+        private async void SendDataToFileServer(MachineData machine)
+        {
+            try
+            {
+                string fileServerUrl = "http://bananagoats.co.uk:50547/receiveData"; // Adjust the URL and port if necessary
+
+                using (var httpClient = new HttpClient())
+                {
+                    var jsonData = JsonConvert.SerializeObject(machine);
+                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
+                    var response = await httpClient.PostAsync(fileServerUrl, content);
+                    response.EnsureSuccessStatusCode();
+                }
+            }
+            catch (Exception ex)
+            {
+                //MessageBox.Show($"Error sending data to FileServer: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void SendDataToSqlDatabase(string machineName, string location, string wanIp, string isp, string cpuInfo, string ramInfo, string storageInfo, string windowsOS, string buildNumber, string senderVersion, string pendingUpdates, DateTime? latestSharepointFile, DateTime dateTimeReceived)
+        {
+            // Replace with your actual connection string
+            string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+
+            string query = @"
+        MERGE INTO MachineData AS target
+        USING (SELECT @MachineName AS MachineName) AS source
+        ON target.MachineName = source.MachineName
+        WHEN MATCHED THEN
+            UPDATE SET
+                Location = @Location,
+                WANIP = @WANIP,
+                ISP = @ISP,
+                CPUInfo = @CPUInfo,
+                RAMInfo = @RAMInfo,
+                StorageInfo = @StorageInfo,
+                WindowsOS = @WindowsOS,
+                BuildNumber = @BuildNumber,
+                SenderVersion = @SenderVersion,
+                PendingUpdates = @PendingUpdates,
+                LatestSharepointFile = @LatestSharepointFile,
+                DateTimeReceived = @DateTimeReceived
+        WHEN NOT MATCHED THEN
+            INSERT (MachineName, Location, WANIP, ISP, CPUInfo, RAMInfo, StorageInfo, WindowsOS, BuildNumber, SenderVersion, PendingUpdates, LatestSharepointFile, DateTimeReceived)
+            VALUES (@MachineName, @Location, @WANIP, @ISP, @CPUInfo, @RAMInfo, @StorageInfo, @WindowsOS, @BuildNumber, @SenderVersion, @PendingUpdates, @LatestSharepointFile, @DateTimeReceived);";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    // Add parameters
+                    command.Parameters.AddWithValue("@MachineName", machineName);
+                    command.Parameters.AddWithValue("@Location", location ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@WANIP", wanIp ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@ISP", isp ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@CPUInfo", cpuInfo ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@RAMInfo", ramInfo ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@StorageInfo", storageInfo ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@WindowsOS", windowsOS ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@BuildNumber", buildNumber ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@SenderVersion", senderVersion ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@PendingUpdates", pendingUpdates ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@LatestSharepointFile", latestSharepointFile ?? (object)DBNull.Value);
+                    command.Parameters.AddWithValue("@DateTimeReceived", dateTimeReceived);
+
+                    // Open the connection and execute the query
+                    connection.Open();
+                    command.ExecuteNonQuery();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error sending data to SQL database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 

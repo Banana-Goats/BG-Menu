@@ -70,6 +70,7 @@ public class UserSession
         "networkmonitor",
         "servicetools",
         "fileserver",
+        "stocktake",
         
         // Add more permissions here as needed
     };

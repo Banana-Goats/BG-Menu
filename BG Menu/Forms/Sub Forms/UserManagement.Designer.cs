@@ -40,10 +40,20 @@
             btnUserEdit = new Button();
             btnUserAdd = new Button();
             tableLayoutPanel1 = new TableLayoutPanel();
+            splitContainer1 = new SplitContainer();
+            txtQuery1 = new TextBox();
+            panel2 = new Panel();
+            btnExecute = new Button();
+            btnSetLogin = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPermissions).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewStoresFranchises).BeginInit();
             panel1.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.Panel2.SuspendLayout();
+            splitContainer1.SuspendLayout();
+            panel2.SuspendLayout();
             SuspendLayout();
             // 
             // listBoxUsers
@@ -210,6 +220,7 @@
             tableLayoutPanel1.Controls.Add(listBoxUsers, 0, 0);
             tableLayoutPanel1.Controls.Add(dataGridViewPermissions, 1, 0);
             tableLayoutPanel1.Controls.Add(dataGridViewStoresFranchises, 2, 0);
+            tableLayoutPanel1.Controls.Add(splitContainer1, 3, 0);
             tableLayoutPanel1.Dock = DockStyle.Fill;
             tableLayoutPanel1.Location = new Point(0, 39);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -217,6 +228,70 @@
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.Size = new Size(989, 569);
             tableLayoutPanel1.TabIndex = 6;
+            // 
+            // splitContainer1
+            // 
+            splitContainer1.Dock = DockStyle.Fill;
+            splitContainer1.Location = new Point(853, 3);
+            splitContainer1.Name = "splitContainer1";
+            splitContainer1.Orientation = Orientation.Horizontal;
+            // 
+            // splitContainer1.Panel1
+            // 
+            splitContainer1.Panel1.Controls.Add(txtQuery1);
+            // 
+            // splitContainer1.Panel2
+            // 
+            splitContainer1.Panel2.Controls.Add(panel2);
+            splitContainer1.Size = new Size(136, 563);
+            splitContainer1.SplitterDistance = 95;
+            splitContainer1.TabIndex = 3;
+            // 
+            // txtQuery1
+            // 
+            txtQuery1.Dock = DockStyle.Fill;
+            txtQuery1.Location = new Point(0, 0);
+            txtQuery1.Multiline = true;
+            txtQuery1.Name = "txtQuery1";
+            txtQuery1.Size = new Size(136, 95);
+            txtQuery1.TabIndex = 0;
+            // 
+            // panel2
+            // 
+            panel2.AutoSize = true;
+            panel2.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            panel2.Controls.Add(btnExecute);
+            panel2.Controls.Add(btnSetLogin);
+            panel2.Dock = DockStyle.Bottom;
+            panel2.Location = new Point(0, 434);
+            panel2.MinimumSize = new Size(0, 30);
+            panel2.Name = "panel2";
+            panel2.Size = new Size(136, 30);
+            panel2.TabIndex = 0;
+            // 
+            // btnExecute
+            // 
+            btnExecute.Dock = DockStyle.Left;
+            btnExecute.Location = new Point(75, 0);
+            btnExecute.MinimumSize = new Size(0, 30);
+            btnExecute.Name = "btnExecute";
+            btnExecute.Size = new Size(75, 30);
+            btnExecute.TabIndex = 1;
+            btnExecute.Text = "Execute";
+            btnExecute.UseVisualStyleBackColor = true;
+            btnExecute.Click += BtnExecute_Click;
+            // 
+            // btnSetLogin
+            // 
+            btnSetLogin.Dock = DockStyle.Left;
+            btnSetLogin.Location = new Point(0, 0);
+            btnSetLogin.MinimumSize = new Size(0, 30);
+            btnSetLogin.Name = "btnSetLogin";
+            btnSetLogin.Size = new Size(75, 30);
+            btnSetLogin.TabIndex = 0;
+            btnSetLogin.Text = "Login";
+            btnSetLogin.UseVisualStyleBackColor = true;
+            btnSetLogin.Click += btnSetLogin_Click;
             // 
             // UserManagement
             // 
@@ -233,6 +308,13 @@
             ((System.ComponentModel.ISupportInitialize)dataGridViewStoresFranchises).EndInit();
             panel1.ResumeLayout(false);
             tableLayoutPanel1.ResumeLayout(false);
+            splitContainer1.Panel1.ResumeLayout(false);
+            splitContainer1.Panel1.PerformLayout();
+            splitContainer1.Panel2.ResumeLayout(false);
+            splitContainer1.Panel2.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
+            panel2.ResumeLayout(false);
             ResumeLayout(false);
         }
 
@@ -245,5 +327,10 @@
         private Button btnUserEdit;
         private TableLayoutPanel tableLayoutPanel1;
         private Class.Design.Custom_Items.CenteredListBox listBoxUsers;
+        private SplitContainer splitContainer1;
+        private Panel panel2;
+        private Button btnExecute;
+        private Button btnSetLogin;
+        private TextBox txtQuery1;
     }
 }

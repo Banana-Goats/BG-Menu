@@ -82,8 +82,8 @@ namespace BG_Menu.Class.Sales_Summary
                 // Stairlifts
                 new StoreInfo { StoreName = "Stairlifts", WarehouseNames = new[]
                 {
-                    "Ableworld Stairlfts Shrewsbury",
-                    "Ableworld Stairlfts Shrewsbury Off-Line",
+                    "Ableworld Stairlifts Shrewsbury",
+                    "Ableworld Stairlifts Shrewsbury Off-Line",
                     "Ableworld Stairlift Hub",
                     "Ableworld Stairlift Hub Off-Line",
                     "Ableworld Stairlifts Birkenhead",

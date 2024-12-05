@@ -38,16 +38,23 @@ namespace BG_Menu.Forms.Sub_Forms
             machineNameColumn = new DataGridViewTextBoxColumn();
             locationColumn = new DataGridViewTextBoxColumn();
             faultColumn = new DataGridViewTextBoxColumn();
+            dataGridView1 = new DataGridView();
+            dataGridViewMissingDates = new DataGridView();
             tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewMissingDates).BeginInit();
             SuspendLayout();
             // 
             // tableLayoutPanel1
             // 
-            tableLayoutPanel1.ColumnCount = 2;
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 41.3549042F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 58.6450958F));
+            tableLayoutPanel1.ColumnCount = 3;
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 40F));
             tableLayoutPanel1.Controls.Add(dataGridViewFaults, 0, 0);
+            tableLayoutPanel1.Controls.Add(dataGridView1, 1, 0);
+            tableLayoutPanel1.Controls.Add(dataGridViewMissingDates, 1, 1);
             tableLayoutPanel1.Dock = DockStyle.Fill;
             tableLayoutPanel1.Location = new Point(0, 0);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -78,7 +85,7 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridViewFaults.ReadOnly = true;
             dataGridViewFaults.RowHeadersVisible = false;
             dataGridViewFaults.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridViewFaults.Size = new Size(403, 298);
+            dataGridViewFaults.Size = new Size(389, 298);
             dataGridViewFaults.TabIndex = 3;
             // 
             // machineNameColumn
@@ -112,6 +119,34 @@ namespace BG_Menu.Forms.Sub_Forms
             faultColumn.Name = "faultColumn";
             faultColumn.ReadOnly = true;
             // 
+            // dataGridView1
+            // 
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.AllowUserToDeleteRows = false;
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridView1.Dock = DockStyle.Fill;
+            dataGridView1.Location = new Point(398, 3);
+            dataGridView1.Name = "dataGridView1";
+            dataGridView1.ReadOnly = true;
+            dataGridView1.RowHeadersVisible = false;
+            dataGridView1.Size = new Size(191, 298);
+            dataGridView1.TabIndex = 4;
+            // 
+            // dataGridViewMissingDates
+            // 
+            dataGridViewMissingDates.AllowUserToAddRows = false;
+            dataGridViewMissingDates.AllowUserToDeleteRows = false;
+            dataGridViewMissingDates.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewMissingDates.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewMissingDates.Dock = DockStyle.Fill;
+            dataGridViewMissingDates.Location = new Point(398, 307);
+            dataGridViewMissingDates.Name = "dataGridViewMissingDates";
+            dataGridViewMissingDates.ReadOnly = true;
+            dataGridViewMissingDates.RowHeadersVisible = false;
+            dataGridViewMissingDates.Size = new Size(191, 298);
+            dataGridViewMissingDates.TabIndex = 5;
+            // 
             // DashBoard
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -125,6 +160,8 @@ namespace BG_Menu.Forms.Sub_Forms
             Load += DashBoard_Load;
             tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewMissingDates).EndInit();
             ResumeLayout(false);
         }
 
@@ -134,5 +171,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private DataGridViewTextBoxColumn machineNameColumn;
         private DataGridViewTextBoxColumn locationColumn;
         private DataGridViewTextBoxColumn faultColumn;
+        private DataGridView dataGridView1;
+        private DataGridView dataGridViewMissingDates;
     }
 }

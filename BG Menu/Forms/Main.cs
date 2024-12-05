@@ -142,7 +142,7 @@ namespace BG_Menu
         {
             HidePanels();
             Pagelbl.Text = "DashBoard";
-            LoadFormInPanel(new Forms.Sub_Forms.DashBoard());
+            LoadFormInPanel(new DashBoard());
         }
 
         private void button2_Click(object sender, EventArgs e)
@@ -151,12 +151,7 @@ namespace BG_Menu
             Pagelbl.Text = "Credit Card Report";
             LoadFormInPanel(new Forms.Sub_Forms.CreditCard());
 
-        }
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            ShowPanels(pnlActiveDirectory);
-        }
+        }        
 
         private void button6_Click(object sender, EventArgs e)
         {
@@ -216,11 +211,7 @@ namespace BG_Menu
             Pagelbl.Text = "User Management";
             LoadFormInPanel(new Forms.Sub_Forms.ActiveDirectory());
 
-        }
-        private void btnTools_Click(object sender, EventArgs e)
-        {
-            ShowPanels(pnlServiceTools);
-        }
+        }        
 
         private void btnSalesSheets_Click(object sender, EventArgs e)
         {
@@ -250,6 +241,16 @@ namespace BG_Menu
             LoadFormInPanel(new Forms.Sub_Forms.YeaStarConfig());
         }
 
+        private void btnTools_Click(object sender, EventArgs e)
+        {
+            ShowPanels(pnlServiceTools);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            ShowPanels(pnlActiveDirectory);
+        }
+
         // Tray Buttons
 
         private void button10_Click(object sender, EventArgs e)
@@ -269,12 +270,21 @@ namespace BG_Menu
 
         private void button9_Click(object sender, EventArgs e)
         {
-            Login loginForm = new Login();
-            loginForm.Show();
-            this.Close();
-            if (udpListener != null)
+            // Logout Functionality
+            try
             {
-                udpListener.StopListening();
+                Login loginForm = new Login();
+                loginForm.Show();
+
+                // Stop UDP Listener if it's running
+                udpListener?.StopListening();
+
+                // Close the Main form
+                this.Close();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("An error occurred during logout: " + ex.Message);
             }
         }
 
@@ -327,34 +337,6 @@ namespace BG_Menu
                 btnSalesSummary.Visible = false;
             }
 
-            // Network Notify Functions
-            if (userPermissions.Contains("networknotify"))
-            {
-                StartUdpListener();
-            }
-            else
-            {
-                //btnHome.Visible = false;
-            }
-
-            if (userPermissions.Contains("activedirectory"))
-            {
-                btnActiveDirector.Visible = true;
-            }
-            else
-            {
-                btnActiveDirector.Visible = false;
-            }
-
-            if (userPermissions.Contains("ccreport"))
-            {
-                button2.Visible = true;
-            }
-            else
-            {
-                button2.Visible = false;
-            }
-
             if (userPermissions.Contains("networkmonitor"))
             {
                 btnStoreManagement.Visible = true;
@@ -373,13 +355,19 @@ namespace BG_Menu
                 btnTools.Visible = false;
             }
 
-            if (userPermissions.Contains("stocktake"))
+            if (userPermissions.Contains("IT Department"))
             {
-                button7.Visible = true;
+                paymentdevices.Visible = true;
+                button1.Visible = true;
+                button2.Visible = true;
+                btnActiveDirector.Visible = true;
             }
             else
             {
-                button7.Visible = false;
+                paymentdevices.Visible = false;
+                button1.Visible = false;
+                button2.Visible = false;
+                btnActiveDirector.Visible = false;
             }
 
             // Add more buttons and permission checks as needed
@@ -387,6 +375,16 @@ namespace BG_Menu
 
         private void LoadFormInPanel(Form form)
         {
+            if (currentForm != null)
+            {
+                // Remove the current form from the panel
+                FormLoader.Controls.Remove(currentForm);
+
+                // Dispose of the form and its resources
+                currentForm.Dispose();
+                currentForm = null;
+            }
+
             // Clear the current form from the panel
             FormLoader.Controls.Clear();
 
@@ -411,13 +409,12 @@ namespace BG_Menu
 
             // Store the reference to the current form
             currentForm = form;
-        }
+        }        
 
-        private void button7_Click(object sender, EventArgs e)
+        private void paymentdevices_Click(object sender, EventArgs e)
         {
-            HidePanels();
-            Pagelbl.Text = "Home";
-            LoadFormInPanel(new Forms.Sub_Forms.Meraki());
+            PaymentDevicesApp paymentDevicesApp = new PaymentDevicesApp(currentUsername);
+            paymentDevicesApp.Show();
         }
     }
 }

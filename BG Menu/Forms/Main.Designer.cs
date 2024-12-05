@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             panel1 = new Panel();
+            paymentdevices = new Button();
             btnFileServer = new Button();
             pnlServiceTools = new Panel();
-            button7 = new Button();
             button6 = new Button();
             button3 = new Button();
             btnFSM = new Button();
@@ -75,8 +75,8 @@
             // 
             panel1.AutoScroll = true;
             panel1.BackColor = Color.FromArgb(24, 30, 54);
+            panel1.Controls.Add(paymentdevices);
             panel1.Controls.Add(btnFileServer);
-            panel1.Controls.Add(button7);
             panel1.Controls.Add(pnlServiceTools);
             panel1.Controls.Add(btnTools);
             panel1.Controls.Add(btnAdminSettings);
@@ -96,6 +96,29 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(220, 660);
             panel1.TabIndex = 0;
+            // 
+            // paymentdevices
+            // 
+            paymentdevices.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            paymentdevices.BackgroundImageLayout = ImageLayout.Zoom;
+            paymentdevices.Dock = DockStyle.Top;
+            paymentdevices.FlatAppearance.BorderSize = 0;
+            paymentdevices.FlatAppearance.MouseOverBackColor = Color.Silver;
+            paymentdevices.FlatStyle = FlatStyle.Flat;
+            paymentdevices.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            paymentdevices.ForeColor = Color.FromArgb(158, 161, 176);
+            paymentdevices.Image = Properties.Resources.Home;
+            paymentdevices.ImageAlign = ContentAlignment.MiddleLeft;
+            paymentdevices.Location = new Point(0, 845);
+            paymentdevices.Margin = new Padding(2);
+            paymentdevices.Name = "paymentdevices";
+            paymentdevices.RightToLeft = RightToLeft.No;
+            paymentdevices.Size = new Size(203, 55);
+            paymentdevices.TabIndex = 15;
+            paymentdevices.Text = "Mids / Tids";
+            paymentdevices.TextImageRelation = TextImageRelation.ImageBeforeText;
+            paymentdevices.UseVisualStyleBackColor = true;
+            paymentdevices.Click += paymentdevices_Click;
             // 
             // btnFileServer
             // 
@@ -123,7 +146,6 @@
             // pnlServiceTools
             // 
             pnlServiceTools.AutoSize = true;
-            
             pnlServiceTools.Controls.Add(button6);
             pnlServiceTools.Controls.Add(button3);
             pnlServiceTools.Controls.Add(btnFSM);
@@ -132,32 +154,9 @@
             pnlServiceTools.Dock = DockStyle.Top;
             pnlServiceTools.Location = new Point(0, 570);
             pnlServiceTools.Name = "pnlServiceTools";
-            pnlServiceTools.Size = new Size(203, 330);
+            pnlServiceTools.Size = new Size(203, 275);
             pnlServiceTools.TabIndex = 13;
             pnlServiceTools.Visible = false;
-            // 
-            // button7
-            // 
-            button7.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            button7.BackgroundImageLayout = ImageLayout.Stretch;
-            button7.Dock = DockStyle.Top;
-            button7.FlatAppearance.BorderSize = 0;
-            button7.FlatAppearance.MouseOverBackColor = Color.Silver;
-            button7.FlatStyle = FlatStyle.Flat;
-            button7.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            button7.ForeColor = Color.FromArgb(158, 161, 176);
-            button7.Image = Properties.Resources.Phone;
-            button7.ImageAlign = ContentAlignment.MiddleLeft;
-            button7.Location = new Point(0, 275);
-            button7.Margin = new Padding(2);
-            button7.Name = "button7";
-            button7.RightToLeft = RightToLeft.No;
-            button7.Size = new Size(203, 55);
-            button7.TabIndex = 10;
-            button7.Text = "Stock Take";
-            button7.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button7.UseVisualStyleBackColor = true;
-            button7.Click += button7_Click;
             // 
             // button6
             // 
@@ -520,7 +519,7 @@
             button1.RightToLeft = RightToLeft.No;
             button1.Size = new Size(203, 55);
             button1.TabIndex = 2;
-            button1.Text = "Home";
+            button1.Text = "DashBoard";
             button1.TextImageRelation = TextImageRelation.ImageBeforeText;
             button1.UseVisualStyleBackColor = true;
             button1.Click += button1_Click;
@@ -578,7 +577,7 @@
             // 
             pictureBox1.BackColor = Color.FromArgb(24, 30, 54);
             pictureBox1.Dock = DockStyle.Top;
-            pictureBox1.Image = Properties.Resources.Account;
+            pictureBox1.Image = Properties.Resources.Grinch;
             pictureBox1.InitialImage = Properties.Resources.Account;
             pictureBox1.Location = new Point(0, 0);
             pictureBox1.Margin = new Padding(2);
@@ -783,6 +782,6 @@
         private Button btnFileServer;
         private Button button3;
         private Button button6;
-        private Button button7;
+        private Button paymentdevices;
     }
 }

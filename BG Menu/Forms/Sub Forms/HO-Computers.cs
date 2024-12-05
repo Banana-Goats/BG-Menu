@@ -36,11 +36,11 @@ namespace BG_Menu.Forms.Sub_Forms
 
             // Define patterns to match
             var patterns = new List<string>
-    {
-        "WS-{0:D2}",    // Matches WS-??
-        "LT-{0:D2}",    // Matches LT-??
-        "ABL000{0:D1}"    // Matches ABL0???
-    };
+        {
+            "WS-{0:D2}",    // Matches WS-??
+            "LT-{0:D2}",    // Matches LT-??
+            "ABL000{0:D2}"    // Matches ABL0???
+        };
 
             foreach (var pattern in patterns)
             {

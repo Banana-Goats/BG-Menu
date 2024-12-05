@@ -307,7 +307,8 @@ namespace BG_Menu.Forms.Sub_Forms
 
                 ApplyRowFilter(); // Apply the filter after updating data
 
-                SendDataToSqlDatabase(machineName, machine.Location, wanIp, isp, cpuInfo, ramInfo, storageInfo, windowsOS, buildNumber, senderVersion, pendingUpdates, latestSharepointFile, dateTimeReceived);
+                _ = SendDataToSqlDatabase(machineName, machine.Location, wanIp, isp, cpuInfo, ramInfo, storageInfo, windowsOS, buildNumber, senderVersion, pendingUpdates, latestSharepointFile, dateTimeReceived);
+
             }
             catch (Exception ex)
             {
@@ -654,28 +655,9 @@ namespace BG_Menu.Forms.Sub_Forms
                 }
             }
         }
+        
 
-        private async void SendDataToFileServer(MachineData machine)
-        {
-            try
-            {
-                string fileServerUrl = "http://bananagoats.co.uk:50547/receiveData"; // Adjust the URL and port if necessary
-
-                using (var httpClient = new HttpClient())
-                {
-                    var jsonData = JsonConvert.SerializeObject(machine);
-                    var content = new StringContent(jsonData, Encoding.UTF8, "application/json");
-                    var response = await httpClient.PostAsync(fileServerUrl, content);
-                    response.EnsureSuccessStatusCode();
-                }
-            }
-            catch (Exception ex)
-            {
-                //MessageBox.Show($"Error sending data to FileServer: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void SendDataToSqlDatabase(string machineName, string location, string wanIp, string isp, string cpuInfo, string ramInfo, string storageInfo, string windowsOS, string buildNumber, string senderVersion, string pendingUpdates, DateTime? latestSharepointFile, DateTime dateTimeReceived)
+        private async Task SendDataToSqlDatabase(string machineName, string location, string wanIp, string isp, string cpuInfo, string ramInfo, string storageInfo, string windowsOS, string buildNumber, string senderVersion, string pendingUpdates, DateTime? latestSharepointFile, DateTime dateTimeReceived)
         {
             // Replace with your actual connection string
             string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";

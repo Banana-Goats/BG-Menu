@@ -6,6 +6,7 @@ using System.Windows.Forms;
 using System.DirectoryServices.AccountManagement;
 using System.Data;
 using System.Diagnostics;
+using System.Data.SqlClient;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -13,6 +14,8 @@ namespace BG_Menu.Forms.Sub_Forms
     {
         private List<UserPrincipal> _userList;
         private UserPrincipal _selectedUser;
+
+        private readonly string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
 
         public ActiveDirectory()
         {
@@ -59,15 +62,10 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private void btnImportCSV_Click(object sender, EventArgs e)
         {
-            using (OpenFileDialog ofd = new OpenFileDialog())
-            {
-                ofd.Filter = "CSV files (*.csv)|*.csv";
-                if (ofd.ShowDialog() == DialogResult.OK)
-                {
-                    LoadCSV(ofd.FileName);
-                }
-            }
+            LoadDataFromDatabase();
         }
+
+
 
         // Load CSV into DataGridView
         private void LoadCSV(string filePath)
@@ -98,6 +96,52 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
+        private void LoadDataFromDatabase()
+        {
+            try
+            {
+                // Define your SQL query
+                string query = "SELECT Username, Password, Department FROM ADAccounts";
+
+                // Create a new DataTable to hold the data
+                DataTable dataTable = new DataTable();
+
+                // Establish a connection to the SQL Server
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    // Open the connection
+                    conn.Open();
+
+                    // Create a SqlDataAdapter to execute the query and fill the DataTable
+                    using (SqlDataAdapter adapter = new SqlDataAdapter(query, conn))
+                    {
+                        adapter.Fill(dataTable);
+                    }
+
+                    // Optionally, you can close the connection explicitly
+                    conn.Close();
+                }
+
+                // Bind the DataTable to the DataGridView
+                dgvUsers.DataSource = dataTable;
+
+                // Optional: Adjust DataGridView settings for better display
+                dgvUsers.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+                dgvUsers.ReadOnly = true;
+                dgvUsers.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            }
+            catch (SqlException sqlEx)
+            {
+                // Handle SQL-related exceptions
+                MessageBox.Show($"SQL Error: {sqlEx.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                // Handle all other exceptions
+                MessageBox.Show($"Error loading data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         // Handle row selection in DataGridView
         private void DgvUsers_SelectionChanged(object sender, EventArgs e)
         {
@@ -107,7 +151,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 DataGridViewRow selectedRow = dgvUsers.SelectedRows[0];
 
                 // Populate cmbUsers and txtNewPassword with selected user and password
-                string selectedUsername = selectedRow.Cells["User"].Value.ToString();
+                string selectedUsername = selectedRow.Cells["Username"].Value.ToString();
                 string selectedPassword = selectedRow.Cells["Password"].Value.ToString();
 
                 cmbUsers.SelectedItem = selectedUsername; // This triggers cmbUsers_SelectedIndexChanged
@@ -177,6 +221,7 @@ namespace BG_Menu.Forms.Sub_Forms
                             MessageBox.Show($"Password for {user.SamAccountName} has been changed successfully.", "Password Changed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
+                    UpdatePasswordInDatabase(_selectedUser.SamAccountName, newPassword);
                 }
                 catch (Exception ex)
                 {
@@ -186,6 +231,92 @@ namespace BG_Menu.Forms.Sub_Forms
             else
             {
                 MessageBox.Show("Please select a user first.", "No User Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+
+            LoadDataFromDatabase();
+        }
+
+        private void UpdatePasswordInDatabase(string username, string newPassword)
+        {
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // Start a transaction to ensure both operations are atomic
+                    using (SqlTransaction transaction = conn.BeginTransaction())
+                    {
+                        try
+                        {
+                            // Define the SQL UPDATE query with parameters to prevent SQL injection
+                            string updateQuery = "UPDATE ADAccounts SET Password = @Password WHERE Username = @Username";
+
+                            using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn, transaction))
+                            {
+                                // Define parameters and assign values
+                                updateCmd.Parameters.Add("@Password", SqlDbType.VarChar, 255).Value = newPassword;
+                                updateCmd.Parameters.Add("@Username", SqlDbType.VarChar, 255).Value = username;
+
+                                // Execute the UPDATE command
+                                int rowsAffected = updateCmd.ExecuteNonQuery();
+
+                                if (rowsAffected > 0)
+                                {
+                                    MessageBox.Show($"Password for {username} has been updated successfully in the database.", "Database Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                }
+                                else
+                                {
+                                    // User does not exist, perform INSERT
+                                    string insertQuery = "INSERT INTO ADAccounts (Username, Password, Department) VALUES (@Username, @Password, @Department)";
+
+                                    using (SqlCommand insertCmd = new SqlCommand(insertQuery, conn, transaction))
+                                    {
+                                        // Define parameters and assign values
+                                        insertCmd.Parameters.Add("@Username", SqlDbType.VarChar, 255).Value = username;
+                                        insertCmd.Parameters.Add("@Password", SqlDbType.VarChar, 255).Value = newPassword;
+                                        insertCmd.Parameters.Add("@Department", SqlDbType.VarChar, 50).Value = "Please Update"; // Default Department
+
+                                        int insertRows = insertCmd.ExecuteNonQuery();
+
+                                        if (insertRows > 0)
+                                        {
+                                            MessageBox.Show($"User {username} was not found in the database and has been added successfully.", "User Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                        }
+                                        else
+                                        {
+                                            MessageBox.Show($"Failed to add user {username} to the database.", "Insert Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Commit the transaction if both operations succeed
+                            transaction.Commit();
+
+                            // Optionally, refresh the DataGridView to reflect the changes
+                            LoadDataFromDatabase();
+                        }
+                        catch
+                        {
+                            // Rollback the transaction if any operation fails
+                            transaction.Rollback();
+                            throw;
+                        }
+                    }
+
+                    conn.Close();
+                }
+            }
+            catch (SqlException sqlEx)
+            {
+                // Handle SQL-related exceptions
+                MessageBox.Show($"SQL Error: {sqlEx.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            catch (Exception ex)
+            {
+                // Handle all other exceptions
+                MessageBox.Show($"Error updating database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -301,7 +432,7 @@ namespace BG_Menu.Forms.Sub_Forms
             if (dgvUsers.SelectedRows.Count > 0)
             {
                 DataGridViewRow selectedRow = dgvUsers.SelectedRows[0];
-                string selectedUsername = selectedRow.Cells["User"].Value?.ToString();
+                string selectedUsername = selectedRow.Cells["Username"].Value?.ToString();
 
                 if (string.IsNullOrWhiteSpace(selectedUsername))
                 {
@@ -353,15 +484,17 @@ namespace BG_Menu.Forms.Sub_Forms
                     return;
                 }
 
-                // Construct the email content using plain text and encoded new lines
+                string todaysDate = DateTime.Now.ToString("dd/MM/yyyy");
+
+                // Construct the email content
                 string subject = "Your Email Password Will Be Changed";
                 string body = $"Hello,%0D%0A%0D%0A" +
-                              $"As of the 24th of November, your email password will be changed to the following:%0D%0A%0D%0A" +
+                              $"As of the {todaysDate}, your email password will be changed to the following:%0D%0A%0D%0A" +
                               $"PASSWORD: {selectedPassword}%0D%0A%0D%0A" +
                               $"You do not need to do anything at this moment in time, but please keep the password handy as you will not be able to read this message once the password changes.%0D%0A%0D%0A" +
-                              $"If you have any issues, there will be Temp cover in IT on the Sunday to assist.%0D%0A%0D%0A" +
-                              $"Regards%0D%0A%0D%0A" +
-                              $"Elliot Renner";
+                              $"If you have any issues, please contact IT.%0D%0A%0D%0A" +
+                              $"Regards,%0D%0A%0D%0A" +
+                              $"IT Support";
 
                 // Open the default email client with the pre-populated information
                 string mailtoLink = $"mailto:{userLogonName}?subject={Uri.EscapeDataString(subject)}&body={body}";
@@ -379,8 +512,6 @@ namespace BG_Menu.Forms.Sub_Forms
                 MessageBox.Show("Please select a user first.", "No User Selected", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
-
-
     }
 }
 

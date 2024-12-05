@@ -64,9 +64,7 @@ public class UserSession
     {
         "admin",
         "salesview",
-        "networknotify",
-        "activedirectory",
-        "ccreport",
+        "IT Department",
         "networkmonitor",
         "servicetools",
         "fileserver",

@@ -1,45 +1,70 @@
 ﻿using BG_Menu.Class.Design;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Data.SqlClient;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class PaymentDeviceManager : Form
     {
+        private string currentUsername;
         private RoundedCorners roundedCorners;
         private string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
         private int? existingIndexID = null;
 
-        public PaymentDeviceManager()
+        // Fields to store original values for edit operations
+        private string originalMerchantID;
+        private string originalMerchant;
+        private string originalTID;
+        private string originalPTID;
+        private string originalDevice;
+        private string originalSerialNumber;
+        private string originalCompany;
+        private string originalAssignedUser;
+        private string originalDepartmentStore;
+        private DateTime? originalPCIDSSDate;
+        private string originalPCIDSSVersion;
+        private string originalPCIDSSPassword;
+
+        // Default constructor for add mode
+        public PaymentDeviceManager(string username)
         {
             InitializeComponent();
-            var roundedCorners = new RoundedCorners(this, 70, 3, Color.Yellow);
+            currentUsername = username; // Assign the passed username
+            roundedCorners = new RoundedCorners(this, 70, 3, Color.Yellow);
             var LoginDraggable = new Draggable(this, this);
+
+            InitializeForm(); // Common initialization
+        }
+
+        // Overloaded constructor for edit mode using IndexID
+        public PaymentDeviceManager(int indexID, string username) : this(username)
+        {
+            existingIndexID = indexID;
+            LoadExistingData();
+            this.Text = "Edit Payment Device"; // Change form title to indicate edit mode
+            btnDelete.Enabled = true; // Enable the Delete button in Edit mode
+        }
+
+        // Common initialization method
+        private void InitializeForm()
+        {
+            // Set default selections and dates
+            if (cmbMerchant.Items.Count > 0)
+                cmbMerchant.SelectedIndex = 0;
+
+            dtpPCIDSSDate.Value = DateTime.Today;
 
             if (!existingIndexID.HasValue)
             {
                 this.Text = "Add New Payment Device"; // Change form title to indicate add mode
                 btnDelete.Enabled = false; // Disable the Delete button in Add mode
             }
-
         }
 
-        public PaymentDeviceManager(int indexID) : this()
-        {
-            existingIndexID = indexID;
-            LoadExistingData();
-            this.Text = "Edit Payment Device"; // Change form title to indicate edit mode
-            btnDelete.Enabled = true;
-        }
-
+        // Method to load existing data into the form fields
         private void LoadExistingData()
         {
             try
@@ -48,21 +73,21 @@ namespace BG_Menu.Forms.Sub_Forms
                 {
                     connection.Open();
                     string query = @"
-                SELECT 
-                    MerchantID,
-                    Merchant,
-                    TID,
-                    PTID,
-                    Device,
-                    SerialNumber,
-                    Company,
-                    AssignedUser,
-                    DepartmentStore,
-                    PCIDSSDate,
-                    PCIDSSVersion,
-                    PCIDSSPassword
-                FROM PaymentDevices
-                WHERE IndexID = @IndexID";
+                        SELECT 
+                            MerchantID,
+                            Merchant,
+                            TID,
+                            PTID,
+                            Device,
+                            SerialNumber,
+                            Company,
+                            AssignedUser,
+                            DepartmentStore,
+                            PCIDSSDate,
+                            PCIDSSVersion,
+                            PCIDSSPassword
+                        FROM PaymentDevices
+                        WHERE IndexID = @IndexID";
 
                     using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
@@ -78,16 +103,34 @@ namespace BG_Menu.Forms.Sub_Forms
                                 txtPTID.Text = reader["PTID"] != DBNull.Value ? reader["PTID"].ToString() : string.Empty;
                                 txtDevice.Text = reader["Device"] != DBNull.Value ? reader["Device"].ToString() : string.Empty;
                                 txtSerialNumber.Text = reader["SerialNumber"] != DBNull.Value ? reader["SerialNumber"].ToString() : string.Empty;
-                                txtCompany.Text = reader["Company"] != DBNull.Value ? reader["Company"].ToString() : string.Empty;
-                                txtAssignedUser.Text = reader["AssignedUser"] != DBNull.Value ? reader["AssignedUser"].ToString() : string.Empty;
-                                txtDepartmentStore.Text = reader["DepartmentStore"] != DBNull.Value ? reader["DepartmentStore"].ToString() : string.Empty;
+                                txtCompany.Text = reader["Company"].ToString();
+                                txtAssignedUser.Text = reader["AssignedUser"].ToString();
+                                txtDepartmentStore.Text = reader["DepartmentStore"].ToString();
 
                                 if (reader["PCIDSSDate"] != DBNull.Value)
                                     dtpPCIDSSDate.Value = Convert.ToDateTime(reader["PCIDSSDate"]);
+                                else
+                                    dtpPCIDSSDate.Value = DateTime.Today;
 
-                                txtPCIDSSVersion.Text = reader["PCIDSSVersion"] != DBNull.Value ? reader["PCIDSSVersion"].ToString() : string.Empty;
-                                txtPCIDSSPassword.Text = reader["PCIDSSPassword"] != DBNull.Value ? reader["PCIDSSPassword"].ToString() : string.Empty;
-                                
+                                txtPCIDSSVersion.Text = reader["PCIDSSVersion"].ToString();
+                                txtPCIDSSPassword.Text = reader["PCIDSSPassword"].ToString();
+
+                                // Store original values for comparison
+                                originalMerchantID = reader["MerchantID"].ToString();
+                                originalMerchant = reader["Merchant"].ToString();
+                                originalTID = reader["TID"] != DBNull.Value ? reader["TID"].ToString() : string.Empty;
+                                originalPTID = reader["PTID"].ToString();
+                                originalDevice = reader["Device"].ToString();
+                                originalSerialNumber = reader["SerialNumber"].ToString();
+                                originalCompany = reader["Company"].ToString();
+                                originalAssignedUser = reader["AssignedUser"].ToString();
+                                originalDepartmentStore = reader["DepartmentStore"].ToString();
+                                originalPCIDSSDate = reader["PCIDSSDate"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(reader["PCIDSSDate"]) : null;
+                                originalPCIDSSVersion = reader["PCIDSSVersion"].ToString();
+                                originalPCIDSSPassword = reader["PCIDSSPassword"].ToString();
+
+                                // Enable the MerchantID textbox for editing
+                                txtMerchantID.Enabled = true;
                             }
                             else
                             {
@@ -103,6 +146,202 @@ namespace BG_Menu.Forms.Sub_Forms
                 MessageBox.Show($"Error loading payment device data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 this.Close();
             }
+        }
+
+        // Method to insert audit logs
+        private void InsertAuditLog(int indexID, string operationType, string fieldName, string oldValue, string newValue)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    string auditQuery = @"
+                        INSERT INTO PaymentDevicesAudit (
+                            IndexID,
+                            OperationType,
+                            FieldName,
+                            OldValue,
+                            NewValue,
+                            ChangedBy,
+                            ChangeDate
+                        )
+                        VALUES (
+                            @IndexID,
+                            @OperationType,
+                            @FieldName,
+                            @OldValue,
+                            @NewValue,
+                            @ChangedBy,
+                            @ChangeDate
+                        )";
+
+                    using (SqlCommand cmd = new SqlCommand(auditQuery, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@IndexID", indexID);
+                        cmd.Parameters.AddWithValue("@OperationType", operationType);
+                        cmd.Parameters.AddWithValue("@FieldName", (object)fieldName ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@OldValue", (object)oldValue ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@NewValue", (object)newValue ?? DBNull.Value);
+                        cmd.Parameters.AddWithValue("@ChangedBy", currentUsername);
+                        cmd.Parameters.AddWithValue("@ChangeDate", DateTime.Now);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Log the error or handle it as per your application's requirement
+                MessageBox.Show($"Error logging audit data: {ex.Message}", "Audit Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // Method to compare original and new values and log changes
+        private void CompareAndLogChanges(int indexID)
+        {
+            // Compare each field and log changes
+            if (originalMerchant != cmbMerchant.SelectedItem?.ToString())
+            {
+                InsertAuditLog(indexID, "Edit", "Merchant", originalMerchant, cmbMerchant.SelectedItem?.ToString());
+            }
+
+            if (originalTID != txtTID.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "TID", originalTID, txtTID.Text.Trim());
+            }
+
+            if (originalPTID != txtPTID.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "PTID", originalPTID, txtPTID.Text.Trim());
+            }
+
+            if (originalDevice != txtDevice.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "Device", originalDevice, txtDevice.Text.Trim());
+            }
+
+            if (originalSerialNumber != txtSerialNumber.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "SerialNumber", originalSerialNumber, txtSerialNumber.Text.Trim());
+            }
+
+            if (originalCompany != txtCompany.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "Company", originalCompany, txtCompany.Text.Trim());
+            }
+
+            if (originalAssignedUser != txtAssignedUser.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "AssignedUser", originalAssignedUser, txtAssignedUser.Text.Trim());
+            }
+
+            if (originalDepartmentStore != txtDepartmentStore.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "DepartmentStore", originalDepartmentStore, txtDepartmentStore.Text.Trim());
+            }
+
+            if (originalPCIDSSDate != dtpPCIDSSDate.Value.Date)
+            {
+                string oldDate = originalPCIDSSDate.HasValue ? originalPCIDSSDate.Value.ToString("yyyy-MM-dd") : "NULL";
+                string newDate = dtpPCIDSSDate.Value.Date.ToString("yyyy-MM-dd");
+                InsertAuditLog(indexID, "Edit", "PCIDSSDate", oldDate, newDate);
+            }
+
+            if (originalPCIDSSVersion != txtPCIDSSVersion.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "PCIDSSVersion", originalPCIDSSVersion, txtPCIDSSVersion.Text.Trim());
+            }
+
+            if (originalPCIDSSPassword != txtPCIDSSPassword.Text.Trim())
+            {
+                InsertAuditLog(indexID, "Edit", "PCIDSSPassword", originalPCIDSSPassword, txtPCIDSSPassword.Text.Trim());
+            }
+
+            // **Always log TID and PTID during edit operations, even if they haven't changed**
+            InsertAuditLog(indexID, "Edit", "TID", originalTID, txtTID.Text.Trim());
+            InsertAuditLog(indexID, "Edit", "PTID", originalPTID, txtPTID.Text.Trim());
+
+            // **Always log MerchantID during edit operations, even if it hasn't changed**
+            InsertAuditLog(indexID, "Edit", "MerchantID", originalMerchantID, txtMerchantID.Text.Trim());
+        }
+
+        // Method to log each field's initial value during Add operation
+        private void LogAddOperation(int indexID)
+        {
+            InsertAuditLog(indexID, "Add", "MerchantID", null, txtMerchantID.Text.Trim());
+            InsertAuditLog(indexID, "Add", "Merchant", null, cmbMerchant.SelectedItem?.ToString());
+            InsertAuditLog(indexID, "Add", "TID", null, txtTID.Text.Trim());
+            InsertAuditLog(indexID, "Add", "PTID", null, txtPTID.Text.Trim());
+            InsertAuditLog(indexID, "Add", "Device", null, txtDevice.Text.Trim());
+            InsertAuditLog(indexID, "Add", "SerialNumber", null, txtSerialNumber.Text.Trim());
+            InsertAuditLog(indexID, "Add", "Company", null, txtCompany.Text.Trim());
+            InsertAuditLog(indexID, "Add", "AssignedUser", null, txtAssignedUser.Text.Trim());
+            InsertAuditLog(indexID, "Add", "DepartmentStore", null, txtDepartmentStore.Text.Trim());
+            InsertAuditLog(indexID, "Add", "PCIDSSDate", null, dtpPCIDSSDate.Value.Date.ToString("yyyy-MM-dd"));
+            InsertAuditLog(indexID, "Add", "PCIDSSVersion", null, txtPCIDSSVersion.Text.Trim());
+            InsertAuditLog(indexID, "Add", "PCIDSSPassword", null, txtPCIDSSPassword.Text.Trim());
+        }
+
+        // Method to retrieve current record data for deletion logging
+        private Dictionary<string, string> GetCurrentRecordData(int indexID)
+        {
+            var recordData = new Dictionary<string, string>();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string query = @"
+                        SELECT 
+                            MerchantID,
+                            Merchant,
+                            TID,
+                            PTID,
+                            Device,
+                            SerialNumber,
+                            Company,
+                            AssignedUser,
+                            DepartmentStore,
+                            PCIDSSDate,
+                            PCIDSSVersion,
+                            PCIDSSPassword
+                        FROM PaymentDevices
+                        WHERE IndexID = @IndexID";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@IndexID", indexID);
+
+                        using (SqlDataReader reader = cmd.ExecuteReader())
+                        {
+                            if (reader.Read())
+                            {
+                                recordData.Add("MerchantID", reader["MerchantID"].ToString());
+                                recordData.Add("Merchant", reader["Merchant"].ToString());
+                                recordData.Add("TID", reader["TID"] != DBNull.Value ? reader["TID"].ToString() : string.Empty);
+                                recordData.Add("PTID", reader["PTID"].ToString());
+                                recordData.Add("Device", reader["Device"].ToString());
+                                recordData.Add("SerialNumber", reader["SerialNumber"].ToString());
+                                recordData.Add("Company", reader["Company"].ToString());
+                                recordData.Add("AssignedUser", reader["AssignedUser"].ToString());
+                                recordData.Add("DepartmentStore", reader["DepartmentStore"].ToString());
+                                recordData.Add("PCIDSSDate", reader["PCIDSSDate"] != DBNull.Value ? Convert.ToDateTime(reader["PCIDSSDate"]).ToString("yyyy-MM-dd") : "NULL");
+                                recordData.Add("PCIDSSVersion", reader["PCIDSSVersion"].ToString());
+                                recordData.Add("PCIDSSPassword", reader["PCIDSSPassword"].ToString());
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error retrieving record data for deletion: {ex.Message}", "Deletion Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+
+            return recordData;
         }
 
         private void btnSave_Click(object sender, EventArgs e)
@@ -129,6 +368,17 @@ namespace BG_Menu.Forms.Sub_Forms
                 return;
             }
 
+            // Optional: Validate MerchantID format if necessary
+            // Example: Ensure MerchantID is alphanumeric and within a certain length
+            /*
+            if (!System.Text.RegularExpressions.Regex.IsMatch(merchantID, @"^[a-zA-Z0-9]{5,10}$"))
+            {
+                MessageBox.Show("MerchantID must be alphanumeric and 5-10 characters long.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                txtMerchantID.Focus();
+                return;
+            }
+            */
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -140,51 +390,55 @@ namespace BG_Menu.Forms.Sub_Forms
                     {
                         // Edit mode: UPDATE existing record using IndexID
                         query = @"
-                    UPDATE PaymentDevices
-                    SET 
-                        Merchant = @Merchant,
-                        TID = @TID,
-                        PTID = @PTID,
-                        Device = @Device,
-                        SerialNumber = @SerialNumber,
-                        Company = @Company,
-                        AssignedUser = @AssignedUser,
-                        DepartmentStore = @DepartmentStore,
-                        PCIDSSDate = @PCIDSSDate,
-                        PCIDSSVersion = @PCIDSSVersion,
-                        PCIDSSPassword = @PCIDSSPassword
-                    WHERE IndexID = @IndexID";
+                            UPDATE PaymentDevices
+                            SET 
+                                MerchantID = @MerchantID,
+                                Merchant = @Merchant,
+                                TID = @TID,
+                                PTID = @PTID,
+                                Device = @Device,
+                                SerialNumber = @SerialNumber,
+                                Company = @Company,
+                                AssignedUser = @AssignedUser,
+                                DepartmentStore = @DepartmentStore,
+                                PCIDSSDate = @PCIDSSDate,
+                                PCIDSSVersion = @PCIDSSVersion,
+                                PCIDSSPassword = @PCIDSSPassword
+                            WHERE IndexID = @IndexID";
                     }
                     else
                     {
                         // Add mode: INSERT new record
                         query = @"
-                    INSERT INTO PaymentDevices (
-                        Merchant,
-                        TID,
-                        PTID,
-                        Device,
-                        SerialNumber,
-                        Company,
-                        AssignedUser,
-                        DepartmentStore,
-                        PCIDSSDate,
-                        PCIDSSVersion,
-                        PCIDSSPassword
-                    )
-                    VALUES (
-                        @Merchant,
-                        @TID,
-                        @PTID,
-                        @Device,
-                        @SerialNumber,
-                        @Company,
-                        @AssignedUser,
-                        @DepartmentStore,
-                        @PCIDSSDate,
-                        @PCIDSSVersion,
-                        @PCIDSSPassword
-                    )";
+                            INSERT INTO PaymentDevices (
+                                MerchantID,
+                                Merchant,
+                                TID,
+                                PTID,
+                                Device,
+                                SerialNumber,
+                                Company,
+                                AssignedUser,
+                                DepartmentStore,
+                                PCIDSSDate,
+                                PCIDSSVersion,
+                                PCIDSSPassword
+                            )
+                            VALUES (
+                                @MerchantID,
+                                @Merchant,
+                                @TID,
+                                @PTID,
+                                @Device,
+                                @SerialNumber,
+                                @Company,
+                                @AssignedUser,
+                                @DepartmentStore,
+                                @PCIDSSDate,
+                                @PCIDSSVersion,
+                                @PCIDSSPassword
+                            ); 
+                            SELECT CAST(scope_identity() AS int);"; // Retrieve the newly inserted IndexID
                     }
 
                     using (SqlCommand cmd = new SqlCommand(query, connection))
@@ -195,6 +449,7 @@ namespace BG_Menu.Forms.Sub_Forms
                             cmd.Parameters.AddWithValue("@IndexID", existingIndexID.Value);
                         }
 
+                        cmd.Parameters.AddWithValue("@MerchantID", string.IsNullOrEmpty(merchantID) ? (object)DBNull.Value : merchantID);
                         cmd.Parameters.AddWithValue("@Merchant", merchant);
                         cmd.Parameters.AddWithValue("@TID", string.IsNullOrEmpty(tid) ? (object)DBNull.Value : tid);
                         cmd.Parameters.AddWithValue("@PTID", string.IsNullOrEmpty(ptid) ? (object)DBNull.Value : ptid);
@@ -207,8 +462,39 @@ namespace BG_Menu.Forms.Sub_Forms
                         cmd.Parameters.AddWithValue("@PCIDSSVersion", string.IsNullOrEmpty(pcidssVersion) ? (object)DBNull.Value : pcidssVersion);
                         cmd.Parameters.AddWithValue("@PCIDSSPassword", string.IsNullOrEmpty(pcidssPassword) ? (object)DBNull.Value : pcidssPassword);
 
-                        // Execute the command
-                        int rowsAffected = cmd.ExecuteNonQuery();
+                        int rowsAffected = 0;
+                        int newIndexID = 0;
+
+                        if (existingIndexID.HasValue)
+                        {
+                            // Execute UPDATE
+                            rowsAffected = cmd.ExecuteNonQuery();
+
+                            if (rowsAffected > 0)
+                            {
+                                // Compare old and new values and log changes
+                                CompareAndLogChanges(existingIndexID.Value);
+                            }
+                        }
+                        else
+                        {
+                            // Execute INSERT and retrieve the new IndexID
+                            object result = cmd.ExecuteScalar();
+                            if (result != null)
+                            {
+                                newIndexID = Convert.ToInt32(result);
+                                rowsAffected = 1;
+
+                                if (rowsAffected > 0)
+                                {
+                                    // Log the addition of a new record
+                                    InsertAuditLog(newIndexID, "Add", null, null, null);
+
+                                    // Log each field's initial value as an addition
+                                    LogAddOperation(newIndexID);
+                                }
+                            }
+                        }
 
                         if (rowsAffected > 0)
                         {
@@ -217,6 +503,7 @@ namespace BG_Menu.Forms.Sub_Forms
                                 : "Payment device added successfully.";
 
                             MessageBox.Show(message, "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                            this.DialogResult = DialogResult.OK; // Indicate success to the calling form
                             this.Close(); // Close the form after successful operation
                         }
                         else
@@ -256,6 +543,9 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 try
                 {
+                    // Fetch current record data before deletion
+                    var recordData = GetCurrentRecordData(existingIndexID.Value);
+
                     using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                         connection.Open();
@@ -271,6 +561,12 @@ namespace BG_Menu.Forms.Sub_Forms
 
                             if (rowsAffected > 0)
                             {
+                                // Log the deletion for each field
+                                foreach (var field in recordData)
+                                {
+                                    InsertAuditLog(existingIndexID.Value, "Delete", field.Key, field.Value, null);
+                                }
+
                                 MessageBox.Show("Payment device deleted successfully.", "Deletion Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                 this.DialogResult = DialogResult.OK; // Indicate success to the calling form
                                 this.Close(); // Close the manager form
@@ -287,6 +583,8 @@ namespace BG_Menu.Forms.Sub_Forms
                     MessageBox.Show($"Error deleting payment device: {ex.Message}", "Deletion Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }
+        }     
+        
+        
     }
 }

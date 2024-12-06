@@ -11,10 +11,12 @@ namespace BG_Menu.Forms.Sub_Forms
         private string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
         private SqlDataAdapter dataAdapter;
         private DataTable dataTable;
+        private string currentUsername;
 
         public PaymentDevicesApp(string currentUsername)
         {
             InitializeComponent();
+            this.currentUsername = currentUsername;
 
             this.Text = $"Payment Device Managment - {currentUsername}";
 
@@ -96,45 +98,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private void btnUserAdd_Click(object sender, EventArgs e)
         {
             LoadData();
-        }
-
-        private void btnSaveChanges_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-
-                    // Use the same query as in LoadData
-                    dataAdapter = new SqlDataAdapter(@"
-                SELECT 
-                    MerchantID,
-                    Merchant,
-                    TID,
-                    PTID,
-                    Device,
-                    SerialNumber,
-                    Company,
-                    AssignedUser,
-                    DepartmentStore,
-                    PCIDSSVersion,
-                    PCIDSSPassword
-                FROM PaymentDevices", connection);
-
-                    SqlCommandBuilder commandBuilder = new SqlCommandBuilder(dataAdapter);
-
-                    // Update changes in the DataTable back to the database
-                    dataAdapter.Update(dataTable);
-
-                    MessageBox.Show("Changes saved successfully!");
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving changes: {ex.Message}");
-            }
-        }
+        }        
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
         {
@@ -162,11 +126,15 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private void button2_Click(object sender, EventArgs e)
         {
-            // Open PaymentDeviceManager in add mode
-            using (PaymentDeviceManager manager = new PaymentDeviceManager())
+            // Open PaymentDeviceManager in add mode with currentUsername
+            using (PaymentDeviceManager manager = new PaymentDeviceManager(currentUsername))
             {
-                manager.ShowDialog(); // Open as a modal dialog
-                LoadData(); // Refresh data after the dialog is closed
+                var result = manager.ShowDialog(); // Open as a modal dialog
+
+                if (result == DialogResult.OK)
+                {
+                    LoadData(); // Refresh data after the dialog is closed
+                }
             }
         }
 
@@ -180,17 +148,37 @@ namespace BG_Menu.Forms.Sub_Forms
                 // Retrieve IndexID from the selected row
                 if (selectedRow.Cells["IndexID"].Value != null && int.TryParse(selectedRow.Cells["IndexID"].Value.ToString(), out int indexID))
                 {
-                    // Open PaymentDeviceManager in edit mode using IndexID
-                    using (PaymentDeviceManager manager = new PaymentDeviceManager(indexID))
+                    // Open PaymentDeviceManager in edit mode using IndexID and currentUsername
+                    using (PaymentDeviceManager manager = new PaymentDeviceManager(indexID, currentUsername))
                     {
-                        manager.ShowDialog(); // Open as a modal dialog
-                        LoadData(); // Refresh data after the dialog is closed
+                        var result = manager.ShowDialog(); // Open as a modal dialog
+
+                        if (result == DialogResult.OK)
+                        {
+                            LoadData(); // Refresh data if a record was deleted or updated
+                        }
                     }
                 }
                 else
                 {
                     MessageBox.Show("Invalid IndexID selected.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            // Initialize the search form with the connection string
+            SearchAssignmentsForm searchForm = new SearchAssignmentsForm(connectionString);
+
+            // Show the search form as a dialog
+            var result = searchForm.ShowDialog();
+
+            // Optionally handle the dialog result
+            if (result == DialogResult.OK)
+            {
+                // Search was executed; results are already displayed in the dialog
+                // Additional actions can be performed here if needed
             }
         }
     }

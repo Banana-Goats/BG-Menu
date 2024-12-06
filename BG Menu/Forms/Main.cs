@@ -251,6 +251,12 @@ namespace BG_Menu
             ShowPanels(pnlActiveDirectory);
         }
 
+        private void paymentdevices_Click(object sender, EventArgs e)
+        {
+            PaymentDevicesApp paymentDevicesApp = new PaymentDevicesApp(currentUsername);
+            paymentDevicesApp.Show();
+        }
+
         // Tray Buttons
 
         private void button10_Click(object sender, EventArgs e)
@@ -301,6 +307,8 @@ namespace BG_Menu
         {
             udpListener = new UdpListener(this);
         }
+
+        // Permissions
 
         private void SetButtonVisibility()
         {
@@ -370,6 +378,15 @@ namespace BG_Menu
                 btnActiveDirector.Visible = false;
             }
 
+            if (userPermissions.Contains("mids/tids"))
+            {
+                paymentdevices.Visible = true;
+            }
+            else
+            {
+                paymentdevices.Visible = false;
+            }
+
             // Add more buttons and permission checks as needed
         }
 
@@ -411,10 +428,6 @@ namespace BG_Menu
             currentForm = form;
         }        
 
-        private void paymentdevices_Click(object sender, EventArgs e)
-        {
-            PaymentDevicesApp paymentDevicesApp = new PaymentDevicesApp(currentUsername);
-            paymentDevicesApp.Show();
-        }
+        
     }
 }

@@ -29,9 +29,9 @@
         private void InitializeComponent()
         {
             panel1 = new Panel();
+            button3 = new Button();
             button2 = new Button();
             txtSearch = new TextBox();
-            button1 = new Button();
             btnUserAdd = new Button();
             dataGridView1 = new DataGridView();
             panel1.SuspendLayout();
@@ -40,15 +40,38 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(button3);
             panel1.Controls.Add(button2);
             panel1.Controls.Add(txtSearch);
-            panel1.Controls.Add(button1);
             panel1.Controls.Add(btnUserAdd);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
             panel1.Name = "panel1";
             panel1.Size = new Size(800, 43);
             panel1.TabIndex = 0;
+            // 
+            // button3
+            // 
+            button3.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button3.BackgroundImageLayout = ImageLayout.Zoom;
+            button3.Dock = DockStyle.Left;
+            button3.FlatAppearance.BorderSize = 0;
+            button3.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button3.FlatStyle = FlatStyle.Flat;
+            button3.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button3.ForeColor = Color.FromArgb(158, 161, 176);
+            button3.Image = Properties.Resources.Push;
+            button3.ImageAlign = ContentAlignment.MiddleLeft;
+            button3.Location = new Point(200, 0);
+            button3.Margin = new Padding(2);
+            button3.Name = "button3";
+            button3.RightToLeft = RightToLeft.No;
+            button3.Size = new Size(206, 43);
+            button3.TabIndex = 10;
+            button3.Text = "Search Assignment";
+            button3.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
             // 
             // button2
             // 
@@ -62,7 +85,7 @@
             button2.ForeColor = Color.FromArgb(158, 161, 176);
             button2.Image = Properties.Resources.Push;
             button2.ImageAlign = ContentAlignment.MiddleLeft;
-            button2.Location = new Point(200, 0);
+            button2.Location = new Point(100, 0);
             button2.Margin = new Padding(2);
             button2.Name = "button2";
             button2.RightToLeft = RightToLeft.No;
@@ -75,34 +98,11 @@
             // 
             // txtSearch
             // 
-            txtSearch.Location = new Point(305, 12);
+            txtSearch.Location = new Point(411, 12);
             txtSearch.Name = "txtSearch";
-            txtSearch.Size = new Size(219, 23);
+            txtSearch.Size = new Size(163, 23);
             txtSearch.TabIndex = 8;
             txtSearch.TextChanged += txtSearch_TextChanged;
-            // 
-            // button1
-            // 
-            button1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            button1.BackgroundImageLayout = ImageLayout.Zoom;
-            button1.Dock = DockStyle.Left;
-            button1.FlatAppearance.BorderSize = 0;
-            button1.FlatAppearance.MouseOverBackColor = Color.Silver;
-            button1.FlatStyle = FlatStyle.Flat;
-            button1.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            button1.ForeColor = Color.FromArgb(158, 161, 176);
-            button1.Image = Properties.Resources.Push;
-            button1.ImageAlign = ContentAlignment.MiddleLeft;
-            button1.Location = new Point(100, 0);
-            button1.Margin = new Padding(2);
-            button1.Name = "button1";
-            button1.RightToLeft = RightToLeft.No;
-            button1.Size = new Size(100, 43);
-            button1.TabIndex = 7;
-            button1.Text = "Push";
-            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += btnSaveChanges_Click;
             // 
             // btnUserAdd
             // 
@@ -161,10 +161,10 @@
         #endregion
 
         private Panel panel1;
-        private Button button1;
         private Button btnUserAdd;
         private DataGridView dataGridView1;
         private TextBox txtSearch;
         private Button button2;
+        private Button button3;
     }
 }

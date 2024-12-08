@@ -21,7 +21,7 @@ namespace BG_Menu.Forms.Sub_Forms
 
         public DashBoard()
         {
-            InitializeComponent();      
+            InitializeComponent();
         }
 
         private void DashBoard_Load(object sender, EventArgs e)
@@ -30,16 +30,208 @@ namespace BG_Menu.Forms.Sub_Forms
 
             LoadHosts();
             PopulateDataGridView();
-            InitializeMissingDatesGrid();
-
-            Task.Run(CheckCallRecordingGapsOptimized);
 
             // Perform the first ping on form load
             Task.Run(async () => await PingHostsAsync());
 
             InitializePingTimer();
             InitializeTimer();
+            LoadFolders();
         }
+
+
+        private void LoadFolders()
+        {
+            string targetDirectory = @"\\marketingnas\Phone System\Recordings ( PBX Archive )";
+            var directories = Directory.GetDirectories(targetDirectory)
+                                       .Where(dir => Path.GetFileName(dir).StartsWith("RecordingFiles-"))
+                                       .ToList();
+
+            dataGridView2.Rows.Clear();
+
+            foreach (var dir in directories)
+            {
+                string folderName = Path.GetFileName(dir);
+                DataGridViewRow row = new DataGridViewRow();
+                row.CreateCells(dataGridView2);
+                row.Cells[0].Value = folderName;
+
+                DataGridViewButtonCell buttonCell = new DataGridViewButtonCell
+                {
+                    Value = "Rename"
+                };
+                row.Cells[1] = buttonCell;
+
+                dataGridView2.Rows.Add(row);
+            }
+        }
+
+        private async void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // Check if the clicked cell is the button column
+            if (e.ColumnIndex == 1) // Assuming the button is in the second column
+            {
+                string targetDirectory = @"\\marketingnas\Phone System\Recordings ( PBX Archive )";
+                string folderName = dataGridView2.Rows[e.RowIndex].Cells[0].Value?.ToString();
+
+                // Validate folder name
+                if (string.IsNullOrEmpty(folderName))
+                {
+                    MessageBox.Show("Folder name is empty. Please check the DataGridView.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string fullPath = Path.Combine(targetDirectory, folderName);
+
+                // Check if the folder exists
+                if (!Directory.Exists(fullPath))
+                {
+                    MessageBox.Show($"The directory '{fullPath}' does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                // Generate new folder name
+                string newName = GetNewFolderName(folderName);
+                if (string.IsNullOrEmpty(newName))
+                {
+                    MessageBox.Show("Failed to generate a new name for the folder. Check the folder format.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                string newFullPath = Path.Combine(targetDirectory, newName);
+
+                // Attempt to rename the folder
+                try
+                {
+                    Directory.Move(fullPath, newFullPath);
+                    AppendProgress($"Folder renamed to: {newName}");
+
+                    // Convert WAV files to MP3 in the renamed folder
+                    await ConvertWavToMp3Async(newFullPath);
+
+                    // Refresh the DataGridView
+                    LoadFolders();
+                }
+                catch (Exception ex)
+                {
+                    AppendProgress($"Error renaming or converting files: {ex.Message}");
+                    MessageBox.Show($"Error renaming or converting files:\nSource Path: {fullPath}\nDestination Path: {newFullPath}\nError: {ex.Message}",
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private string GetNewFolderName(string folderName)
+        {
+            // Extract the date part
+            var parts = folderName.Split('-');
+            if (parts.Length < 3) return null;
+
+            string datePart = parts.Last();
+            if (DateTime.TryParseExact(datePart, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime date))
+            {
+                // Format the date without invalid characters
+                string formattedDate = date.ToString("dd-MM-yyyy");
+
+                if (folderName.Contains("Daily Backup"))
+                {
+                    return $"Daily Backup - {formattedDate}";
+                }
+                else
+                {
+                    string remainingPart = string.Join(" - ", parts.Skip(1).Take(parts.Length - 2));
+                    return $"{remainingPart} - {formattedDate}";
+                }
+            }
+
+            return null;
+        }
+
+        private async Task ConvertWavToMp3Async(string folderPath)
+        {
+            var wavFiles = Directory.GetFiles(folderPath, "*.wav");
+
+            if (wavFiles.Length == 0)
+            {
+                AppendProgress("No WAV files found in the folder.");
+                return;
+            }
+
+            int fileCount = 1;
+
+            foreach (var wavFile in wavFiles)
+            {
+                string mp3File = Path.ChangeExtension(wavFile, ".mp3");
+
+                try
+                {
+                    // Update progress
+                    AppendProgress($"Converting file {fileCount}/{wavFiles.Length}: {Path.GetFileName(wavFile)}");
+
+                    using (var reader = new NAudio.Wave.AudioFileReader(wavFile))
+                    using (var writer = new NAudio.Lame.LameMP3FileWriter(mp3File, reader.WaveFormat, NAudio.Lame.LAMEPreset.VBR_90))
+                    {
+                        await Task.Run(() => reader.CopyTo(writer));
+                    }
+
+                    AppendProgress($"Completed: {Path.GetFileName(wavFile)}");
+                }
+                catch (Exception ex)
+                {
+                    AppendProgress($"Error converting file: {wavFile}. Error: {ex.Message}");
+                }
+
+                fileCount++;
+            }
+
+            AppendProgress("All files have been processed.");
+
+            // Prompt to delete old .wav files
+            DialogResult result = MessageBox.Show(
+                "Do you want to delete the original WAV files?",
+                "Delete WAV Files",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (result == DialogResult.Yes)
+            {
+                DeleteWavFiles(wavFiles);
+            }
+        }
+
+
+        private void DeleteWavFiles(string[] wavFiles)
+        {
+            foreach (var wavFile in wavFiles)
+            {
+                try
+                {
+                    File.Delete(wavFile);
+                    AppendProgress($"Deleted: {Path.GetFileName(wavFile)}");
+                }
+                catch (Exception ex)
+                {
+                    AppendProgress($"Error deleting file: {wavFile}. Error: {ex.Message}");
+                }
+            }
+
+            AppendProgress("All selected WAV files have been deleted.");
+        }
+
+        private void AppendProgress(string message)
+        {
+            if (InvokeRequired)
+            {
+                Invoke(new Action(() => progressTextBox.AppendText(message + Environment.NewLine)));
+            }
+            else
+            {
+                progressTextBox.AppendText(message + Environment.NewLine);
+            }
+        }
+
+
+        #region Faults + Servers
 
         private void LoadHosts()
         {
@@ -179,8 +371,6 @@ namespace BG_Menu.Forms.Sub_Forms
                 }
             }
         }
-
-        
 
         private void InitializeTimer()
         {
@@ -346,143 +536,9 @@ namespace BG_Menu.Forms.Sub_Forms
             return null;
         }
 
-        private void InitializeMissingDatesGrid()
-        {
-            dataGridViewMissingDates.AutoGenerateColumns = false;
-            dataGridViewMissingDates.Columns.Clear();
+        #endregion
 
-            // Add a single column for "Missing Call Recording Dates"
-            var column = new DataGridViewTextBoxColumn
-            {
-                Name = "MissingDates",
-                HeaderText = "Missing Call Recording Dates",
-                DataPropertyName = "MissingDates",
-                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill
-            };
 
-            dataGridViewMissingDates.Columns.Add(column);
-
-            // Ensure no row is selected
-            dataGridViewMissingDates.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
-            dataGridViewMissingDates.MultiSelect = false;
-            dataGridViewMissingDates.ReadOnly = true;
-            dataGridViewMissingDates.RowHeadersVisible = false;
-        }
-
-        private void PopulateMissingDatesGrid(List<string> missingDates)
-        {
-            if (InvokeRequired)
-            {
-                Invoke(new Action(() => PopulateMissingDatesGrid(missingDates)));
-                return;
-            }
-
-            // Clear existing rows
-            dataGridViewMissingDates.Rows.Clear();
-
-            // Add missing dates as rows
-            foreach (var dateRange in missingDates)
-            {
-                dataGridViewMissingDates.Rows.Add(dateRange);
-            }
-        }
-
-        private async Task CheckCallRecordingGapsOptimized()
-        {
-            string rootFolder = @"\\marketingnas\Phone System\Recordings";
-
-            try
-            {
-                var subfolders = Directory.GetDirectories(rootFolder)
-                    .Select(Path.GetFileName)
-                    .Where(name => int.TryParse(name, out _))
-                    .OrderByDescending(name => name)
-                    .Take(2)
-                    .ToList();
-
-                var missingDates = new List<string>();
-
-                foreach (var folder in subfolders)
-                {
-                    string folderPath = Path.Combine(rootFolder, folder);
-
-                    // Stream file modified dates
-                    var modifiedDates = await Task.Run(() => GetModifiedDates(folderPath));
-
-                    // Find and store missing date ranges
-                    missingDates.AddRange(FindMissingDateRanges(modifiedDates));
-                }
-
-                PopulateMissingDatesGrid(missingDates);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                MessageBox.Show($"Access denied to the folder: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (DirectoryNotFoundException ex)
-            {
-                MessageBox.Show($"Folder not found: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Unexpected error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private IEnumerable<DateTime> GetModifiedDates(string folderPath)
-        {
-            HashSet<DateTime> dateSet = new HashSet<DateTime>();
-
-            foreach (var filePath in Directory.EnumerateFiles(folderPath))
-            {
-                DateTime modifiedDate = File.GetLastWriteTime(filePath).Date;
-
-                // Add the date to the set (avoids duplicates)
-                dateSet.Add(modifiedDate);
-            }
-
-            return dateSet.OrderBy(date => date);
-        }
-
-        private List<string> FindMissingDateRanges(IEnumerable<DateTime> modifiedDates)
-        {
-            var missingRanges = new List<string>();
-
-            if (!modifiedDates.Any()) return missingRanges;
-
-            DateTime current = modifiedDates.First();
-            DateTime end = modifiedDates.Last();
-
-            while (current <= end)
-            {
-                if (!modifiedDates.Contains(current))
-                {
-                    DateTime missingStart = current;
-
-                    // Find the end of the missing range
-                    while (current <= end && !modifiedDates.Contains(current))
-                    {
-                        current = current.AddDays(1);
-                    }
-
-                    DateTime missingEnd = current.AddDays(-1);
-
-                    if (missingStart == missingEnd)
-                    {
-                        missingRanges.Add($"{missingStart:yyyy-MM-dd}");
-                    }
-                    else
-                    {
-                        missingRanges.Add($"{missingStart:yyyy-MM-dd} to {missingEnd:yyyy-MM-dd}");
-                    }
-                }
-
-                current = current.AddDays(1);
-            }
-
-            return missingRanges;
-        }
-        
 
         // New class to hold fault data
         public class MachineFault
@@ -519,5 +575,7 @@ namespace BG_Menu.Forms.Sub_Forms
             public string Password { get; set; }
             public string DatabaseName { get; set; }
         }
+
+        
     }
 }

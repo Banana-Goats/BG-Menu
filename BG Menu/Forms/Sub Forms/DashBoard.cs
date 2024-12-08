@@ -195,25 +195,28 @@ namespace BG_Menu.Forms.Sub_Forms
 
             if (result == DialogResult.Yes)
             {
-                DeleteWavFiles(wavFiles);
+                await DeleteWavFiles(wavFiles);
             }
         }
 
 
-        private void DeleteWavFiles(string[] wavFiles)
+        private async Task DeleteWavFiles(string[] wavFiles)
         {
-            foreach (var wavFile in wavFiles)
+            await Task.Run(() =>
             {
-                try
+                foreach (var wavFile in wavFiles)
                 {
-                    File.Delete(wavFile);
-                    AppendProgress($"Deleted: {Path.GetFileName(wavFile)}");
+                    try
+                    {
+                        File.Delete(wavFile);
+                        AppendProgress($"Deleted: {Path.GetFileName(wavFile)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        AppendProgress($"Error deleting file: {wavFile}. Error: {ex.Message}");
+                    }
                 }
-                catch (Exception ex)
-                {
-                    AppendProgress($"Error deleting file: {wavFile}. Error: {ex.Message}");
-                }
-            }
+            });
 
             AppendProgress("All selected WAV files have been deleted.");
         }

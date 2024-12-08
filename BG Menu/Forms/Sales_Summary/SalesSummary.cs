@@ -445,7 +445,7 @@ namespace BG_Menu.Forms.Sales_Summary
             double progress = progressCalculator.CalculateProgressThroughSelectedWeeks(selectedWeeks);
 
             // List of stores to exclude from counting
-            List<string> storesToExclude = new List<string> { "Engineering", "DropShip", "UK", "Company Total", "Franchise Total", "North Region", "South Region", "North A", "North B", "South A", "South B" };
+            List<string> storesToExclude = new List<string> { "Engineering", "DropShip", "UK", "Company Total", "Franchise Total", "North Region", "South Region", "North A", "North B", "South A", "South B", "Cheltenham" };
 
             // Count stores over target
             var (countOverTarget, totalCount) = CountStoresOverTarget(ukStoreSummaryTable, companySummaryTable, storesToExclude);

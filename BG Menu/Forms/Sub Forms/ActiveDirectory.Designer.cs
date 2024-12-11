@@ -43,13 +43,11 @@
             pictureBox5 = new PictureBox();
             panel4 = new Panel();
             button3 = new Button();
-            button1 = new Button();
             btnImportCSV = new Button();
             pictureBox6 = new PictureBox();
             txtNewPassword = new TextBox();
             button2 = new Button();
             dgvUsers = new DataGridView();
-            ADImportdsg = new DataGridView();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
@@ -60,14 +58,12 @@
             panel4.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)pictureBox6).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dgvUsers).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)ADImportdsg).BeginInit();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
             splitContainer1.Panel2.SuspendLayout();
             splitContainer1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
             splitContainer2.Panel1.SuspendLayout();
-            splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
             SuspendLayout();
             // 
@@ -215,7 +211,6 @@
             // panel4
             // 
             panel4.Controls.Add(button3);
-            panel4.Controls.Add(button1);
             panel4.Controls.Add(btnImportCSV);
             panel4.Controls.Add(pictureBox1);
             panel4.Controls.Add(cmbUsers);
@@ -236,7 +231,7 @@
             button3.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
             button3.ForeColor = Color.White;
             button3.ImageAlign = ContentAlignment.MiddleLeft;
-            button3.Location = new Point(248, 0);
+            button3.Location = new Point(124, 0);
             button3.Margin = new Padding(2);
             button3.Name = "button3";
             button3.RightToLeft = RightToLeft.No;
@@ -246,28 +241,6 @@
             button3.TextImageRelation = TextImageRelation.ImageBeforeText;
             button3.UseVisualStyleBackColor = true;
             button3.Click += BtnSendEmail_Click;
-            // 
-            // button1
-            // 
-            button1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            button1.BackgroundImageLayout = ImageLayout.Zoom;
-            button1.Dock = DockStyle.Left;
-            button1.FlatAppearance.BorderColor = Color.White;
-            button1.FlatAppearance.MouseOverBackColor = Color.Silver;
-            button1.FlatStyle = FlatStyle.Flat;
-            button1.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            button1.ForeColor = Color.White;
-            button1.ImageAlign = ContentAlignment.MiddleLeft;
-            button1.Location = new Point(124, 0);
-            button1.Margin = new Padding(2);
-            button1.Name = "button1";
-            button1.RightToLeft = RightToLeft.No;
-            button1.Size = new Size(124, 39);
-            button1.TabIndex = 24;
-            button1.Text = "Load";
-            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button1.UseVisualStyleBackColor = true;
-            button1.Click += button1_Click;
             // 
             // btnImportCSV
             // 
@@ -342,18 +315,6 @@
             dgvUsers.Size = new Size(287, 569);
             dgvUsers.TabIndex = 22;
             // 
-            // ADImportdsg
-            // 
-            ADImportdsg.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-            ADImportdsg.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            ADImportdsg.Dock = DockStyle.Fill;
-            ADImportdsg.Location = new Point(0, 0);
-            ADImportdsg.Name = "ADImportdsg";
-            ADImportdsg.RowHeadersVisible = false;
-            ADImportdsg.SelectionMode = DataGridViewSelectionMode.CellSelect;
-            ADImportdsg.Size = new Size(275, 569);
-            ADImportdsg.TabIndex = 23;
-            // 
             // splitContainer1
             // 
             splitContainer1.Dock = DockStyle.Fill;
@@ -393,10 +354,6 @@
             // splitContainer2.Panel1
             // 
             splitContainer2.Panel1.Controls.Add(dgvUsers);
-            // 
-            // splitContainer2.Panel2
-            // 
-            splitContainer2.Panel2.Controls.Add(ADImportdsg);
             splitContainer2.Size = new Size(566, 569);
             splitContainer2.SplitterDistance = 287;
             splitContainer2.TabIndex = 24;
@@ -420,14 +377,12 @@
             panel4.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)pictureBox6).EndInit();
             ((System.ComponentModel.ISupportInitialize)dgvUsers).EndInit();
-            ((System.ComponentModel.ISupportInitialize)ADImportdsg).EndInit();
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel1.PerformLayout();
             splitContainer1.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             splitContainer2.Panel1.ResumeLayout(false);
-            splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
             ResumeLayout(false);
@@ -453,8 +408,6 @@
         private Button button2;
         private DataGridView dgvUsers;
         private Button btnImportCSV;
-        private Button button1;
-        private DataGridView ADImportdsg;
         private SplitContainer splitContainer1;
         private SplitContainer splitContainer2;
         private Button button3;

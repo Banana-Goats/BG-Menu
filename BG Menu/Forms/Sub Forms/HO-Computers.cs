@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.DirectoryServices.AccountManagement;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -100,7 +101,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private async Task SaveToDatabaseAsync(string machineName, string location, string cpu, string ram, string storageInfo, string os, string buildNumber)
         {
             // Replace with your actual connection string
-            string connectionString = "Server=bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
             string query = @"
         MERGE INTO MachineData AS target

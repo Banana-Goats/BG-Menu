@@ -7,6 +7,7 @@ using System.DirectoryServices.AccountManagement;
 using System.Data;
 using System.Diagnostics;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -15,7 +16,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private List<UserPrincipal> _userList;
         private UserPrincipal _selectedUser;
 
-        private readonly string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+        string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
         public ActiveDirectory()
         {
@@ -203,6 +204,7 @@ namespace BG_Menu.Forms.Sub_Forms
             if (_selectedUser != null)
             {
                 string newPassword = txtNewPassword.Text;
+                string Department = txtDescription.Text;
 
                 if (string.IsNullOrWhiteSpace(newPassword))
                 {
@@ -221,7 +223,7 @@ namespace BG_Menu.Forms.Sub_Forms
                             MessageBox.Show($"Password for {user.SamAccountName} has been changed successfully.", "Password Changed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
-                    UpdatePasswordInDatabase(_selectedUser.SamAccountName, newPassword);
+                    UpdatePasswordInDatabase(_selectedUser.SamAccountName, newPassword, Department);
                 }
                 catch (Exception ex)
                 {
@@ -236,7 +238,7 @@ namespace BG_Menu.Forms.Sub_Forms
             LoadDataFromDatabase();
         }
 
-        private void UpdatePasswordInDatabase(string username, string newPassword)
+        private void UpdatePasswordInDatabase(string username, string newPassword, string Department)
         {
             try
             {
@@ -249,13 +251,14 @@ namespace BG_Menu.Forms.Sub_Forms
                     {
                         try
                         {
-                            // Define the SQL UPDATE query with parameters to prevent SQL injection
-                            string updateQuery = "UPDATE ADAccounts SET Password = @Password WHERE Username = @Username";
+                            // Modify the UPDATE query to also update Department
+                            string updateQuery = "UPDATE ADAccounts SET Password = @Password, Department = @Department WHERE Username = @Username";
 
                             using (SqlCommand updateCmd = new SqlCommand(updateQuery, conn, transaction))
                             {
                                 // Define parameters and assign values
                                 updateCmd.Parameters.Add("@Password", SqlDbType.VarChar, 255).Value = newPassword;
+                                updateCmd.Parameters.Add("@Department", SqlDbType.VarChar, 50).Value = Department;
                                 updateCmd.Parameters.Add("@Username", SqlDbType.VarChar, 255).Value = username;
 
                                 // Execute the UPDATE command
@@ -263,7 +266,7 @@ namespace BG_Menu.Forms.Sub_Forms
 
                                 if (rowsAffected > 0)
                                 {
-                                    MessageBox.Show($"Password for {username} has been updated successfully in the database.", "Database Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                    
                                 }
                                 else
                                 {
@@ -275,31 +278,27 @@ namespace BG_Menu.Forms.Sub_Forms
                                         // Define parameters and assign values
                                         insertCmd.Parameters.Add("@Username", SqlDbType.VarChar, 255).Value = username;
                                         insertCmd.Parameters.Add("@Password", SqlDbType.VarChar, 255).Value = newPassword;
-                                        insertCmd.Parameters.Add("@Department", SqlDbType.VarChar, 50).Value = "Please Update"; // Default Department
+                                        insertCmd.Parameters.Add("@Department", SqlDbType.VarChar, 50).Value = Department;
 
                                         int insertRows = insertCmd.ExecuteNonQuery();
 
                                         if (insertRows > 0)
                                         {
-                                            MessageBox.Show($"User {username} was not found in the database and has been added successfully.", "User Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                            MessageBox.Show($"User {username} was not found and has been added successfully with the specified Department.", "User Added", MessageBoxButtons.OK, MessageBoxIcon.Information);
                                         }
                                         else
                                         {
-                                            MessageBox.Show($"Failed to add user {username} to the database.", "Insert Failed", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                            
                                         }
                                     }
                                 }
                             }
-
-                            // Commit the transaction if both operations succeed
                             transaction.Commit();
 
-                            // Optionally, refresh the DataGridView to reflect the changes
                             LoadDataFromDatabase();
                         }
                         catch
                         {
-                            // Rollback the transaction if any operation fails
                             transaction.Rollback();
                             throw;
                         }
@@ -310,113 +309,13 @@ namespace BG_Menu.Forms.Sub_Forms
             }
             catch (SqlException sqlEx)
             {
-                // Handle SQL-related exceptions
                 MessageBox.Show($"SQL Error: {sqlEx.Message}", "Database Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             catch (Exception ex)
             {
-                // Handle all other exceptions
                 MessageBox.Show($"Error updating database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-        }
-
-        private void button1_Click(object sender, EventArgs e)
-        {
-            LoadUsersFromMultipleOUs();
-        }
-
-        private void LoadUsersFromMultipleOUs()
-        {
-            try
-            {
-                // List of OUs to search in Active Directory
-                List<string> ouPaths = new List<string>
-                {
-                    "OU=UK Stores,OU=Stores,OU=Ableworld,DC=ableworld,DC=local",
-                    "OU=Franchise Stores,OU=Stores,OU=Ableworld,DC=ableworld,DC=local",
-                    "OU=Franchise Services,OU=Stores,OU=Ableworld,DC=ableworld,DC=local",
-                };
-
-                List<UserEntry> allUsers = new List<UserEntry>();
-
-                // Iterate over each OU and load users into allUsers list
-                foreach (string ouPath in ouPaths)
-                {
-                    using (PrincipalContext context = new PrincipalContext(ContextType.Domain, "ableworld.local", ouPath))
-                    {
-                        using (UserPrincipal userPrincipal = new UserPrincipal(context))
-                        {
-                            using (PrincipalSearcher searcher = new PrincipalSearcher(userPrincipal))
-                            {
-                                foreach (var result in searcher.FindAll())
-                                {
-                                    UserPrincipal user = result as UserPrincipal;
-                                    if (user != null)
-                                    {
-                                        allUsers.Add(new UserEntry
-                                        {
-                                            UserName = user.SamAccountName,
-                                            Email = user.EmailAddress ?? "No Email",
-                                            OU = ouPath
-                                        });
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
-                // Sort users according to the custom rules
-                var sortedUsers = allUsers.OrderBy(u => GetOUIndex(u.OU))
-                                          .ThenBy(u => GetUserTypePriority(u.UserName))
-                                          .ThenBy(u => u.UserName)
-                                          .ToList();
-
-                // Initialize DataGridView columns if not already present
-                if (ADImportdsg.Columns.Count == 0)
-                {
-                    ADImportdsg.Columns.Add("User", "User");
-                    ADImportdsg.Columns.Add("Email", "Email");
-                }
-
-                // Clear existing rows in DataGridView to start fresh
-                ADImportdsg.Rows.Clear();
-
-                // Populate DataGridView with sorted users
-                foreach (var user in sortedUsers)
-                {
-                    ADImportdsg.Rows.Add(user.UserName, user.Email);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error loading users from Active Directory: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // Helper method to determine the order of OUs
-        private int GetOUIndex(string ouPath)
-        {
-            if (ouPath.Contains("OU=UK Stores"))
-                return 1;
-            if (ouPath.Contains("OU=Franchise Stores"))
-                return 2;
-            if (ouPath.Contains("OU=Franchise Services"))
-                return 3;
-
-            return 4; // Default index if not found
-        }
-
-        // Helper method to determine the priority of the user type within the OU
-        private int GetUserTypePriority(string userName)
-        {
-            if (userName.ToLower().Contains("manager"))
-                return 2; // Managers should be listed second
-            if (userName.ToLower().Contains("workshop"))
-                return 3; // Workshops should be listed third
-
-            return 1; // Stores should be listed first (default)
-        }
+        }         
 
         // Custom data structure to store user details along with their OU
         private class UserEntry

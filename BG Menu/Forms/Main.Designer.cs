@@ -29,6 +29,10 @@
         private void InitializeComponent()
         {
             panel1 = new Panel();
+            pnlFinance = new Panel();
+            btnSalesSummary = new Button();
+            button8 = new Button();
+            button7 = new Button();
             paymentdevices = new Button();
             btnFileServer = new Button();
             pnlServiceTools = new Panel();
@@ -40,14 +44,13 @@
             btnTools = new Button();
             btnAdminSettings = new Button();
             btnSettings = new Button();
-            btnSalesSummary = new Button();
             BtnSpacerPnl = new Panel();
             btnStoreManagement = new Button();
             pnlActiveDirectory = new Panel();
             button5 = new Button();
             button4 = new Button();
             btnActiveDirector = new Button();
-            button2 = new Button();
+            btnCreditcard = new Button();
             button1 = new Button();
             panel7 = new Panel();
             panel2 = new Panel();
@@ -64,6 +67,7 @@
             FormLoader = new Panel();
             panel6 = new Panel();
             panel1.SuspendLayout();
+            pnlFinance.SuspendLayout();
             pnlServiceTools.SuspendLayout();
             pnlActiveDirectory.SuspendLayout();
             panel2.SuspendLayout();
@@ -75,18 +79,19 @@
             // 
             panel1.AutoScroll = true;
             panel1.BackColor = Color.FromArgb(24, 30, 54);
-            panel1.Controls.Add(paymentdevices);
+            panel1.Controls.Add(pnlFinance);
+            panel1.Controls.Add(button7);
+            
             panel1.Controls.Add(btnFileServer);
             panel1.Controls.Add(pnlServiceTools);
             panel1.Controls.Add(btnTools);
             panel1.Controls.Add(btnAdminSettings);
             panel1.Controls.Add(btnSettings);
-            panel1.Controls.Add(btnSalesSummary);
-            panel1.Controls.Add(BtnSpacerPnl);
-            panel1.Controls.Add(btnStoreManagement);
+            panel1.Controls.Add(BtnSpacerPnl);            
             panel1.Controls.Add(pnlActiveDirectory);
             panel1.Controls.Add(btnActiveDirector);
-            panel1.Controls.Add(button2);
+            panel1.Controls.Add(btnStoreManagement);
+            //panel1.Controls.Add(btnCreditcard);
             panel1.Controls.Add(button1);
             panel1.Controls.Add(panel7);
             panel1.Controls.Add(panel2);
@@ -96,6 +101,91 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(220, 660);
             panel1.TabIndex = 0;
+            // 
+            // pnlFinance
+            // 
+            pnlFinance.AutoSize = true;
+            pnlFinance.Controls.Add(btnBudgetsExtract);
+            pnlFinance.Controls.Add(btnSalesSheets);
+            pnlFinance.Controls.Add(btnSalesSummary);
+            pnlFinance.Controls.Add(btnCreditcard);
+            pnlFinance.Controls.Add(paymentdevices);
+            pnlFinance.Dock = DockStyle.Top;
+            pnlFinance.Location = new Point(0, 855);
+            pnlFinance.Name = "pnlFinance";
+            pnlFinance.Size = new Size(203, 110);
+            pnlFinance.TabIndex = 17;
+            pnlFinance.Visible = false;
+            // 
+            // btnSalesSummary
+            // 
+            btnSalesSummary.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnSalesSummary.BackgroundImageLayout = ImageLayout.Stretch;
+            btnSalesSummary.Dock = DockStyle.Top;
+            btnSalesSummary.FlatAppearance.BorderSize = 0;
+            btnSalesSummary.FlatAppearance.MouseOverBackColor = Color.Silver;
+            btnSalesSummary.FlatStyle = FlatStyle.Flat;
+            btnSalesSummary.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnSalesSummary.ForeColor = Color.FromArgb(158, 161, 176);
+            btnSalesSummary.Image = Properties.Resources.Finance;
+            btnSalesSummary.ImageAlign = ContentAlignment.MiddleLeft;
+            btnSalesSummary.Location = new Point(0, 55);
+            btnSalesSummary.Margin = new Padding(2);
+            btnSalesSummary.Name = "btnSalesSummary";
+            btnSalesSummary.RightToLeft = RightToLeft.No;
+            btnSalesSummary.Size = new Size(203, 55);
+            btnSalesSummary.TabIndex = 6;
+            btnSalesSummary.Text = "Sales Summary";
+            btnSalesSummary.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnSalesSummary.UseMnemonic = false;
+            btnSalesSummary.UseVisualStyleBackColor = true;
+            btnSalesSummary.Click += btnSalesSummary_Click;
+            // 
+            // button8
+            // 
+            button8.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button8.BackgroundImageLayout = ImageLayout.Stretch;
+            button8.Dock = DockStyle.Top;
+            button8.FlatAppearance.BorderSize = 0;
+            button8.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button8.FlatStyle = FlatStyle.Flat;
+            button8.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button8.ForeColor = Color.FromArgb(158, 161, 176);
+            button8.Image = Properties.Resources.Computer;
+            button8.ImageAlign = ContentAlignment.MiddleLeft;
+            button8.Location = new Point(0, 0);
+            button8.Margin = new Padding(2);
+            button8.Name = "button8";
+            button8.RightToLeft = RightToLeft.No;
+            button8.Size = new Size(203, 55);
+            button8.TabIndex = 6;
+            button8.Text = "Computers";
+            button8.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button8.UseVisualStyleBackColor = true;
+            // 
+            // button7
+            // 
+            button7.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button7.BackColor = Color.FromArgb(24, 30, 54);
+            button7.BackgroundImageLayout = ImageLayout.Stretch;
+            button7.Dock = DockStyle.Top;
+            button7.FlatAppearance.BorderSize = 0;
+            button7.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button7.FlatStyle = FlatStyle.Flat;
+            button7.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button7.ForeColor = Color.White;
+            button7.ImageAlign = ContentAlignment.MiddleLeft;
+            button7.Location = new Point(0, 815);
+            button7.Margin = new Padding(2);
+            button7.Name = "button7";
+            button7.RightToLeft = RightToLeft.No;
+            button7.Size = new Size(203, 40);
+            button7.TabIndex = 16;
+            button7.Text = "Finance Tools";
+            button7.TextAlign = ContentAlignment.MiddleLeft;
+            button7.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button7.UseVisualStyleBackColor = false;
+            button7.Click += button7_Click;
             // 
             // paymentdevices
             // 
@@ -109,7 +199,7 @@
             paymentdevices.ForeColor = Color.FromArgb(158, 161, 176);
             paymentdevices.Image = Properties.Resources.Home;
             paymentdevices.ImageAlign = ContentAlignment.MiddleLeft;
-            paymentdevices.Location = new Point(0, 845);
+            paymentdevices.Location = new Point(0, 760);
             paymentdevices.Margin = new Padding(2);
             paymentdevices.Name = "paymentdevices";
             paymentdevices.RightToLeft = RightToLeft.No;
@@ -132,7 +222,7 @@
             btnFileServer.ForeColor = Color.FromArgb(158, 161, 176);
             btnFileServer.Image = Properties.Resources.Folder;
             btnFileServer.ImageAlign = ContentAlignment.MiddleLeft;
-            btnFileServer.Location = new Point(0, 900);
+            btnFileServer.Location = new Point(0, 965);
             btnFileServer.Margin = new Padding(2);
             btnFileServer.Name = "btnFileServer";
             btnFileServer.RightToLeft = RightToLeft.No;
@@ -148,11 +238,9 @@
             pnlServiceTools.AutoSize = true;
             pnlServiceTools.Controls.Add(button6);
             pnlServiceTools.Controls.Add(button3);
-            pnlServiceTools.Controls.Add(btnFSM);
-            pnlServiceTools.Controls.Add(btnBudgetsExtract);
-            pnlServiceTools.Controls.Add(btnSalesSheets);
+            pnlServiceTools.Controls.Add(btnFSM);            
             pnlServiceTools.Dock = DockStyle.Top;
-            pnlServiceTools.Location = new Point(0, 570);
+            pnlServiceTools.Location = new Point(0, 485);
             pnlServiceTools.Name = "pnlServiceTools";
             pnlServiceTools.Size = new Size(203, 275);
             pnlServiceTools.TabIndex = 13;
@@ -281,17 +369,17 @@
             btnTools.FlatAppearance.BorderSize = 0;
             btnTools.FlatAppearance.MouseOverBackColor = Color.Silver;
             btnTools.FlatStyle = FlatStyle.Flat;
-            btnTools.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnTools.ForeColor = Color.FromArgb(158, 161, 176);
-            btnTools.Image = Properties.Resources.Tools;
+            btnTools.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnTools.ForeColor = Color.White;
             btnTools.ImageAlign = ContentAlignment.MiddleLeft;
-            btnTools.Location = new Point(0, 515);
+            btnTools.Location = new Point(0, 445);
             btnTools.Margin = new Padding(2);
             btnTools.Name = "btnTools";
             btnTools.RightToLeft = RightToLeft.No;
-            btnTools.Size = new Size(203, 55);
+            btnTools.Size = new Size(203, 40);
             btnTools.TabIndex = 12;
             btnTools.Text = "Service Tools";
+            btnTools.TextAlign = ContentAlignment.MiddleLeft;
             btnTools.TextImageRelation = TextImageRelation.ImageBeforeText;
             btnTools.UseVisualStyleBackColor = true;
             btnTools.Click += btnTools_Click;
@@ -308,7 +396,7 @@
             btnAdminSettings.ForeColor = Color.FromArgb(158, 161, 176);
             btnAdminSettings.Image = Properties.Resources.Admin;
             btnAdminSettings.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAdminSettings.Location = new Point(0, 955);
+            btnAdminSettings.Location = new Point(0, 1020);
             btnAdminSettings.Margin = new Padding(2);
             btnAdminSettings.Name = "btnAdminSettings";
             btnAdminSettings.RightToLeft = RightToLeft.No;
@@ -331,7 +419,7 @@
             btnSettings.ForeColor = Color.FromArgb(158, 161, 176);
             btnSettings.Image = Properties.Resources.Settings;
             btnSettings.ImageAlign = ContentAlignment.MiddleLeft;
-            btnSettings.Location = new Point(0, 1010);
+            btnSettings.Location = new Point(0, 1075);
             btnSettings.Margin = new Padding(2);
             btnSettings.Name = "btnSettings";
             btnSettings.RightToLeft = RightToLeft.No;
@@ -342,34 +430,10 @@
             btnSettings.UseVisualStyleBackColor = true;
             btnSettings.Click += btnSettings_Click;
             // 
-            // btnSalesSummary
-            // 
-            btnSalesSummary.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            btnSalesSummary.BackgroundImageLayout = ImageLayout.Stretch;
-            btnSalesSummary.Dock = DockStyle.Top;
-            btnSalesSummary.FlatAppearance.BorderSize = 0;
-            btnSalesSummary.FlatAppearance.MouseOverBackColor = Color.Silver;
-            btnSalesSummary.FlatStyle = FlatStyle.Flat;
-            btnSalesSummary.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnSalesSummary.ForeColor = Color.FromArgb(158, 161, 176);
-            btnSalesSummary.Image = Properties.Resources.Finance;
-            btnSalesSummary.ImageAlign = ContentAlignment.MiddleLeft;
-            btnSalesSummary.Location = new Point(0, 460);
-            btnSalesSummary.Margin = new Padding(2);
-            btnSalesSummary.Name = "btnSalesSummary";
-            btnSalesSummary.RightToLeft = RightToLeft.No;
-            btnSalesSummary.Size = new Size(203, 55);
-            btnSalesSummary.TabIndex = 6;
-            btnSalesSummary.Text = "Sales Summary";
-            btnSalesSummary.TextImageRelation = TextImageRelation.ImageBeforeText;
-            btnSalesSummary.UseMnemonic = false;
-            btnSalesSummary.UseVisualStyleBackColor = true;
-            btnSalesSummary.Click += btnSalesSummary_Click;
-            // 
             // BtnSpacerPnl
             // 
             BtnSpacerPnl.Dock = DockStyle.Bottom;
-            BtnSpacerPnl.Location = new Point(0, 1065);
+            BtnSpacerPnl.Location = new Point(0, 1130);
             BtnSpacerPnl.Name = "BtnSpacerPnl";
             BtnSpacerPnl.Size = new Size(203, 5);
             BtnSpacerPnl.TabIndex = 10;
@@ -386,7 +450,7 @@
             btnStoreManagement.ForeColor = Color.FromArgb(158, 161, 176);
             btnStoreManagement.Image = Properties.Resources.Store;
             btnStoreManagement.ImageAlign = ContentAlignment.MiddleLeft;
-            btnStoreManagement.Location = new Point(0, 405);
+            btnStoreManagement.Location = new Point(0, 390);
             btnStoreManagement.Margin = new Padding(2);
             btnStoreManagement.Name = "btnStoreManagement";
             btnStoreManagement.RightToLeft = RightToLeft.No;
@@ -403,7 +467,7 @@
             pnlActiveDirectory.Controls.Add(button5);
             pnlActiveDirectory.Controls.Add(button4);
             pnlActiveDirectory.Dock = DockStyle.Top;
-            pnlActiveDirectory.Location = new Point(0, 295);
+            pnlActiveDirectory.Location = new Point(0, 280);
             pnlActiveDirectory.Name = "pnlActiveDirectory";
             pnlActiveDirectory.Size = new Size(203, 110);
             pnlActiveDirectory.TabIndex = 11;
@@ -427,7 +491,7 @@
             button5.RightToLeft = RightToLeft.No;
             button5.Size = new Size(203, 55);
             button5.TabIndex = 6;
-            button5.Text = "PC Management";
+            button5.Text = "Computers";
             button5.TextImageRelation = TextImageRelation.ImageBeforeText;
             button5.UseVisualStyleBackColor = true;
             button5.Click += button5_Click;
@@ -450,7 +514,7 @@
             button4.RightToLeft = RightToLeft.No;
             button4.Size = new Size(203, 55);
             button4.TabIndex = 5;
-            button4.Text = "User Management";
+            button4.Text = "Users";
             button4.TextImageRelation = TextImageRelation.ImageBeforeText;
             button4.UseVisualStyleBackColor = true;
             button4.Click += button4_Click;
@@ -458,48 +522,49 @@
             // btnActiveDirector
             // 
             btnActiveDirector.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnActiveDirector.BackColor = Color.FromArgb(24, 30, 54);
             btnActiveDirector.BackgroundImageLayout = ImageLayout.Stretch;
             btnActiveDirector.Dock = DockStyle.Top;
             btnActiveDirector.FlatAppearance.BorderSize = 0;
             btnActiveDirector.FlatAppearance.MouseOverBackColor = Color.Silver;
             btnActiveDirector.FlatStyle = FlatStyle.Flat;
-            btnActiveDirector.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnActiveDirector.ForeColor = Color.FromArgb(158, 161, 176);
-            btnActiveDirector.Image = Properties.Resources.Active_Directory;
+            btnActiveDirector.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnActiveDirector.ForeColor = Color.White;
             btnActiveDirector.ImageAlign = ContentAlignment.MiddleLeft;
             btnActiveDirector.Location = new Point(0, 240);
             btnActiveDirector.Margin = new Padding(2);
             btnActiveDirector.Name = "btnActiveDirector";
             btnActiveDirector.RightToLeft = RightToLeft.No;
-            btnActiveDirector.Size = new Size(203, 55);
+            btnActiveDirector.Size = new Size(203, 40);
             btnActiveDirector.TabIndex = 4;
             btnActiveDirector.Text = "Active Directory";
+            btnActiveDirector.TextAlign = ContentAlignment.MiddleLeft;
             btnActiveDirector.TextImageRelation = TextImageRelation.ImageBeforeText;
-            btnActiveDirector.UseVisualStyleBackColor = true;
+            btnActiveDirector.UseVisualStyleBackColor = false;
             btnActiveDirector.Click += button3_Click;
             // 
-            // button2
+            // btnCreditcard
             // 
-            button2.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            button2.BackgroundImageLayout = ImageLayout.Stretch;
-            button2.Dock = DockStyle.Top;
-            button2.FlatAppearance.BorderSize = 0;
-            button2.FlatAppearance.MouseOverBackColor = Color.Silver;
-            button2.FlatStyle = FlatStyle.Flat;
-            button2.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            button2.ForeColor = Color.FromArgb(158, 161, 176);
-            button2.Image = Properties.Resources.Credit_Card;
-            button2.ImageAlign = ContentAlignment.MiddleLeft;
-            button2.Location = new Point(0, 185);
-            button2.Margin = new Padding(2);
-            button2.Name = "button2";
-            button2.RightToLeft = RightToLeft.No;
-            button2.Size = new Size(203, 55);
-            button2.TabIndex = 3;
-            button2.Text = "Credit Card";
-            button2.TextImageRelation = TextImageRelation.ImageBeforeText;
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click;
+            btnCreditcard.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnCreditcard.BackgroundImageLayout = ImageLayout.Stretch;
+            btnCreditcard.Dock = DockStyle.Top;
+            btnCreditcard.FlatAppearance.BorderSize = 0;
+            btnCreditcard.FlatAppearance.MouseOverBackColor = Color.Silver;
+            btnCreditcard.FlatStyle = FlatStyle.Flat;
+            btnCreditcard.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnCreditcard.ForeColor = Color.FromArgb(158, 161, 176);
+            btnCreditcard.Image = Properties.Resources.Credit_Card;
+            btnCreditcard.ImageAlign = ContentAlignment.MiddleLeft;
+            btnCreditcard.Location = new Point(0, 185);
+            btnCreditcard.Margin = new Padding(2);
+            btnCreditcard.Name = "btnCreditcard";
+            btnCreditcard.RightToLeft = RightToLeft.No;
+            btnCreditcard.Size = new Size(203, 55);
+            btnCreditcard.TabIndex = 3;
+            btnCreditcard.Text = "Credit Card";
+            btnCreditcard.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnCreditcard.UseVisualStyleBackColor = true;
+            btnCreditcard.Click += button2_Click;
             // 
             // button1
             // 
@@ -738,6 +803,7 @@
             Text = "BG Menu";
             panel1.ResumeLayout(false);
             panel1.PerformLayout();
+            pnlFinance.ResumeLayout(false);
             pnlServiceTools.ResumeLayout(false);
             pnlActiveDirectory.ResumeLayout(false);
             panel2.ResumeLayout(false);
@@ -758,7 +824,7 @@
         private Button btnSalesSummary;
         private Button btnStoreManagement;
         private Button btnActiveDirector;
-        private Button button2;
+        private Button btnCreditcard;
         private Label Userlbl;
         private Button btnSettings;
         private Button btnAdminSettings;
@@ -783,5 +849,8 @@
         private Button button3;
         private Button button6;
         private Button paymentdevices;
+        private Button button7;
+        private Panel pnlFinance;
+        private Button button8;
     }
 }

@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
+using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -16,41 +18,30 @@ namespace BG_Menu.Forms.Sub_Forms
         private string yearSegment = "2024-25";
 
         // Hard-coded list of Tabs
-        private Dictionary<string, string> hardCodedTabs = new Dictionary<string, string>
+        private Dictionary<string, string> GetSalesSheetsDictionaryFromDb()
         {
-            // UK
-            {"Birkenhead", "UK"}, {"Burton", "UK"}, {"Chester", "UK"}, {"Congleton", "UK"},
-            {"Crewe", "UK"}, {"Darlington", "UK"}, {"Engineering", "UK"}, {"Gloucester", "UK"},
-            {"Hanley", "UK"}, {"Lincoln", "UK"}, {"Llandudno", "UK"}, {"Nantwich", "UK"},
-            {"Newark", "UK"}, {"Newport", "UK"}, {"Northwich", "UK"}, {"Oswestry", "UK"},
-            {"Queensferry", "UK"}, {"Reading", "UK"}, {"Rhyl", "UK"}, {"Runcorn", "UK"},
-            {"Shrewsbury", "UK"}, {"Specialist", "UK"}, {"Stafford", "UK"}, {"Stairlift", "UK"},
-            {"Stockport", "UK"}, {"Stockton", "UK"}, {"Thatcham", "UK"}, {"Wrexham", "UK"},
+            var result = new Dictionary<string, string>();
 
-            // MGB
-            {"Blackpool", "MGB"}, {"Hyde", "MGB"}, {"Salford", "MGB"}, {"Southport", "MGB"},
-            {"St_Helens", "MGB"}, {"Wavertree", "MGB"}, {"Wigan", "MGB"}, {"Mob_GB_Engineering", "MGB"}, {"Mob_GB_Stairlift", "MGB"}, {"Mob_GB_Slift_other", "MGB"}, {"Mob_GB_Total", "MGB"},
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+            string query = "SELECT ExcelTab, Company FROM Store_Mapping WHERE SalesSheets = 'Yes';";
 
-            // AWG
-            {"Leeds", "AWG"}, {"Leeds_Stairlifts", "AWG"}, {"Leeds_Total", "AWG"}, 
+            using (var conn = new SqlConnection(connectionString))
+            using (var cmd = new SqlCommand(query, conn))
+            {
+                conn.Open();
+                using (var reader = cmd.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        string excelTab = reader["ExcelTab"].ToString();
+                        string company = reader["Company"].ToString();
+                        result[excelTab] = company;
+                    }
+                }
+            }
 
-            // AMD
-            {"Broxburn", "AMD"}, {"Broxburn_Stairlifts", "AMD"}, {"Broxburn_Total", "AMD"},
-
-            // SJLK
-            {"Paisley", "SJLK"}, {"Paisley_Stairlifts", "SJLK"}, {"Paisley_Total", "SJLK"},
-
-            // GRMR
-            {"Colchester", "GRMR"}, {"Colchester_Stairlifts", "GRMR"}, {"Colchester_Total", "GRMR"},
-
-            // SML
-            {"Southampton", "SML"}, {"Christchurch", "SML"}, {"SML_Total", "SML"}, {"SML_Stairlifts", "SML"},
-
-            //JSCD
-            {"JSCD_Stairlift", "JSCD"}, {"JSCD_Total", "JSCD"}, {"Bridgend", "JSCD"}, {"Cardiff", "JSCD"}, {"Newport_SW", "JSCD"},
-            
-            
-        };
+            return result;
+        }
 
         public SalesSheets()
         {
@@ -78,7 +69,11 @@ namespace BG_Menu.Forms.Sub_Forms
         private void InitializeMappings(string yearSegment)
         {
             mappings.Clear();
-            foreach (var entry in hardCodedTabs)
+
+            // Fetch dictionary from the database
+            var dictionaryFromDb = GetSalesSheetsDictionaryFromDb();
+
+            foreach (var entry in dictionaryFromDb)
             {
                 string tab = entry.Key;
                 string folder = entry.Value;
@@ -100,7 +95,7 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        private void btnSelectFolder_Click(object sender, EventArgs e)
+        private async void btnSelectFolder_Click(object sender, EventArgs e)
         {
             using (var folderBrowserDialog = new FolderBrowserDialog())
             {
@@ -133,6 +128,8 @@ namespace BG_Menu.Forms.Sub_Forms
                     lblStatus.Text = "Status: Mappings initialized and files checked.";
                 }
             }
+
+            await CreateFiles();
         }
 
         private void CheckForStoreFiles(string baseFolderPath)
@@ -262,7 +259,7 @@ namespace BG_Menu.Forms.Sub_Forms
             public string CopyStatus { get; set; }
         }
 
-        private async void btnCreateStoreFiles_Click(object sender, EventArgs e)
+        private async Task CreateFiles()
         {
             string folderPath = txtFolderPath.Text;
             if (string.IsNullOrEmpty(folderPath))
@@ -339,7 +336,7 @@ namespace BG_Menu.Forms.Sub_Forms
                             var storeWorkbook = storePackage.Workbook;
                             var worksheet = storeWorkbook.Worksheets[0];
 
-                            worksheet.Cells["Y1"].Value = mapping.Tab;
+                            worksheet.Cells["M1"].Value = mapping.Tab;
 
                             worksheet.Calculate();
                             storePackage.Save();

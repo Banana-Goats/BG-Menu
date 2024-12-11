@@ -39,23 +39,23 @@ namespace BG_Menu.Forms.Sub_Forms
             locationColumn = new DataGridViewTextBoxColumn();
             faultColumn = new DataGridViewTextBoxColumn();
             dataGridView1 = new DataGridView();
+            splitContainer2 = new SplitContainer();
             splitContainer1 = new SplitContainer();
             dataGridView2 = new DataGridView();
+            progressTextBox = new TextBox();
             Folder = new DataGridViewTextBoxColumn();
             Process = new DataGridViewButtonColumn();
-            progressTextBox = new TextBox();
-            splitContainer2 = new SplitContainer();
             tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
-            splitContainer1.Panel1.SuspendLayout();
-            splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
             splitContainer2.Panel1.SuspendLayout();
             splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
+            splitContainer1.Panel1.SuspendLayout();
+            splitContainer1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridView2).BeginInit();
             SuspendLayout();
             // 
             // tableLayoutPanel1
@@ -145,6 +145,23 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridView1.Size = new Size(142, 298);
             dataGridView1.TabIndex = 4;
             // 
+            // splitContainer2
+            // 
+            splitContainer2.Dock = DockStyle.Fill;
+            splitContainer2.Location = new Point(571, 3);
+            splitContainer2.Name = "splitContainer2";
+            // 
+            // splitContainer2.Panel1
+            // 
+            splitContainer2.Panel1.Controls.Add(splitContainer1);
+            // 
+            // splitContainer2.Panel2
+            // 
+            splitContainer2.Panel2.Controls.Add(progressTextBox);
+            splitContainer2.Size = new Size(415, 298);
+            splitContainer2.SplitterDistance = 199;
+            splitContainer2.TabIndex = 7;
+            // 
             // splitContainer1
             // 
             splitContainer1.Dock = DockStyle.Fill;
@@ -175,18 +192,6 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridView2.TabIndex = 5;
             dataGridView2.CellContentClick += dataGridView2_CellContentClick;
             // 
-            // Folder
-            // 
-            Folder.HeaderText = "Folder";
-            Folder.Name = "Folder";
-            Folder.ReadOnly = true;
-            // 
-            // Process
-            // 
-            Process.HeaderText = "Process";
-            Process.Name = "Process";
-            Process.ReadOnly = true;
-            // 
             // progressTextBox
             // 
             progressTextBox.Dock = DockStyle.Fill;
@@ -196,22 +201,20 @@ namespace BG_Menu.Forms.Sub_Forms
             progressTextBox.Size = new Size(212, 298);
             progressTextBox.TabIndex = 0;
             // 
-            // splitContainer2
+            // Folder
             // 
-            splitContainer2.Dock = DockStyle.Fill;
-            splitContainer2.Location = new Point(571, 3);
-            splitContainer2.Name = "splitContainer2";
+            Folder.HeaderText = "Folder";
+            Folder.Name = "Folder";
+            Folder.ReadOnly = true;
             // 
-            // splitContainer2.Panel1
+            // Process
             // 
-            splitContainer2.Panel1.Controls.Add(splitContainer1);
-            // 
-            // splitContainer2.Panel2
-            // 
-            splitContainer2.Panel2.Controls.Add(progressTextBox);
-            splitContainer2.Size = new Size(415, 298);
-            splitContainer2.SplitterDistance = 199;
-            splitContainer2.TabIndex = 7;
+            Process.AutoSizeMode = DataGridViewAutoSizeColumnMode.ColumnHeader;
+            Process.HeaderText = "Process";
+            Process.MinimumWidth = 80;
+            Process.Name = "Process";
+            Process.ReadOnly = true;
+            Process.Width = 80;
             // 
             // DashBoard
             // 
@@ -227,15 +230,15 @@ namespace BG_Menu.Forms.Sub_Forms
             tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
-            splitContainer1.Panel1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
-            splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
             splitContainer2.Panel1.ResumeLayout(false);
             splitContainer2.Panel2.ResumeLayout(false);
             splitContainer2.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
+            splitContainer1.Panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
+            splitContainer1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
             ResumeLayout(false);
         }
 

@@ -39,7 +39,6 @@
             btnExecuteCopyPaste = new Button();
             lblStatus = new Label();
             dataGridViewMappings = new DataGridView();
-            btnCreateStoreFiles = new Button();
             txtCopyRange2 = new TextBox();
             txtPasteRange2 = new TextBox();
             panel1 = new Panel();
@@ -57,7 +56,7 @@
             btnLoadMaster.Dock = DockStyle.Top;
             btnLoadMaster.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnLoadMaster.ForeColor = SystemColors.ControlLightLight;
-            btnLoadMaster.Location = new Point(0, 79);
+            btnLoadMaster.Location = new Point(0, 49);
             btnLoadMaster.Name = "btnLoadMaster";
             btnLoadMaster.Size = new Size(181, 30);
             btnLoadMaster.TabIndex = 0;
@@ -107,7 +106,7 @@
             txtPasteRange.PlaceholderText = "PY Sales Paste";
             txtPasteRange.Size = new Size(84, 23);
             txtPasteRange.TabIndex = 6;
-            txtPasteRange.Text = "N8:Q82";
+            txtPasteRange.Text = "B8:E82";
             txtPasteRange.TextAlign = HorizontalAlignment.Center;
             // 
             // btnExecuteCopyPaste
@@ -116,7 +115,7 @@
             btnExecuteCopyPaste.Dock = DockStyle.Top;
             btnExecuteCopyPaste.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             btnExecuteCopyPaste.ForeColor = SystemColors.ControlLightLight;
-            btnExecuteCopyPaste.Location = new Point(0, 109);
+            btnExecuteCopyPaste.Location = new Point(0, 79);
             btnExecuteCopyPaste.Name = "btnExecuteCopyPaste";
             btnExecuteCopyPaste.Size = new Size(181, 30);
             btnExecuteCopyPaste.TabIndex = 7;
@@ -131,7 +130,7 @@
             lblStatus.ForeColor = SystemColors.Control;
             lblStatus.Location = new Point(339, 0);
             lblStatus.Name = "lblStatus";
-            lblStatus.Size = new Size(52, 23);
+            lblStatus.Size = new Size(450, 23);
             lblStatus.TabIndex = 8;
             lblStatus.Text = "lblStatus";
             lblStatus.TextAlign = ContentAlignment.MiddleLeft;
@@ -174,20 +173,6 @@
             dataGridViewMappings.TabIndex = 9;
             dataGridViewMappings.CellValueChanged += dataGridViewMappings_CellValueChanged;
             // 
-            // btnCreateStoreFiles
-            // 
-            btnCreateStoreFiles.BackColor = Color.FromArgb(46, 51, 73);
-            btnCreateStoreFiles.Dock = DockStyle.Top;
-            btnCreateStoreFiles.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnCreateStoreFiles.ForeColor = SystemColors.ControlLightLight;
-            btnCreateStoreFiles.Location = new Point(0, 49);
-            btnCreateStoreFiles.Name = "btnCreateStoreFiles";
-            btnCreateStoreFiles.Size = new Size(181, 30);
-            btnCreateStoreFiles.TabIndex = 10;
-            btnCreateStoreFiles.Text = "Create Store Files";
-            btnCreateStoreFiles.UseVisualStyleBackColor = false;
-            btnCreateStoreFiles.Click += btnCreateStoreFiles_Click;
-            // 
             // txtCopyRange2
             // 
             txtCopyRange2.Location = new Point(93, 3);
@@ -205,14 +190,13 @@
             txtPasteRange2.PlaceholderText = "Budgets Paste";
             txtPasteRange2.Size = new Size(85, 23);
             txtPasteRange2.TabIndex = 12;
-            txtPasteRange2.Text = "S8:S82";
+            txtPasteRange2.Text = "G8:G82";
             txtPasteRange2.TextAlign = HorizontalAlignment.Center;
             // 
             // panel1
             // 
             panel1.Controls.Add(btnExecuteCopyPaste);
             panel1.Controls.Add(btnLoadMaster);
-            panel1.Controls.Add(btnCreateStoreFiles);
             panel1.Controls.Add(btnSelectFolder);
             panel1.Controls.Add(tableLayoutPanel1);
             panel1.Dock = DockStyle.Left;
@@ -282,7 +266,6 @@
         private Button btnExecuteCopyPaste;
         private Label lblStatus;
         private DataGridView dataGridViewMappings;
-        private Button btnCreateStoreFiles;
         private TextBox txtCopyRange2;
         private TextBox txtPasteRange2;
         private Panel panel1;

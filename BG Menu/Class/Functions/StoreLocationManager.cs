@@ -36,7 +36,12 @@
             { "ABL0075", ("Stockton - Till 1", "UK Store") },
             { "ABL0082", ("Thatcham - Till 1", "UK Store") },
             { "ABL0046", ("Wrexham - Till 1", "UK Store") },
-            { "ABL0079", ("Wrexham - Till 2", "UK Store") },        
+            { "ABL0079", ("Wrexham - Till 2", "UK Store") },
+
+            //Engineering
+            { "ABL0073", ("Stapeley - Workshop 1", "UK Store") },
+            { "ABL0057", ("Stapeley - Workshop 2", "UK Store") },          
+
             
 
             // Franchise

@@ -37,6 +37,7 @@ namespace BG_Menu.Forms.Sub_Forms
             InitializePingTimer();
             InitializeTimer();
             LoadFolders();
+            LoadFaultsAsync();
         }
 
 
@@ -109,13 +110,44 @@ namespace BG_Menu.Forms.Sub_Forms
                     // Convert WAV files to MP3 in the renamed folder
                     await ConvertWavToMp3Async(newFullPath);
 
+                    // Prompt to delete old WAV files
+                    var wavFiles = Directory.GetFiles(newFullPath, "*.wav");
+                    if (wavFiles.Length > 0)
+                    {
+                        DialogResult deleteResult = MessageBox.Show(
+                            "Do you want to delete the original WAV files?",
+                            "Delete WAV Files",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
+
+                        if (deleteResult == DialogResult.Yes)
+                        {
+                            await DeleteWavFilesAsync(wavFiles);
+                        }
+                    }
+
+                    // Prompt to validate calls
+                    DialogResult validateResult = MessageBox.Show(
+                        "Do you want to validate the calls by importing a CSV file?",
+                        "Validate Calls",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Question);
+
+                    if (validateResult == DialogResult.Yes)
+                    {
+                        await ValidateCallsAsync(newFullPath, DateTime.Now);
+                    }
+
+                    // Rename MP3 files in the folder
+                    RenameMp3Files(newFullPath);
+
                     // Refresh the DataGridView
                     LoadFolders();
                 }
                 catch (Exception ex)
                 {
-                    AppendProgress($"Error renaming or converting files: {ex.Message}");
-                    MessageBox.Show($"Error renaming or converting files:\nSource Path: {fullPath}\nDestination Path: {newFullPath}\nError: {ex.Message}",
+                    AppendProgress($"Error during operations: {ex.Message}");
+                    MessageBox.Show($"Error during operations:\nSource Path: {fullPath}\nDestination Path: {newFullPath}\nError: {ex.Message}",
                                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
@@ -135,7 +167,7 @@ namespace BG_Menu.Forms.Sub_Forms
 
                 if (folderName.Contains("Daily Backup"))
                 {
-                    return $"Daily Backup - {formattedDate}";
+                    return $"{formattedDate}";
                 }
                 else
                 {
@@ -151,56 +183,85 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             var wavFiles = Directory.GetFiles(folderPath, "*.wav");
 
-            if (wavFiles.Length == 0)
+            if (wavFiles.Length > 0)
             {
-                AppendProgress("No WAV files found in the folder.");
-                return;
-            }
+                int fileCount = 1;
 
-            int fileCount = 1;
-
-            foreach (var wavFile in wavFiles)
-            {
-                string mp3File = Path.ChangeExtension(wavFile, ".mp3");
-
-                try
+                foreach (var wavFile in wavFiles)
                 {
-                    // Update progress
-                    AppendProgress($"Converting file {fileCount}/{wavFiles.Length}: {Path.GetFileName(wavFile)}");
+                    string mp3File = Path.ChangeExtension(wavFile, ".mp3");
 
-                    using (var reader = new NAudio.Wave.AudioFileReader(wavFile))
-                    using (var writer = new NAudio.Lame.LameMP3FileWriter(mp3File, reader.WaveFormat, NAudio.Lame.LAMEPreset.VBR_90))
+                    try
                     {
-                        await Task.Run(() => reader.CopyTo(writer));
+                        // Update progress
+                        AppendProgress($"Converting file {fileCount}/{wavFiles.Length}: {Path.GetFileName(wavFile)}");
+
+                        using (var reader = new NAudio.Wave.AudioFileReader(wavFile))
+                        using (var writer = new NAudio.Lame.LameMP3FileWriter(mp3File, reader.WaveFormat, NAudio.Lame.LAMEPreset.VBR_90))
+                        {
+                            await Task.Run(() => reader.CopyTo(writer));
+                        }
+
+                        AppendProgress($"Completed: {Path.GetFileName(wavFile)}");
+                    }
+                    catch (Exception ex)
+                    {
+                        AppendProgress($"Error converting file: {wavFile}. Error: {ex.Message}");
                     }
 
-                    AppendProgress($"Completed: {Path.GetFileName(wavFile)}");
-                }
-                catch (Exception ex)
-                {
-                    AppendProgress($"Error converting file: {wavFile}. Error: {ex.Message}");
+                    fileCount++;
                 }
 
-                fileCount++;
+                AppendProgress("All files have been processed.");
             }
-
-            AppendProgress("All files have been processed.");
-
-            // Prompt to delete old .wav files
-            DialogResult result = MessageBox.Show(
-                "Do you want to delete the original WAV files?",
-                "Delete WAV Files",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question);
-
-            if (result == DialogResult.Yes)
+            else
             {
-                await DeleteWavFiles(wavFiles);
+                AppendProgress("No WAV files found in the folder.");
             }
         }
 
+        private void RenameMp3Files(string folderPath)
+        {
+            var mp3Files = Directory.GetFiles(folderPath, "*.mp3");
 
-        private async Task DeleteWavFiles(string[] wavFiles)
+            foreach (var file in mp3Files)
+            {
+                string fileName = Path.GetFileNameWithoutExtension(file);
+                string[] parts = fileName.Split('-');
+
+                if (parts.Length < 5) // Ensure the filename has enough parts
+                    continue;
+
+                try
+                {
+                    // Extract and format date and time
+                    string originalTimestamp = parts[0]; // First part is the timestamp
+                    DateTime timestamp = DateTime.ParseExact(originalTimestamp, "yyyyMMddHHmmss", null);
+                    string formattedTimestamp = timestamp.ToString("dd-MM-yyyy HH-mm");
+
+                    // Extract caller and callee numbers
+                    string caller = parts[2]; // Third part
+                    string callee = parts[3]; // Fourth part
+
+                    // Construct new filename
+                    string newFileName = $"{formattedTimestamp} ( {caller} - {callee} ).mp3";
+                    string newFilePath = Path.Combine(folderPath, newFileName);
+
+                    // Rename the file
+                    File.Move(file, newFilePath);
+                    AppendProgress($"Renamed: {fileName} -> {newFileName}");
+                }
+                catch (Exception ex)
+                {
+                    AppendProgress($"Error renaming file: {fileName}. Error: {ex.Message}");
+                }
+            }
+
+            AppendProgress("All MP3 files have been renamed.");
+        }
+
+
+        private async Task DeleteWavFilesAsync(string[] wavFiles)
         {
             await Task.Run(() =>
             {
@@ -230,6 +291,80 @@ namespace BG_Menu.Forms.Sub_Forms
             else
             {
                 progressTextBox.AppendText(message + Environment.NewLine);
+            }
+        }
+
+        private async Task ValidateCallsAsync(string folderPath, DateTime folderDate)
+        {
+            // Prompt the user to select the CSV file
+            OpenFileDialog openFileDialog = new OpenFileDialog
+            {
+                Filter = "CSV Files (*.csv)|*.csv",
+                Title = "Select CDR CSV File"
+            };
+
+            if (openFileDialog.ShowDialog() != DialogResult.OK) return;
+
+            string csvFilePath = openFileDialog.FileName;
+            string downloadsFolder = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile) + @"\Downloads";
+            string outputFilePath = Path.Combine(downloadsFolder, $"CDR Compare {folderDate:yyyy-MM-dd}.csv");
+
+            try
+            {
+                // Read the CSV file
+                var csvLines = await File.ReadAllLinesAsync(csvFilePath);
+                if (csvLines.Length == 0) throw new Exception("The CSV file is empty.");
+
+                // Extract "Recording File" column
+                var header = csvLines[0].Split(',');
+                int recordingFileIndex = Array.IndexOf(header, "Recording File");
+                if (recordingFileIndex == -1) throw new Exception("The CSV file does not contain a 'Recording File' column.");
+
+                var validRows = new List<string> { csvLines[0] }; // Add header
+                var csvFileNames = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                // Filter rows with valid "Recording File" and remove empty ones
+                for (int i = 1; i < csvLines.Length; i++)
+                {
+                    var columns = csvLines[i].Split(',');
+                    if (columns.Length > recordingFileIndex && !string.IsNullOrWhiteSpace(columns[recordingFileIndex]))
+                    {
+                        string recordingFile = columns[recordingFileIndex].Replace(".yswav", "").Trim();
+                        validRows.Add(csvLines[i]); // Add only valid rows to the list
+                        csvFileNames.Add(recordingFile);
+                    }
+                }
+
+                // Write filtered rows back to a new CSV for debugging (optional)
+                string filteredCsvPath = Path.Combine(downloadsFolder, $"Filtered_CDR_{folderDate:yyyy-MM-dd}.csv");
+                await File.WriteAllLinesAsync(filteredCsvPath, validRows);
+
+                // Compare with MP3 files
+                var mp3Files = Directory.GetFiles(folderPath, "*.mp3").Select(Path.GetFileNameWithoutExtension).ToHashSet(StringComparer.OrdinalIgnoreCase);
+                var missingFiles = csvFileNames.Except(mp3Files).ToList();
+
+                // Debug Logging
+                AppendProgress($"Total Files in CSV (After Filtering): {csvFileNames.Count}");
+                AppendProgress($"Total MP3 Files in Folder: {mp3Files.Count}");
+                AppendProgress($"Missing Files Count: {missingFiles.Count}");
+
+                // Write missing files to new CSV
+                if (missingFiles.Count > 0)
+                {
+                    var outputLines = new List<string> { "Missing Recording File" };
+                    outputLines.AddRange(missingFiles);
+                    await File.WriteAllLinesAsync(outputFilePath, outputLines);
+
+                    MessageBox.Show($"Comparison complete. Missing files saved to: {outputFilePath}", "Validation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("All files in the CSV were found in the folder.", "Validation Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error validating calls: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -290,7 +425,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private void InitializePingTimer()
         {
             pingTimer = new Timer();
-            pingTimer.Interval = 30 * 1000; // 30 seconds
+            pingTimer.Interval = 60 * 1000; // 30 seconds
             pingTimer.Tick += async (s, e) => await PingHostsAsync();
             pingTimer.Start();
         }
@@ -452,7 +587,7 @@ namespace BG_Menu.Forms.Sub_Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error retrieving data from database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                
             }
 
             return machineDataList;

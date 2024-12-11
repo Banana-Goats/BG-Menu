@@ -267,6 +267,12 @@ namespace BG_Menu.Forms.Sub_Forms
                     row.Cells["Dimension"].Value = "0102";    // Set Dimension to 0102                    
                 }
 
+                else if (baseDescription.Equals("Broadband Buyer", StringComparison.OrdinalIgnoreCase))
+                {
+                    row.Cells["GLAccount"].Value = "605065"; // IT Expense
+                    row.Cells["Dimension"].Value = "0102";    // Set Dimension to 0102                    
+                }
+
                 // Handle GL Account auto-population (based on GLAccount logic)
                 string glAccountValue = row.Cells["GLAccount"].Value?.ToString();
 
@@ -743,6 +749,10 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 return "CCL";
             }
+            else if (extractedText.Contains("broadbandbuyer", StringComparison.OrdinalIgnoreCase))
+            {
+                return "Broadband Buyer";
+            }
             else
             {
                 return "Unknown Supplier";
@@ -823,6 +833,15 @@ namespace BG_Menu.Forms.Sub_Forms
                     if (matchCclTotalIncVat.Success)
                     {
                         return matchCclTotalIncVat.Groups[1].Value; // Extracted total including VAT (e.g., "92.98")
+                    }
+                    break;
+
+                case "Broadband Buyer":
+                    // Updated regex pattern to match "Total £22.46" format
+                    var matchBBB = Regex.Match(extractedText, @"Sub Total\s*£\s*([0-9]*\.?[0-9]+)");
+                    if (matchBBB.Success)
+                    {
+                        return matchBBB.Groups[1].Value; // Extracted pre-VAT total (e.g., "22.46")
                     }
                     break;
 

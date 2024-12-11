@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Windows.Forms;
@@ -8,7 +9,7 @@ namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class PaymentDevicesApp : Form
     {
-        private string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+        string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
         private SqlDataAdapter dataAdapter;
         private DataTable dataTable;
         private string currentUsername;

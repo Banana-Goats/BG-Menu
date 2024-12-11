@@ -123,6 +123,9 @@ namespace BG_Menu
 
             if (pnlServiceTools.Visible == true)
                 pnlServiceTools.Visible = false;
+
+            if (pnlFinance.Visible == true)
+                pnlFinance.Visible = false;
         }
 
         private void ShowPanels(Panel subMenu)
@@ -140,29 +143,29 @@ namespace BG_Menu
 
         private void button1_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "DashBoard";
             LoadFormInPanel(new DashBoard());
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Credit Card Report";
             LoadFormInPanel(new Forms.Sub_Forms.CreditCard());
 
-        }        
+        }
 
         private void button6_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Emails";
             LoadFormInPanel(new Forms.Sub_Forms.EmailManager());
         }
 
         private void btnStoreManagement_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Network Manager";
             LoadFormInPanel(new Forms.Sub_Forms.NetworkManagerDisplay());
 
@@ -170,7 +173,7 @@ namespace BG_Menu
 
         private void btnSalesSummary_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Sales Summary";
 
             LoadFormInPanel(new Forms.Sales_Summary.SalesSummary());
@@ -178,14 +181,14 @@ namespace BG_Menu
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "File Server Manager";
             LoadFormInPanel(new Forms.Sub_Forms.FileClientForm());
         }
 
         private void btnAdminSettings_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Admin Settings";
 
             LoadFormInPanel(new Forms.Sub_Forms.UserManagement(firestoreDb));
@@ -193,62 +196,70 @@ namespace BG_Menu
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Settings";
             LoadFormInPanel(new Forms.Sub_Forms.UserSettings(currentUsername, firestoreDb));
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Computer Management";
             LoadFormInPanel(new Forms.Sub_Forms.HO_Computers());
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "User Management";
             LoadFormInPanel(new Forms.Sub_Forms.ActiveDirectory());
 
-        }        
+        }
 
         private void btnSalesSheets_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Sales Sheet Creator";
             LoadFormInPanel(new Forms.Sub_Forms.SalesSheets());
         }
 
         private void btnBudgetsExtract_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "Budgets Extractor";
             LoadFormInPanel(new Forms.Sub_Forms.BudgetsExtract());
         }
 
         private void btnFSM_Click(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "FSM Management";
             LoadFormInPanel(new Forms.Sub_Forms.FSMUsers());
         }
 
         private void button3_Click_2(object sender, EventArgs e)
         {
-            HidePanels();
+            
             Pagelbl.Text = "YeaStar PBX Custom Config Editor";
             LoadFormInPanel(new Forms.Sub_Forms.YeaStarConfig());
         }
 
         private void btnTools_Click(object sender, EventArgs e)
         {
+            HidePanels();
             ShowPanels(pnlServiceTools);
         }
 
         private void button3_Click(object sender, EventArgs e)
         {
+            HidePanels();
             ShowPanels(pnlActiveDirectory);
+        }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            HidePanels();
+            ShowPanels(pnlFinance);
         }
 
         private void paymentdevices_Click(object sender, EventArgs e)
@@ -367,14 +378,17 @@ namespace BG_Menu
             {
                 paymentdevices.Visible = true;
                 button1.Visible = true;
-                button2.Visible = true;
+                btnCreditcard.Visible = true;
                 btnActiveDirector.Visible = true;
+                HidePanels();
+                Pagelbl.Text = "DashBoard";
+                LoadFormInPanel(new DashBoard());
             }
             else
             {
                 paymentdevices.Visible = false;
                 button1.Visible = false;
-                button2.Visible = false;
+                btnCreditcard.Visible = false;
                 btnActiveDirector.Visible = false;
             }
 
@@ -385,6 +399,17 @@ namespace BG_Menu
             else
             {
                 paymentdevices.Visible = false;
+            }
+
+            if (userPermissions.Contains("Sales/Budgets"))
+            {
+                btnBudgetsExtract.Visible = true;
+                btnSalesSheets.Visible = true;
+            }
+            else
+            {
+                btnBudgetsExtract.Visible = false;
+                btnSalesSheets.Visible = false;
             }
 
             // Add more buttons and permission checks as needed
@@ -427,7 +452,5 @@ namespace BG_Menu
             // Store the reference to the current form
             currentForm = form;
         }        
-
-        
     }
 }

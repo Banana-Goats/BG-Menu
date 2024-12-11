@@ -14,6 +14,7 @@ using Timer = System.Threading.Timer;
 using Newtonsoft.Json;
 using System.Net.Http;
 using System.Data.SqlClient;
+using System.Configuration;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -242,8 +243,7 @@ namespace BG_Menu.Forms.Sub_Forms
             }
 
             try
-            {
-                // Assuming the data format is (MainData)|MachineName|WANIP|ISP|CPUInfo|RAMInfo|StorageInfo|WindowsOS|BuildNumber|SenderVersion|PendingUpdates|LatestSharepointFile
+            {                
                 string[] parts = data.Split('|');
                 if (parts.Length < 12)
                 {
@@ -660,7 +660,7 @@ namespace BG_Menu.Forms.Sub_Forms
         private async Task SendDataToSqlDatabase(string machineName, string location, string wanIp, string isp, string cpuInfo, string ramInfo, string storageInfo, string windowsOS, string buildNumber, string senderVersion, string pendingUpdates, DateTime? latestSharepointFile, DateTime dateTimeReceived)
         {
             // Replace with your actual connection string
-            string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
             string query = @"
         MERGE INTO MachineData AS target
@@ -711,7 +711,7 @@ namespace BG_Menu.Forms.Sub_Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error sending data to SQL database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
         }
 

@@ -2,6 +2,7 @@
 using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data;
 using System.Data.SqlClient;
 using System.Data.SQLite;
@@ -50,69 +51,34 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             return Task.Run(() =>
             {
-                var excludedRows = new HashSet<int> { 13, 14, 19, 20, 25, 26, 32, 33, 38, 39, 44, 45, 51, 52, 57, 58, 63, 64, 70, 71, 76, 77 }; // Dont Count These Cells, They Are Blank Or Calc Cells
+                var excludedRows = new HashSet<int> { 13, 14, 19, 20, 25, 26, 32, 33, 38, 39, 44, 45, 51, 52, 57, 58, 63, 64, 70, 71, 76, 77 }; // Cells to exclude
 
-                var dictionaries = new Dictionary<string, string>
+                // Fetch the dictionary from SQL instead of hardcoding
+                var dictionaries = new Dictionary<string, string>();
+
+                string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+                using (var connection = new SqlConnection(connectionString))
                 {
-                    // UK Stores
-                    {"Birkenhead", "Birkenhead"},
-                    {"Burton", "Burton"},
-                    {"Cheltenham", "Cheltenham"},
-                    {"Chester", "Chester"},
-                    {"Congleton", "Congleton"},
-                    {"Crewe", "Crewe"},
-                    {"Darlington", "Darlington"},
-                    {"Gloucester", "Gloucester"},
-                    {"Hanley", "Hanley"},
-                    {"Lincoln", "Lincoln"},
-                    {"Llandudno", "Llandudno"},
-                    {"Nantwich", "Nantwich"},
-                    {"Newark", "Newark"},
-                    {"Newport", "Newport"},
-                    {"Northwich", "Northwich"},
-                    {"Oswestry", "Oswestry"},
-                    {"Queensferry", "Queensferry"},
-                    {"Reading", "Reading"},
-                    {"Rhyl", "Rhyl"},
-                    {"Runcorn", "Runcorn"},
-                    {"Shrewsbury", "Shrewsbury"},
-                    {"Specialist", "Specialist"},
-                    {"Stafford", "Stafford"},
-                    {"Stairlift", "Stairlifts"},
-                    {"Stockport", "Stockport"},
-                    {"Stockton", "Stockton"},
-                    {"Thatcham", "Thatcham"},
-                    {"Wrexham", "Wrexham"},
-                    {"Engineering", "Engineering"},
-                    {"HO", "Dropship"},
+                    connection.Open();
+                    using (var command = new SqlCommand("SELECT ExcelTab, StoreName FROM Store_Mapping WHERE Budgets = 'Yes'", connection))
+                    {
+                        using (var reader = command.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                // Expecting ExcelTab and StoreName columns
+                                string excelTab = reader["ExcelTab"]?.ToString();
+                                string storeName = reader["StoreName"]?.ToString();
 
-                    // Franchsie Stores
-                    {"Blackpool", "Blackpool"},
-                    {"Bridgend", "Bridgend"},
-                    {"Broxburn", "Broxburn"},
-                    {"Cardiff", "Cardiff"},
-                    {"Christchurch", "Christchurch"},
-                    {"Colchester", "Colchester"},
-                    {"Hyde", "Hyde"},
-                    {"Leeds", "Leeds"},
-                    {"Newport_SW", "Newport Wales"},
-                    {"Paisley", "Paisley"},
-                    {"Salford", "Salford"},
-                    {"Southampton", "Southampton"},
-                    {"Southport", "Southport"},
-                    {"St_Helens", "St Helens"},
-                    {"Wavertree", "Wavertree"},
-                    {"Wigan", "Wigan"},
-
-                    // Franchsie Companies
-                    {"Broxburn_Total", "AMD"},
-                    {"Leeds_Total", "AWG"},
-                    {"Colchester_Total", "GRMR"},
-                    {"JSCD_Total", "JSCD"},
-                    {"Mob_GB_Total", "Mobility GB"},
-                    {"Paisley_Total", "SJLK"},
-                    {"SML_Total", "SML"}
-                };
+                                if (!string.IsNullOrEmpty(excelTab) && !string.IsNullOrEmpty(storeName))
+                                {
+                                    dictionaries[excelTab] = storeName;
+                                }
+                            }
+                        }
+                    }
+                }
 
                 // Initialize a list to hold the data temporarily
                 var dataToDisplay = new List<Tuple<string, int, double>>();
@@ -137,7 +103,7 @@ namespace BG_Menu.Forms.Sub_Forms
                         }
 
                         // Fetch the entire data range at once for better performance
-                        var data = worksheet.Cells[$"{cellRange}"].ToList();
+                        var data = worksheet.Cells[cellRange].ToList();
 
                         int weekNumber = 1;
                         for (int i = 0; i < data.Count; i++)

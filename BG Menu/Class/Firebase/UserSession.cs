@@ -69,7 +69,8 @@ public class UserSession
         "servicetools",
         "fileserver",
         "stocktake",
-        "mids/tids"
+        "mids/tids",
+        "Sales/Budgets"
         
         // Add more permissions here as needed
     };

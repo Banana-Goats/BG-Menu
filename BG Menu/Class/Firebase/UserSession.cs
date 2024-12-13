@@ -70,7 +70,8 @@ public class UserSession
         "fileserver",
         "stocktake",
         "mids/tids",
-        "Sales/Budgets"
+        "Sales/Budgets",
+        "Refunds"
         
         // Add more permissions here as needed
     };

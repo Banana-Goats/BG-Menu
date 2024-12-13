@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using Google.Cloud.Firestore;
 using Google.Cloud.Storage.V1;
 using BG_Menu.Class.Sales_Summary;
+using System.Configuration;
 
 namespace BG_Menu.Forms.Sales_Summary
 {
@@ -23,7 +24,9 @@ namespace BG_Menu.Forms.Sales_Summary
         private List<StoreSales> sales2021;
         private List<StoreSales> sales2020;
         private bool isComboBoxTriggeredSelection = false;
-        private string connectionString = "Server=10.100.230.6:30015;UserID=ELLIOTRENNER;Password=Drop-Local-Poet-Knife-5";
+
+        string connectionString = ConfigurationManager.ConnectionStrings["Hana"].ConnectionString;
+
         private ProgressCalculator progressCalculator;
 
         private readonly StorageClient _storageClient;

@@ -143,14 +143,14 @@ namespace BG_Menu
 
         private void button1_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "DashBoard";
             LoadFormInPanel(new DashBoard());
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Credit Card Report";
             LoadFormInPanel(new Forms.Sub_Forms.CreditCard());
 
@@ -158,14 +158,14 @@ namespace BG_Menu
 
         private void button6_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Emails";
             LoadFormInPanel(new Forms.Sub_Forms.EmailManager());
         }
 
         private void btnStoreManagement_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Network Manager";
             LoadFormInPanel(new Forms.Sub_Forms.NetworkManagerDisplay());
 
@@ -173,7 +173,7 @@ namespace BG_Menu
 
         private void btnSalesSummary_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Sales Summary";
 
             LoadFormInPanel(new Forms.Sales_Summary.SalesSummary());
@@ -181,14 +181,14 @@ namespace BG_Menu
 
         private void button3_Click_1(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "File Server Manager";
             LoadFormInPanel(new Forms.Sub_Forms.FileClientForm());
         }
 
         private void btnAdminSettings_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Admin Settings";
 
             LoadFormInPanel(new Forms.Sub_Forms.UserManagement(firestoreDb));
@@ -196,21 +196,21 @@ namespace BG_Menu
 
         private void btnSettings_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Settings";
             LoadFormInPanel(new Forms.Sub_Forms.UserSettings(currentUsername, firestoreDb));
         }
 
         private void button5_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Computer Management";
             LoadFormInPanel(new Forms.Sub_Forms.HO_Computers());
         }
 
         private void button4_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "User Management";
             LoadFormInPanel(new Forms.Sub_Forms.ActiveDirectory());
 
@@ -218,28 +218,28 @@ namespace BG_Menu
 
         private void btnSalesSheets_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Sales Sheet Creator";
             LoadFormInPanel(new Forms.Sub_Forms.SalesSheets());
         }
 
         private void btnBudgetsExtract_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "Budgets Extractor";
             LoadFormInPanel(new Forms.Sub_Forms.BudgetsExtract());
         }
 
         private void btnFSM_Click(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "FSM Management";
             LoadFormInPanel(new Forms.Sub_Forms.FSMUsers());
         }
 
         private void button3_Click_2(object sender, EventArgs e)
         {
-            
+
             Pagelbl.Text = "YeaStar PBX Custom Config Editor";
             LoadFormInPanel(new Forms.Sub_Forms.YeaStarConfig());
         }
@@ -266,6 +266,12 @@ namespace BG_Menu
         {
             PaymentDevicesApp paymentDevicesApp = new PaymentDevicesApp(currentUsername);
             paymentDevicesApp.Show();
+        }
+
+        private void btnRefunds_Click(object sender, EventArgs e)
+        {
+            Refunds Refunds = new Refunds();
+            Refunds.Show();
         }
 
         // Tray Buttons
@@ -412,6 +418,15 @@ namespace BG_Menu
                 btnSalesSheets.Visible = false;
             }
 
+            if (userPermissions.Contains("Refunds"))
+            {
+                btnRefunds.Visible = true;
+            }
+            else
+            {
+                btnRefunds.Visible = false;
+            }
+
             // Add more buttons and permission checks as needed
         }
 
@@ -451,6 +466,14 @@ namespace BG_Menu
 
             // Store the reference to the current form
             currentForm = form;
-        }        
+        }
+
+        private void pictureBox1_Click(object sender, EventArgs e)
+        {
+            Pagelbl.Text = "New Credit Card";
+            LoadFormInPanel(new Forms.Sub_Forms.NewCreditCard());
+        }
+
+        
     }
 }

@@ -576,16 +576,19 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private void button3_Click(object sender, EventArgs e)
         {
-            // Select the PDF file
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.Filter = "PDF files (*.pdf)|*.pdf|All files (*.*)|*.*";
-                openFileDialog.Title = "Select PDF file";
+                openFileDialog.Title = "Select PDF file(s)";
+                openFileDialog.Multiselect = true; // Allow multiple file selection
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    string selectedPdfFilePath = openFileDialog.FileName;
-                    ExtractDataFromPdfAndPopulate(selectedPdfFilePath);
+                    // Process each selected PDF file
+                    foreach (var selectedPdfFilePath in openFileDialog.FileNames)
+                    {
+                        ExtractDataFromPdfAndPopulate(selectedPdfFilePath);
+                    }
                 }
             }
         }
@@ -596,37 +599,39 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 string extractedText = ExtractTextFromPdf(filePath);
 
-                // Check the supplier based on specific phrases in the PDF text
+                // Detect supplier
                 string supplier = DetectSupplier(extractedText);
+                if (supplier == "Unknown Supplier")
+                {
+                    MessageBox.Show($"Could not identify a known supplier from the invoice: {Path.GetFileName(filePath)}. Skipping this file.");
+                    return;
+                }
 
-                // Extract the charges or total based on the supplier
-                string description = supplier;
+                // Extract total
                 string total = ExtractTotalFromPdf(extractedText, supplier);
-
-                if (!string.IsNullOrEmpty(total))
+                if (string.IsNullOrEmpty(total))
                 {
-                    // Ensure the description is unique before adding it to the DataGridView
-                    description = GetUniqueDescription(description);
-
-                    // Populate a new row in the DataGridView with the description and total
-                    int rowIndex = dataGridView1.Rows.Add(description, "", "", "", "", total, total);
-
-                    // Trigger the logic to apply for this row (auto-populate GLAccount, Dimension, VAT, etc.)
-                    ApplyLogicForRow(rowIndex);
-
-                    // After adding the row, copy the PDF file over to the destination folder
-                    CopyInvoicePdf(description, total, comboBoxFiles.SelectedItem.ToString(), filePath, rowIndex);
-
-                    SaveCurrentCsvFile();
+                    MessageBox.Show($"Unable to find the total value for supplier '{supplier}' in the PDF: {Path.GetFileName(filePath)}. Skipping this file.");
+                    return;
                 }
-                else
-                {
-                    MessageBox.Show($"Unable to find the total value for supplier '{supplier}' in the PDF.");
-                }
+
+                // Ensure the description is unique
+                string description = GetUniqueDescription(supplier);
+
+                // Add the row to the DataGridView
+                int rowIndex = dataGridView1.Rows.Add(description, "", "", "", "", total, total);
+
+                // Apply logic to the new row
+                ApplyLogicForRow(rowIndex);
+
+                // Attempt to copy the PDF and update the CSV
+                CopyInvoicePdf(description, total, comboBoxFiles.SelectedItem.ToString(), filePath, rowIndex);
+
+                SaveCurrentCsvFile();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error reading PDF: {ex.Message}");
+                MessageBox.Show($"Error reading or processing PDF '{Path.GetFileName(filePath)}': {ex.Message}. Skipping this file.");
             }
         }
 
@@ -812,11 +817,17 @@ namespace BG_Menu.Forms.Sub_Forms
                     break;
 
                 case "Amazon":
-                    // Updated regex pattern to match "Total £22.46" format
-                    var matchAmazon = Regex.Match(extractedText, @"Total\s*£\s*([0-9]*\.?[0-9]+)");
+                    // Updated regex pattern to match something like "Total £1,000.00" or "Total £22.46"
+                    var matchAmazon = Regex.Match(extractedText, @"Total\s*£\s*([0-9,]*\.?[0-9]+)");
                     if (matchAmazon.Success)
                     {
-                        return matchAmazon.Groups[1].Value; // Extracted pre-VAT total (e.g., "22.46")
+                        // Extract the matched total value
+                        string rawTotal = matchAmazon.Groups[1].Value;
+
+                        // Remove commas to handle thousands separators
+                        rawTotal = rawTotal.Replace(",", "");
+
+                        return rawTotal; // Now returns something like "1000.00" instead of "1"
                     }
                     break;
 

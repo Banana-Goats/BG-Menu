@@ -1,6 +1,7 @@
 ﻿using BG_Menu.Class.Design;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
@@ -11,7 +12,7 @@ namespace BG_Menu.Forms.Sub_Forms
     {
         private string currentUsername;
         private RoundedCorners roundedCorners;
-        private string connectionString = "Server=Bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+        string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
         private int? existingIndexID = null;
 
         // Fields to store original values for edit operations
@@ -46,6 +47,7 @@ namespace BG_Menu.Forms.Sub_Forms
             LoadExistingData();
             this.Text = "Edit Payment Device"; // Change form title to indicate edit mode
             btnDelete.Enabled = true; // Enable the Delete button in Edit mode
+            btnSave.Text = "Edit Data";
         }
 
         // Common initialization method
@@ -61,6 +63,7 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 this.Text = "Add New Payment Device"; // Change form title to indicate add mode
                 btnDelete.Enabled = false; // Disable the Delete button in Add mode
+                btnSave.Text = "Add Data";
             }
         }
 
@@ -73,21 +76,21 @@ namespace BG_Menu.Forms.Sub_Forms
                 {
                     connection.Open();
                     string query = @"
-                        SELECT 
-                            MerchantID,
-                            Merchant,
-                            TID,
-                            PTID,
-                            Device,
-                            SerialNumber,
-                            Company,
-                            AssignedUser,
-                            DepartmentStore,
-                            PCIDSSDate,
-                            PCIDSSVersion,
-                            PCIDSSPassword
-                        FROM PaymentDevices
-                        WHERE IndexID = @IndexID";
+                SELECT 
+                    MerchantID,
+                    Merchant,
+                    TID,
+                    PTID,
+                    Device,
+                    SerialNumber,
+                    Company,
+                    AssignedUser,
+                    DepartmentStore,
+                    PCIDSSDate,
+                    PCIDSSVersion,
+                    PCIDSSPassword
+                FROM PaymentDevices
+                WHERE IndexID = @IndexID";
 
                     using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
@@ -114,28 +117,41 @@ namespace BG_Menu.Forms.Sub_Forms
 
                                 txtPCIDSSVersion.Text = reader["PCIDSSVersion"].ToString();
                                 txtPCIDSSPassword.Text = reader["PCIDSSPassword"].ToString();
-
-                                // Store original values for comparison
-                                originalMerchantID = reader["MerchantID"].ToString();
-                                originalMerchant = reader["Merchant"].ToString();
-                                originalTID = reader["TID"] != DBNull.Value ? reader["TID"].ToString() : string.Empty;
-                                originalPTID = reader["PTID"].ToString();
-                                originalDevice = reader["Device"].ToString();
-                                originalSerialNumber = reader["SerialNumber"].ToString();
-                                originalCompany = reader["Company"].ToString();
-                                originalAssignedUser = reader["AssignedUser"].ToString();
-                                originalDepartmentStore = reader["DepartmentStore"].ToString();
-                                originalPCIDSSDate = reader["PCIDSSDate"] != DBNull.Value ? (DateTime?)Convert.ToDateTime(reader["PCIDSSDate"]) : null;
-                                originalPCIDSSVersion = reader["PCIDSSVersion"].ToString();
-                                originalPCIDSSPassword = reader["PCIDSSPassword"].ToString();
-
-                                // Enable the MerchantID textbox for editing
-                                txtMerchantID.Enabled = true;
                             }
                             else
                             {
                                 MessageBox.Show("Selected payment device not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 this.Close();
+                            }
+                        }
+                    }
+
+                    // Query the last change details from the PaymentDevicesAudit table
+                    string auditQuery = @"
+                            SELECT TOP 1
+                                ChangedBy,
+                                ChangeDate
+                            FROM PaymentDevicesAudit
+                            WHERE IndexID = @IndexID
+                            ORDER BY ChangeDate DESC";
+
+                    using (SqlCommand cmdAudit = new SqlCommand(auditQuery, connection))
+                    {
+                        cmdAudit.Parameters.AddWithValue("@IndexID", existingIndexID.Value);
+
+                        using (SqlDataReader auditReader = cmdAudit.ExecuteReader())
+                        {
+                            if (auditReader.Read())
+                            {
+                                txtChangedBy.Text = auditReader["ChangedBy"].ToString();
+                                txtChangeDate.Text = auditReader["ChangeDate"] != DBNull.Value
+                                    ? Convert.ToDateTime(auditReader["ChangeDate"]).ToString("dd/MM/yy HH:mm")
+                                    : "N/A";
+                            }
+                            else
+                            {
+                                txtChangedBy.Text = "N/A";
+                                txtChangeDate.Text = "N/A";
                             }
                         }
                     }
@@ -583,8 +599,11 @@ namespace BG_Menu.Forms.Sub_Forms
                     MessageBox.Show($"Error deleting payment device: {ex.Message}", "Deletion Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
-        }     
-        
-        
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
     }
 }

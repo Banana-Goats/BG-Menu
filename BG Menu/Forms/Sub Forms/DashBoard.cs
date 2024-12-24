@@ -5,8 +5,10 @@ using PdfSharp.Charting;
 using PdfSharp.Snippets;
 using System;
 using System.Collections.Generic;
+using System.Configuration;
 using System.Data.SqlClient;
 using System.Linq;
+using System.Management;
 using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -110,32 +112,11 @@ namespace BG_Menu.Forms.Sub_Forms
                     // Convert WAV files to MP3 in the renamed folder
                     await ConvertWavToMp3Async(newFullPath);
 
-                    // Prompt to delete old WAV files
+                    // Delete WAV files after conversion
                     var wavFiles = Directory.GetFiles(newFullPath, "*.wav");
                     if (wavFiles.Length > 0)
                     {
-                        DialogResult deleteResult = MessageBox.Show(
-                            "Do you want to delete the original WAV files?",
-                            "Delete WAV Files",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question);
-
-                        if (deleteResult == DialogResult.Yes)
-                        {
-                            await DeleteWavFilesAsync(wavFiles);
-                        }
-                    }
-
-                    // Prompt to validate calls
-                    DialogResult validateResult = MessageBox.Show(
-                        "Do you want to validate the calls by importing a CSV file?",
-                        "Validate Calls",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question);
-
-                    if (validateResult == DialogResult.Yes)
-                    {
-                        await ValidateCallsAsync(newFullPath, DateTime.Now);
+                        await DeleteWavFilesAsync(wavFiles);
                     }
 
                     // Rename MP3 files in the folder
@@ -143,6 +124,18 @@ namespace BG_Menu.Forms.Sub_Forms
 
                     // Refresh the DataGridView
                     LoadFolders();
+
+                    // Validation option temporarily removed:
+                    // DialogResult validateResult = MessageBox.Show(
+                    //     "Do you want to validate the calls by importing a CSV file?",
+                    //     "Validate Calls",
+                    //     MessageBoxButtons.YesNo,
+                    //     MessageBoxIcon.Question);
+
+                    // if (validateResult == DialogResult.Yes)
+                    // {
+                    //     await ValidateCallsAsync(newFullPath, DateTime.Now);
+                    // }
                 }
                 catch (Exception ex)
                 {
@@ -185,6 +178,7 @@ namespace BG_Menu.Forms.Sub_Forms
 
             if (wavFiles.Length > 0)
             {
+                AppendProgress("Converting WAV files to MP3...");
                 int fileCount = 1;
 
                 foreach (var wavFile in wavFiles)
@@ -193,26 +187,24 @@ namespace BG_Menu.Forms.Sub_Forms
 
                     try
                     {
-                        // Update progress
-                        AppendProgress($"Converting file {fileCount}/{wavFiles.Length}: {Path.GetFileName(wavFile)}");
+                        // Update progress without showing file names
+                        AppendProgress($"Converting file {fileCount}/{wavFiles.Length}...", overwrite: true);
 
                         using (var reader = new NAudio.Wave.AudioFileReader(wavFile))
                         using (var writer = new NAudio.Lame.LameMP3FileWriter(mp3File, reader.WaveFormat, NAudio.Lame.LAMEPreset.VBR_90))
                         {
                             await Task.Run(() => reader.CopyTo(writer));
                         }
-
-                        AppendProgress($"Completed: {Path.GetFileName(wavFile)}");
                     }
                     catch (Exception ex)
                     {
-                        AppendProgress($"Error converting file: {wavFile}. Error: {ex.Message}");
+                        AppendProgress($"Error converting file: {Path.GetFileName(wavFile)}. Error: {ex.Message}");
                     }
 
                     fileCount++;
                 }
 
-                AppendProgress("All files have been processed.");
+                AppendProgress("All WAV files have been converted to MP3.");
             }
             else
             {
@@ -224,74 +216,96 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             var mp3Files = Directory.GetFiles(folderPath, "*.mp3");
 
+            AppendProgress("Renaming MP3 files...");
+            int fileCount = 1;
+
             foreach (var file in mp3Files)
             {
                 string fileName = Path.GetFileNameWithoutExtension(file);
-                string[] parts = fileName.Split('-');
-
-                if (parts.Length < 5) // Ensure the filename has enough parts
-                    continue;
 
                 try
                 {
-                    // Extract and format date and time
-                    string originalTimestamp = parts[0]; // First part is the timestamp
+                    // Update progress without showing file names
+                    AppendProgress($"Renaming file {fileCount}/{mp3Files.Length}...", overwrite: true);
+
+                    string[] parts = fileName.Split('-');
+                    if (parts.Length < 5) continue;
+
+                    string originalTimestamp = parts[0];
                     DateTime timestamp = DateTime.ParseExact(originalTimestamp, "yyyyMMddHHmmss", null);
                     string formattedTimestamp = timestamp.ToString("dd-MM-yyyy HH-mm");
 
-                    // Extract caller and callee numbers
-                    string caller = parts[2]; // Third part
-                    string callee = parts[3]; // Fourth part
+                    string caller = parts[2];
+                    string callee = parts[3];
 
-                    // Construct new filename
                     string newFileName = $"{formattedTimestamp} ( {caller} - {callee} ).mp3";
                     string newFilePath = Path.Combine(folderPath, newFileName);
 
-                    // Rename the file
                     File.Move(file, newFilePath);
-                    AppendProgress($"Renamed: {fileName} -> {newFileName}");
                 }
                 catch (Exception ex)
                 {
                     AppendProgress($"Error renaming file: {fileName}. Error: {ex.Message}");
                 }
+
+                fileCount++;
             }
 
             AppendProgress("All MP3 files have been renamed.");
         }
 
-
         private async Task DeleteWavFilesAsync(string[] wavFiles)
         {
+            AppendProgress("Deleting WAV files...");
+
             await Task.Run(() =>
             {
+                int fileCount = 1;
                 foreach (var wavFile in wavFiles)
                 {
                     try
                     {
+                        // Update progress without showing file names
+                        AppendProgress($"Deleting file {fileCount}/{wavFiles.Length}...", overwrite: true);
+
                         File.Delete(wavFile);
-                        AppendProgress($"Deleted: {Path.GetFileName(wavFile)}");
                     }
                     catch (Exception ex)
                     {
-                        AppendProgress($"Error deleting file: {wavFile}. Error: {ex.Message}");
+                        AppendProgress($"Error deleting file: {Path.GetFileName(wavFile)}. Error: {ex.Message}");
                     }
+
+                    fileCount++;
                 }
             });
 
-            AppendProgress("All selected WAV files have been deleted.");
+            AppendProgress("All WAV files have been deleted.");
         }
 
-        private void AppendProgress(string message)
+        private void AppendProgress(string message, bool overwrite = false)
         {
             if (InvokeRequired)
             {
-                Invoke(new Action(() => progressTextBox.AppendText(message + Environment.NewLine)));
+                Invoke(new Action(() => AppendProgress(message, overwrite)));
+                return;
+            }
+
+            if (overwrite && progressTextBox.Lines.Length > 0)
+            {
+                // Overwrite the last line
+                var lines = progressTextBox.Lines.ToList();
+                lines[lines.Count - 1] = message;
+                progressTextBox.Lines = lines.ToArray();
             }
             else
             {
+                // Add a new line
                 progressTextBox.AppendText(message + Environment.NewLine);
             }
+
+            // Scroll to the bottom to ensure the user sees the latest update
+            progressTextBox.SelectionStart = progressTextBox.Text.Length;
+            progressTextBox.ScrollToCaret();
         }
 
         private async Task ValidateCallsAsync(string folderPath, DateTime folderDate)
@@ -374,20 +388,18 @@ namespace BG_Menu.Forms.Sub_Forms
         private void LoadHosts()
         {
             // Replace this with your actual data
-            hostList.Add(new HostData { Hostname = "Google", IPAddress = "8.8.8.8" });
-            hostList.Add(new HostData { Hostname = "DC01", IPAddress = "able-dc01" });
-            hostList.Add(new HostData { Hostname = "DC02", IPAddress = "able-dc02" });
-            hostList.Add(new HostData { Hostname = "FS01", IPAddress = "able-fs01" });
-            hostList.Add(new HostData { Hostname = "FS02", IPAddress = "able-fs02" });
-            hostList.Add(new HostData { Hostname = "FS03", IPAddress = "able-fs03" });
-            //hostList.Add(new HostData { Hostname = "REC01", IPAddress = "able-rec" });
-            hostList.Add(new HostData { Hostname = "Veeam01", IPAddress = "able-veeam01" });
-            hostList.Add(new HostData { Hostname = "Backup01", IPAddress = "able-backup01" });
-            hostList.Add(new HostData { Hostname = "Fortinet", IPAddress = "192.168.0.10" });
-            hostList.Add(new HostData { Hostname = "VM Host 1", IPAddress = "192.168.0.26" });
-            hostList.Add(new HostData { Hostname = "VM Host 2", IPAddress = "192.168.0.25" });
-            hostList.Add(new HostData { Hostname = "Server SQL", IPAddress = "ABLE-SERVER-SQL" });
-            hostList.Add(new HostData { Hostname = "Unifi Controller", IPAddress = "192.168.0.50" });
+            hostList.Add(new HostData { Hostname = "Google", IPAddress = "8.8.8.8", CheckUptime = false });
+            hostList.Add(new HostData { Hostname = "DC01", IPAddress = "able-dc01", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "DC02", IPAddress = "able-dc02", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "FS01", IPAddress = "able-fs01", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "FS02", IPAddress = "able-fs02", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "FS03", IPAddress = "able-fs03", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "Veeam01", IPAddress = "able-veeam01", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "Backup01", IPAddress = "able-backup01", CheckUptime = true });
+            hostList.Add(new HostData { Hostname = "Fortinet", IPAddress = "192.168.0.10", CheckUptime = false });
+            hostList.Add(new HostData { Hostname = "VM Host 1", IPAddress = "192.168.0.26", CheckUptime = false });
+            hostList.Add(new HostData { Hostname = "VM Host 2", IPAddress = "192.168.0.25", CheckUptime = false });
+            hostList.Add(new HostData { Hostname = "Server SQL", IPAddress = "ABLE-SERVER-SQL", CheckUptime = false });
 
             hostList.Add(new HostData
             {
@@ -396,12 +408,12 @@ namespace BG_Menu.Forms.Sub_Forms
                 IsSqlServer = true,
                 Username = "Elliot",
                 Password = "1234",
-                DatabaseName = "Ableworld"
+                DatabaseName = "Ableworld",
+                CheckUptime = false
             });
 
-            hostList.Add(new HostData { Hostname = "HANA Server", IPAddress = "10.100.230.6" });
-            hostList.Add(new HostData { Hostname = "FSM Server", IPAddress = "10.100.230.50" });
-
+            hostList.Add(new HostData { Hostname = "HANA Server", IPAddress = "10.100.230.6", CheckUptime = false });
+            hostList.Add(new HostData { Hostname = "FSM Server", IPAddress = "10.100.230.50", CheckUptime = false });
         }
 
         private async Task<bool> CheckSqlConnectionAsync(HostData host)
@@ -430,15 +442,49 @@ namespace BG_Menu.Forms.Sub_Forms
             pingTimer.Start();
         }
 
+        private string GetHostUptime(string ipAddress)
+        {
+            try
+            {
+                // Use WMI to query system uptime remotely
+                var scope = new ManagementScope($@"\\{ipAddress}\root\cimv2");
+                var query = new ObjectQuery("SELECT LastBootUpTime FROM Win32_OperatingSystem");
+                var searcher = new ManagementObjectSearcher(scope, query);
+
+                scope.Connect(); // Connect to the remote host
+
+                foreach (var obj in searcher.Get())
+                {
+                    var lastBootUpTime = ManagementDateTimeConverter.ToDateTime(obj["LastBootUpTime"].ToString());
+                    var uptime = DateTime.Now - lastBootUpTime;
+
+                    return $"{uptime.Days}d {uptime.Hours}h {uptime.Minutes}m";
+                }
+            }
+            catch (Exception ex)
+            {
+                // Handle cases where uptime cannot be retrieved
+                return "Unknown";
+            }
+
+            return "Unknown";
+        }
+
         private void PopulateDataGridView()
         {
             dataGridView1.DataSource = null;
             dataGridView1.DataSource = hostList;
 
-            // Ensure only one column is displayed for Hostname
+            // Clear and redefine columns
             dataGridView1.Columns.Clear();
+
+            // Host Name Column
             dataGridView1.Columns.Add("Hostname", "Host Name");
             dataGridView1.Columns["Hostname"].DataPropertyName = "Hostname";
+
+            // Uptime Column
+            dataGridView1.Columns.Add("Uptime", "Uptime");
+            dataGridView1.Columns["Uptime"].DataPropertyName = "Uptime";
 
             // Set DataGridView to be read-only and non-selectable
             dataGridView1.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
@@ -448,12 +494,12 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridView1.AllowUserToAddRows = false;
             dataGridView1.AllowUserToDeleteRows = false;
 
-            // Disable the selection
+            // Disable selection highlight
             dataGridView1.ClearSelection();
             dataGridView1.DefaultCellStyle.SelectionBackColor = dataGridView1.DefaultCellStyle.BackColor;
             dataGridView1.DefaultCellStyle.SelectionForeColor = dataGridView1.DefaultCellStyle.ForeColor;
 
-            // Handle selection changed to prevent selection
+            // Prevent row selection
             dataGridView1.SelectionChanged += (s, e) => dataGridView1.ClearSelection();
         }
 
@@ -463,16 +509,27 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 if (host.IsSqlServer)
                 {
-                    // Check SQL Server connection with specified database
+                    // Check SQL Server connection and set Uptime to N/A
                     host.IsOnline = await CheckSqlConnectionAsync(host);
+                    host.Uptime = "N/A";
                 }
                 else
                 {
                     // Ping the host
                     host.IsOnline = await PingHostAsync(host.IPAddress);
+
+                    // Check uptime only if CheckUptime is true
+                    if (host.CheckUptime && host.IsOnline)
+                    {
+                        host.Uptime = GetHostUptime(host.IPAddress);
+                    }
+                    else
+                    {
+                        host.Uptime = host.IsOnline ? "Online" : "Offline";
+                    }
                 }
 
-                // Update the row color immediately after the check
+                // Update the row color and Uptime immediately after the check
                 UpdateRowColor(host);
             }
         }
@@ -543,7 +600,7 @@ namespace BG_Menu.Forms.Sub_Forms
             var machineDataList = new List<MachineData>();
 
             // Replace with your actual SQL Server connection string
-            string connectionString = "Server=bananagoats.co.uk;Database=Ableworld;User Id=Elliot;Password=1234;";
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
             try
             {
@@ -712,8 +769,8 @@ namespace BG_Menu.Forms.Sub_Forms
             public string Username { get; set; } // SQL Server username
             public string Password { get; set; }
             public string DatabaseName { get; set; }
+            public string Uptime { get; set; } // Store uptime or "N/A"
+            public bool CheckUptime { get; set; } // Indicates whether to check uptime
         }
-
-        
     }
 }

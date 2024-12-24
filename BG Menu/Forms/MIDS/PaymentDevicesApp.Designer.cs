@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             panel1 = new Panel();
+            button1 = new Button();
             button3 = new Button();
             button2 = new Button();
             txtSearch = new TextBox();
@@ -40,6 +41,7 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(button1);
             panel1.Controls.Add(button3);
             panel1.Controls.Add(button2);
             panel1.Controls.Add(txtSearch);
@@ -49,6 +51,29 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(800, 43);
             panel1.TabIndex = 0;
+            // 
+            // button1
+            // 
+            button1.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button1.BackgroundImageLayout = ImageLayout.Zoom;
+            button1.Dock = DockStyle.Right;
+            button1.FlatAppearance.BorderSize = 0;
+            button1.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button1.FlatStyle = FlatStyle.Flat;
+            button1.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button1.ForeColor = Color.FromArgb(158, 161, 176);
+            button1.Image = Properties.Resources.Push;
+            button1.ImageAlign = ContentAlignment.MiddleLeft;
+            button1.Location = new Point(681, 0);
+            button1.Margin = new Padding(2);
+            button1.Name = "button1";
+            button1.RightToLeft = RightToLeft.No;
+            button1.Size = new Size(119, 43);
+            button1.TabIndex = 11;
+            button1.Text = "PCI DSS";
+            button1.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += btnUniqueMerchants_Click;
             // 
             // button3
             // 
@@ -166,5 +191,6 @@
         private TextBox txtSearch;
         private Button button2;
         private Button button3;
+        private Button button1;
     }
 }

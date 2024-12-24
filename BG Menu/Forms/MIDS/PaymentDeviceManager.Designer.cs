@@ -54,6 +54,9 @@
             label11 = new Label();
             label12 = new Label();
             btnDelete = new Button();
+            txtChangedBy = new TextBox();
+            txtChangeDate = new TextBox();
+            button1 = new Button();
             SuspendLayout();
             // 
             // txtMerchantID
@@ -137,9 +140,9 @@
             // 
             // btnSave
             // 
-            btnSave.Location = new Point(59, 408);
+            btnSave.Location = new Point(85, 380);
             btnSave.Name = "btnSave";
-            btnSave.Size = new Size(110, 30);
+            btnSave.Size = new Size(93, 30);
             btnSave.TabIndex = 12;
             btnSave.Text = "Add Record";
             btnSave.UseVisualStyleBackColor = true;
@@ -275,20 +278,49 @@
             // 
             // btnDelete
             // 
-            btnDelete.Location = new Point(269, 408);
+            btnDelete.Location = new Point(187, 380);
             btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(110, 30);
+            btnDelete.Size = new Size(93, 30);
             btnDelete.TabIndex = 26;
             btnDelete.Text = "Delete Record";
             btnDelete.UseVisualStyleBackColor = true;
             btnDelete.Click += btnDelete_Click;
+            // 
+            // txtChangedBy
+            // 
+            txtChangedBy.Location = new Point(50, 416);
+            txtChangedBy.Name = "txtChangedBy";
+            txtChangedBy.ReadOnly = true;
+            txtChangedBy.Size = new Size(161, 23);
+            txtChangedBy.TabIndex = 27;
+            // 
+            // txtChangeDate
+            // 
+            txtChangeDate.Location = new Point(218, 416);
+            txtChangeDate.Name = "txtChangeDate";
+            txtChangeDate.ReadOnly = true;
+            txtChangeDate.Size = new Size(161, 23);
+            txtChangeDate.TabIndex = 28;
+            // 
+            // button1
+            // 
+            button1.Location = new Point(286, 380);
+            button1.Name = "button1";
+            button1.Size = new Size(93, 30);
+            button1.TabIndex = 29;
+            button1.Text = "Close";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // PaymentDeviceManager
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(46, 51, 73);
-            ClientSize = new Size(428, 469);
+            ClientSize = new Size(428, 479);
+            Controls.Add(button1);
+            Controls.Add(txtChangeDate);
+            Controls.Add(txtChangedBy);
             Controls.Add(btnDelete);
             Controls.Add(label7);
             Controls.Add(label8);
@@ -350,5 +382,8 @@
         private Label label11;
         private Label label12;
         private Button btnDelete;
+        private TextBox txtChangedBy;
+        private TextBox txtChangeDate;
+        private Button button1;
     }
 }

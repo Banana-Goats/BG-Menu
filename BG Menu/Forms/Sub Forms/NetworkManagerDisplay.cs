@@ -308,7 +308,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 ApplyRowFilter(); // Apply the filter after updating data
 
                 _ = SendDataToSqlDatabase(machineName, machine.Location, wanIp, isp, cpuInfo, ramInfo, storageInfo, windowsOS, buildNumber, senderVersion, pendingUpdates, latestSharepointFile, dateTimeReceived);
-
+                _ = InsertOrUpdateDeviceConfig(machineName, machine.Location);
             }
             catch (Exception ex)
             {
@@ -655,7 +655,55 @@ namespace BG_Menu.Forms.Sub_Forms
                 }
             }
         }
-        
+
+        private async Task InsertOrUpdateDeviceConfig(string machineName, string location)
+        {
+            // Replace with your actual connection string
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+            string query = @"
+                MERGE INTO DeviceConfig AS target
+                USING (SELECT @MachineName AS Machine) AS source
+                ON target.Machine = source.Machine
+                WHEN NOT MATCHED THEN
+                    INSERT (Machine, Location)
+                    VALUES (@MachineName, @Location);";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlCommand command = new SqlCommand(query, connection))
+                {
+                    // Add parameters
+                    command.Parameters.AddWithValue("@MachineName", machineName);
+                    command.Parameters.AddWithValue("@Location", location ?? (object)DBNull.Value);
+
+                    // Open the connection and execute the query
+                    connection.Open();
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+            catch (SqlException ex)
+            {
+                // SQL-specific errors
+                Console.WriteLine($"SQL error occurred: {ex.Message}");
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Invalid operations (e.g., connection issues)
+                Console.WriteLine($"Invalid operation: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                // General fallback for unexpected errors
+                Console.WriteLine($"An unexpected error occurred: {ex.Message}");
+            }
+            finally
+            {
+                // Ensure any cleanup if needed
+                Console.WriteLine("Attempted to update DeviceConfig.");
+            }
+        }
 
         private async Task SendDataToSqlDatabase(string machineName, string location, string wanIp, string isp, string cpuInfo, string ramInfo, string storageInfo, string windowsOS, string buildNumber, string senderVersion, string pendingUpdates, DateTime? latestSharepointFile, DateTime dateTimeReceived)
         {

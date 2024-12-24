@@ -92,6 +92,7 @@
             ComboDepartment.Name = "ComboDepartment";
             ComboDepartment.Size = new Size(121, 23);
             ComboDepartment.TabIndex = 1;
+            ComboDepartment.Text = "IT";
             // 
             // btnLoad
             // 

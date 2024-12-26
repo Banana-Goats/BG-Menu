@@ -71,6 +71,8 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private async void dataGridView2_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+            progressTextBox.Clear();
+
             // Check if the clicked cell is the button column
             if (e.ColumnIndex == 1) // Assuming the button is in the second column
             {

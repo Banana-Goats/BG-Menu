@@ -37,6 +37,9 @@ namespace BG_Menu.Forms.Sub_Forms
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
             tableLayoutPanel1 = new TableLayoutPanel();
             dataGridViewFaults = new DataGridView();
+            machineNameColumn = new DataGridViewTextBoxColumn();
+            locationColumn = new DataGridViewTextBoxColumn();
+            faultColumn = new DataGridViewTextBoxColumn();
             dataGridView1 = new DataGridView();
             splitContainer2 = new SplitContainer();
             splitContainer1 = new SplitContainer();
@@ -44,9 +47,6 @@ namespace BG_Menu.Forms.Sub_Forms
             Folder = new DataGridViewTextBoxColumn();
             Process = new DataGridViewButtonColumn();
             progressTextBox = new TextBox();
-            machineNameColumn = new DataGridViewTextBoxColumn();
-            locationColumn = new DataGridViewTextBoxColumn();
-            faultColumn = new DataGridViewTextBoxColumn();
             tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
@@ -120,6 +120,38 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridViewFaults.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
             dataGridViewFaults.Size = new Size(414, 298);
             dataGridViewFaults.TabIndex = 3;
+            // 
+            // machineNameColumn
+            // 
+            machineNameColumn.DataPropertyName = "MachineName";
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.BackColor = Color.FromArgb(46, 51, 73);
+            machineNameColumn.DefaultCellStyle = dataGridViewCellStyle2;
+            machineNameColumn.FillWeight = 68.527916F;
+            machineNameColumn.HeaderText = "Machine Name";
+            machineNameColumn.MinimumWidth = 45;
+            machineNameColumn.Name = "machineNameColumn";
+            machineNameColumn.ReadOnly = true;
+            // 
+            // locationColumn
+            // 
+            locationColumn.DataPropertyName = "Location";
+            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            locationColumn.DefaultCellStyle = dataGridViewCellStyle3;
+            locationColumn.FillWeight = 73.84829F;
+            locationColumn.HeaderText = "Location";
+            locationColumn.MinimumWidth = 60;
+            locationColumn.Name = "locationColumn";
+            locationColumn.ReadOnly = true;
+            // 
+            // faultColumn
+            // 
+            faultColumn.DataPropertyName = "Fault";
+            faultColumn.FillWeight = 157.6238F;
+            faultColumn.HeaderText = "Fault";
+            faultColumn.MinimumWidth = 92;
+            faultColumn.Name = "faultColumn";
+            faultColumn.ReadOnly = true;
             // 
             // dataGridView1
             // 
@@ -212,38 +244,6 @@ namespace BG_Menu.Forms.Sub_Forms
             progressTextBox.Name = "progressTextBox";
             progressTextBox.Size = new Size(199, 164);
             progressTextBox.TabIndex = 0;
-            // 
-            // machineNameColumn
-            // 
-            machineNameColumn.DataPropertyName = "MachineName";
-            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle2.BackColor = Color.FromArgb(46, 51, 73);
-            machineNameColumn.DefaultCellStyle = dataGridViewCellStyle2;
-            machineNameColumn.FillWeight = 68.527916F;
-            machineNameColumn.HeaderText = "Machine Name";
-            machineNameColumn.MinimumWidth = 45;
-            machineNameColumn.Name = "machineNameColumn";
-            machineNameColumn.ReadOnly = true;
-            // 
-            // locationColumn
-            // 
-            locationColumn.DataPropertyName = "Location";
-            dataGridViewCellStyle3.Alignment = DataGridViewContentAlignment.MiddleCenter;
-            locationColumn.DefaultCellStyle = dataGridViewCellStyle3;
-            locationColumn.FillWeight = 73.84829F;
-            locationColumn.HeaderText = "Location";
-            locationColumn.MinimumWidth = 60;
-            locationColumn.Name = "locationColumn";
-            locationColumn.ReadOnly = true;
-            // 
-            // faultColumn
-            // 
-            faultColumn.DataPropertyName = "Fault";
-            faultColumn.FillWeight = 157.6238F;
-            faultColumn.HeaderText = "Fault";
-            faultColumn.MinimumWidth = 92;
-            faultColumn.Name = "faultColumn";
-            faultColumn.ReadOnly = true;
             // 
             // DashBoard
             // 

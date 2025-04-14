@@ -2,9 +2,10 @@ using System;
 using System.Drawing;
 using System.Windows.Forms;
 using BG_Menu.Class.Design;
+using BG_Menu.Forms.Sales_Summary;
 using BG_Menu.Forms.Sub_Forms;
 using Google.Cloud.Firestore;
-using Google.Cloud.Storage.V1;
+
 
 
 namespace BG_Menu
@@ -18,7 +19,6 @@ namespace BG_Menu
         private TrayMinimizer trayMinimizer;
         private List<string> userPermissions;
         private FirestoreDb firestoreDb;
-        private UdpListener udpListener;
 
         public Main(string username, List<string> permissions, string rank, FirestoreDb db)
         {
@@ -45,9 +45,9 @@ namespace BG_Menu
             userPermissions = permissions;
             firestoreDb = db;
 
-            SetButtonVisibility();
-            InitialiseFirebaseStorage();
+            btnSalesSummary.MouseUp += btnSalesSummary_MouseUp;
 
+            SetButtonVisibility();
         }
 
         #region Overrides
@@ -67,52 +67,7 @@ namespace BG_Menu
 
         #endregion
 
-        #region Firebase Storage
-        private void InitialiseFirebaseStorage()
-        {
-            // Initialize the Firebase Storage client
-            var firebaseStorageClient = StorageClient.Create();
-            var firebaseStorage = new FirebaseStorage(firebaseStorageClient);
 
-            // Initiate the download
-            InitiateDownload(firebaseStorage);
-        }
-
-        private async void InitiateDownload(FirebaseStorage firebaseStorage)
-        {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string appDirectory = Path.Combine(appDataPath, "BudgetsReport");
-            string filePath = Path.Combine(appDirectory, "Targets.db");
-
-            // Check if the file exists, and delete it if it does
-            if (File.Exists(filePath))
-            {
-                try
-                {
-                    File.Delete(filePath);
-                    Console.WriteLine("Existing file deleted: " + filePath);
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Failed to delete the existing file: " + ex.Message);
-                    return;
-                }
-            }
-
-            // Proceed with downloading the file
-            string downloadedFilePath = await firebaseStorage.DownloadBudgetsAsync();
-
-            if (downloadedFilePath != null)
-            {
-                Console.WriteLine("File Downloaded : " + downloadedFilePath);
-            }
-            else
-            {
-                MessageBox.Show("Download failed.");
-            }
-        }
-
-        #endregion
 
         #region Button Events
 
@@ -152,7 +107,7 @@ namespace BG_Menu
         {
 
             Pagelbl.Text = "Credit Card Report";
-            LoadFormInPanel(new Forms.Sub_Forms.CreditCard());
+            LoadFormInPanel(new Forms.Sub_Forms.NewCreditCard());
 
         }
 
@@ -177,6 +132,23 @@ namespace BG_Menu
             Pagelbl.Text = "Sales Summary";
 
             LoadFormInPanel(new Forms.Sales_Summary.SalesSummary());
+        }
+
+        private void btnSalesSummary_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                // Open SalesSummary in a new window and mark it as such.
+                SalesSummary salesSummaryNew = new SalesSummary();
+                salesSummaryNew.OpenedInNewWindow = true;
+                salesSummaryNew.Show();
+            }
+            else if (e.Button == MouseButtons.Left)
+            {
+                // Original left-click behavior (loads form in the panel)
+                Pagelbl.Text = "Sales Summary";
+                LoadFormInPanel(new SalesSummary());
+            }
         }
 
         private void button3_Click_1(object sender, EventArgs e)
@@ -299,9 +271,6 @@ namespace BG_Menu
                 Login loginForm = new Login();
                 loginForm.Show();
 
-                // Stop UDP Listener if it's running
-                udpListener?.StopListening();
-
                 // Close the Main form
                 this.Close();
             }
@@ -320,10 +289,7 @@ namespace BG_Menu
 
         #endregion
 
-        private void StartUdpListener()
-        {
-            udpListener = new UdpListener(this);
-        }
+
 
         // Permissions
 
@@ -333,8 +299,6 @@ namespace BG_Menu
             if (userPermissions.Contains("admin"))
             {
                 btnAdminSettings.Visible = true;
-
-
             }
             else
             {
@@ -427,6 +391,15 @@ namespace BG_Menu
                 btnRefunds.Visible = false;
             }
 
+            if (userPermissions.Contains("Report"))
+            {
+                LoadFormInPanel(new Display());
+            }
+            else
+            {
+                
+            }
+
             // Add more buttons and permission checks as needed
         }
 
@@ -468,12 +441,10 @@ namespace BG_Menu
             currentForm = form;
         }
 
-        private void pictureBox1_Click(object sender, EventArgs e)
+        private void button2_Click_1(object sender, EventArgs e)
         {
-            Pagelbl.Text = "New Credit Card";
-            LoadFormInPanel(new Forms.Sub_Forms.NewCreditCard());
+            Pagelbl.Text = "VAT Data Export";
+            LoadFormInPanel(new VATData());
         }
-
-        
     }
 }

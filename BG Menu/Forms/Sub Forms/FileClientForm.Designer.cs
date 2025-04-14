@@ -33,6 +33,7 @@
             listViewFiles = new ListView();
             button2 = new Button();
             panel1 = new Panel();
+            button7 = new Button();
             button5 = new Button();
             button6 = new Button();
             button4 = new Button();
@@ -95,6 +96,7 @@
             // panel1
             // 
             panel1.BackColor = Color.FromArgb(46, 51, 73);
+            panel1.Controls.Add(button7);
             panel1.Controls.Add(button5);
             panel1.Controls.Add(button6);
             panel1.Controls.Add(button4);
@@ -106,6 +108,21 @@
             panel1.Name = "panel1";
             panel1.Size = new Size(1332, 35);
             panel1.TabIndex = 5;
+            // 
+            // button7
+            // 
+            button7.BackColor = Color.FromArgb(46, 51, 73);
+            button7.Dock = DockStyle.Right;
+            button7.FlatStyle = FlatStyle.Flat;
+            button7.Font = new Font("Segoe UI", 11.25F, FontStyle.Bold);
+            button7.ForeColor = SystemColors.Control;
+            button7.Location = new Point(1206, 0);
+            button7.Name = "button7";
+            button7.Size = new Size(126, 35);
+            button7.TabIndex = 9;
+            button7.Text = "Push Updates";
+            button7.UseVisualStyleBackColor = false;
+            button7.Click += button7_Click;
             // 
             // button5
             // 
@@ -191,5 +208,6 @@
         private Button button4;
         private Button button5;
         private Button button6;
+        private Button button7;
     }
 }

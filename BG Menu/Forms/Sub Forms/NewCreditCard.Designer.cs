@@ -35,12 +35,14 @@
             ComboDepartment = new ComboBox();
             btnLoad = new Button();
             dataGridView1 = new DataGridView();
+            button1 = new Button();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // panel1
             // 
+            panel1.Controls.Add(button1);
             panel1.Controls.Add(btnUpdate);
             panel1.Controls.Add(btnImport);
             panel1.Controls.Add(ComboMonth);
@@ -118,6 +120,16 @@
             dataGridView1.Size = new Size(945, 504);
             dataGridView1.TabIndex = 1;
             // 
+            // button1
+            // 
+            button1.Dock = DockStyle.Left;
+            button1.Location = new Point(467, 0);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 5;
+            button1.Text = "Combine";
+            button1.UseVisualStyleBackColor = true;
+            // 
             // NewCreditCard
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -141,5 +153,6 @@
         private ComboBox ComboDepartment;
         private DataGridView dataGridView1;
         private Button btnUpdate;
+        private Button button1;
     }
 }

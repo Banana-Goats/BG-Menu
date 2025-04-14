@@ -202,17 +202,8 @@ namespace BG_Menu.Class.Sales_Summary
              new StoreInfo { StoreName = "Franchise Total", StoreNames = new[] { "AWG", "AMD", "GRMR", "JSCD", "Mobility GB", "SJLK", "SML"} },
              new StoreInfo { StoreName = "Company Total", StoreNames = new[] { "UK", "Franchise Total"} },
 
-
-             new StoreInfo { StoreName = "North A", StoreNames = new[] { "AMD", "Darlington", "Hyde", "Lincoln", "Newark", "Northwich", "SJLK", "Queensferry", "Southport", "St Helens", "Stockton" } },
-             new StoreInfo { StoreName = "North B", StoreNames = new[] { "Birkenhead", "Blackpool", "Chester", "AWG", "Llandudno", "Rhyl", "Runcorn", "Salford", "Stockport", "Wavertree", "Wigan" } },
-
-             new StoreInfo { StoreName = "South A", StoreNames = new[] { "Burton", "SML", "GRMR", "Congleton", "Crewe", "Hanley", "Shrewsbury", "Stafford" } },
-             new StoreInfo { StoreName = "South B", StoreNames = new[] { "Gloucester", "Nantwich", "Newport", "JSCD", "Oswestry", "Reading", "Thatcham", "Wrexham" } },
-
-             new StoreInfo { StoreName = "North Region", StoreNames = new[] { "AMD", "Darlington", "Lincoln", "Newark", "Northwich", "SJLK", "Queensferry", "Stockton",
-                                                                              "Birkenhead", "Chester", "AWG", "Llandudno", "Rhyl", "Runcorn", "Stockport", "Mobility GB" } },
-
-             new StoreInfo { StoreName = "South Region", StoreNames = new[] { "South A", "South B" } },
+             new StoreInfo { StoreName = "North Region", StoreNames = new[] { "AMD", "Darlington", "Lincoln", "Newark", "Northwich", "SJLK", "Queensferry", "Stockton", "Birkenhead", "Chester", "AWG", "Llandudno", "Rhyl", "Runcorn", "Stockport", "Mobility GB" } },
+             new StoreInfo { StoreName = "South Region", StoreNames = new[] { "Burton", "SML", "GRMR", "Congleton", "Crewe", "Hanley", "Shrewsbury", "Stafford", "Gloucester", "Nantwich", "Newport", "JSCD", "Oswestry", "Reading", "Thatcham", "Wrexham" , "Cheltenham" } },
 
             };
         }

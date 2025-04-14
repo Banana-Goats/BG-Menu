@@ -2,10 +2,12 @@
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Configuration;
+
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -18,13 +20,13 @@ namespace BG_Menu.Forms.Sub_Forms
         private ConcurrentQueue<Func<Task>> updateQueue = new ConcurrentQueue<Func<Task>>();
         private bool isProcessingQueue = false;
 
-        private string connectionString = string.Empty;
+        string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
         private PopupForm popupForm; // Keep a reference to the popup form
 
         public UserManagement(FirestoreDb db)
         {
-            InitializeComponent();            
+            InitializeComponent();
 
             firestoreDb = db;
 
@@ -521,26 +523,10 @@ namespace BG_Menu.Forms.Sub_Forms
 
         #endregion
 
-        private void btnSetLogin_Click(object sender, EventArgs e)
-        {
-            using (SQLLogin loginForm = new SQLLogin())
-            {
-                if (loginForm.ShowDialog() == DialogResult.OK)
-                {
-                    // Construct connection string using login info
-                    connectionString = $"Server=bananagoats.co.uk;Database=Ableworld;User Id={loginForm.Username};Password={loginForm.Password};";
-                    MessageBox.Show("Login details saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-            }
-        }
+        
 
         private void BtnExecute_Click(object sender, EventArgs e)
-        {
-            if (string.IsNullOrEmpty(connectionString))
-            {
-                MessageBox.Show("Please set the login credentials first.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
+        {           
 
             string query = txtQuery1.Text;
 
@@ -590,6 +576,201 @@ namespace BG_Menu.Forms.Sub_Forms
             catch (Exception ex)
             {
                 MessageBox.Show($"Error executing query: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            // Retrieve the connection string from Web.config/App.config
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+            // SQL to find the highest Client_Version from TBPC table
+            string highestVersionSql = @"
+            ;WITH VersionParts AS (
+        SELECT 
+            Client_Version,
+            TRY_CAST(PARSENAME(Client_Version, 3) AS INT) AS Major,
+            TRY_CAST(PARSENAME(Client_Version, 2) AS INT) AS Minor,
+            TRY_CAST(PARSENAME(Client_Version, 1) AS INT) AS Patch
+        FROM TBPC
+    )
+    SELECT TOP 1 Client_Version
+    FROM VersionParts
+    ORDER BY Major DESC, Minor DESC, Patch DESC;";
+
+            // SQL to count how many machines are not on the highest version
+            string countMachinesSql = @"
+        SELECT COUNT(*) 
+        FROM Computers AS c
+        INNER JOIN TBPC AS t
+            ON c.MachineName = t.Name
+        WHERE t.Client_Version <> @HighestVersion";
+
+            // SQL to update machines not on the highest version
+            string updateSql = @"
+        UPDATE c
+        SET c.AppUpdate = 'Yes'
+        FROM Computers AS c
+        INNER JOIN TBPC AS t
+            ON c.MachineName = t.Name
+        WHERE t.Client_Version <> @HighestVersion";
+
+            try
+            {
+                using (SqlConnection conn = new SqlConnection(connectionString))
+                {
+                    conn.Open();
+
+                    // Step 1: Get the highest version
+                    string highestVersion;
+                    using (SqlCommand cmd = new SqlCommand(highestVersionSql, conn))
+                    {
+                        object result = cmd.ExecuteScalar();
+                        if (result != null)
+                        {
+                            highestVersion = result.ToString();
+                        }
+                        else
+                        {
+                            MessageBox.Show("Could not determine the highest version.");
+                            return;
+                        }
+                    }
+
+                    // Step 2: Count machines not on the highest version
+                    int countNotOnLatest;
+                    using (SqlCommand cmd = new SqlCommand(countMachinesSql, conn))
+                    {
+                        cmd.Parameters.AddWithValue("@HighestVersion", highestVersion);
+                        object result = cmd.ExecuteScalar();
+                        countNotOnLatest = result != null ? Convert.ToInt32(result) : 0;
+                    }
+
+                    // Step 3: Inform the user and ask for confirmation
+                    string message = $"The latest version is {highestVersion}.\n" +
+                                     $"{countNotOnLatest} machine(s) are not on this version.\n" +
+                                     $"Do you want to set AppUpdate to 'Yes' for these machines?";
+                    DialogResult dialogResult = MessageBox.Show(message, "Confirm Update", MessageBoxButtons.YesNo);
+
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        // Step 4: Perform the update if confirmed
+                        using (SqlCommand cmd = new SqlCommand(updateSql, conn))
+                        {
+                            cmd.Parameters.AddWithValue("@HighestVersion", highestVersion);
+                            int rowsAffected = cmd.ExecuteNonQuery();
+                            MessageBox.Show($"Update executed. Rows affected: {rowsAffected}");
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show("Operation cancelled by the user.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ideally log the exception or show an error message
+                MessageBox.Show("An error occurred: " + ex.Message);
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            // Retrieve the connection string from Web.config/App.config
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+            // Define your SQL update command
+            string query = @"
+            SELECT 
+            Name,
+            Store,
+            Commsversion,
+            TillVersion
+
+            FROM 
+            TBPC
+
+            WHERE 
+            Name LIKE '%ABL%'
+        ";
+
+            // Execute the update statement
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        SqlDataAdapter adapter = new SqlDataAdapter(command);
+                        DataTable dataTable = new DataTable();
+
+                        connection.Open(); // Open the connection
+                        adapter.Fill(dataTable); // Fill the DataTable with query results
+
+                        if (dataTable.Rows.Count > 0)
+                        {
+                            // Check if the popup form is already open
+                            if (popupForm == null || popupForm.IsDisposed)
+                            {
+                                // Create and show a new popup form
+                                popupForm = new PopupForm();
+                                popupForm.SetData(dataTable); // Pass the DataTable to the popup form
+                                popupForm.Show();
+                            }
+                            else
+                            {
+                                // Update the existing popup form's data
+                                popupForm.SetData(dataTable);
+                                popupForm.BringToFront(); // Bring the popup to the front
+                            }
+                        }
+                        else
+                        {
+                            MessageBox.Show("Query executed successfully, but no data was returned.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error executing query: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            // 1. Retrieve the connection string from your config
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+            // 2. Define the SQL update command
+            string query = "UPDATE Computers SET TillUpdater = 'Yes' WHERE MachineName LIKE '%ABL%'";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    using (SqlCommand command = new SqlCommand(query, connection))
+                    {
+                        // 3. Execute the update statement
+                        int rowsAffected = command.ExecuteNonQuery();
+
+                        // 4. Inform the user how many rows were updated
+                        MessageBox.Show($"Update successful! Rows affected: {rowsAffected}",
+                            "Update",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Information);
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                // Ideally, log the exception. Showing as a message for demonstration.
+                MessageBox.Show($"Error executing update: {ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
         }
     }

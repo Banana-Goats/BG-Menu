@@ -5,12 +5,13 @@ using System.Data;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using BG_Menu.Data;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class Refunds : Form
     {
-        string connectionString = ConfigurationManager.ConnectionStrings["Hana"].ConnectionString;
+        private SalesRepository salesRepository = new SalesRepository();
         private DataTable dataTable;
 
         public Refunds()
@@ -49,54 +50,48 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private void ExecuteAndDisplayQuery(string query)
         {
-            using (HanaConnection connection = new HanaConnection(connectionString))
+            try
             {
-                try
+                // Delegate query execution to the repository
+                dataTable = salesRepository.ExecuteHanaQuery(query);
+
+                // Rename columns for better readability
+                dataTable.Columns["DocEntry"].ColumnName = "Document Entry";
+                dataTable.Columns["DocDate"].ColumnName = "Document Date";
+                dataTable.Columns["WhsName"].ColumnName = "Warehouse Name";
+                dataTable.Columns["CardCode"].ColumnName = "Customer Code";
+                dataTable.Columns["CardName"].ColumnName = "Customer Name";
+                dataTable.Columns["ItemCode"].ColumnName = "Item Code";
+                dataTable.Columns["Dscription"].ColumnName = "Description";
+                dataTable.Columns["LineTotal"].ColumnName = "Line Total";
+                dataTable.Columns["SlpName"].ColumnName = "Salesperson";
+
+                // Bind the data to the DataGridView
+                dataGridViewResults.DataSource = dataTable;
+
+                // Format the Line Total column
+                if (dataGridViewResults.Columns["Line Total"] != null)
                 {
-                    connection.Open();
-
-                    HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
-                    dataTable = new DataTable();
-                    adapter.Fill(dataTable);
-
-                    // Rename columns for better readability
-                    dataTable.Columns["DocEntry"].ColumnName = "Document Entry";
-                    dataTable.Columns["DocDate"].ColumnName = "Document Date";
-                    dataTable.Columns["WhsName"].ColumnName = "Warehouse Name";
-                    dataTable.Columns["CardCode"].ColumnName = "Customer Code";
-                    dataTable.Columns["CardName"].ColumnName = "Customer Name";
-                    dataTable.Columns["ItemCode"].ColumnName = "Item Code";
-                    dataTable.Columns["Dscription"].ColumnName = "Description";
-                    dataTable.Columns["LineTotal"].ColumnName = "Line Total";
-                    dataTable.Columns["SlpName"].ColumnName = "Salesperson";
-
-                    // Bind the data to the DataGridView
-                    dataGridViewResults.DataSource = dataTable;
-
-                    // Format the Line Total column in the DataGridView
-                    if (dataGridViewResults.Columns["Line Total"] != null)
-                    {
-                        var lineTotalColumn = dataGridViewResults.Columns["Line Total"];
-                        lineTotalColumn.DefaultCellStyle.Format = "C2"; // Currency format with £ and 2 decimal places
-                        lineTotalColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                    }
-
-                    // Center align headers and cells for all columns
-                    foreach (DataGridViewColumn column in dataGridViewResults.Columns)
-                    {
-                        column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                        column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
-                    }
-
-                    // Set auto-size mode for better column visibility
-                    dataGridViewResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
-
-                    MessageBox.Show("Query executed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    var lineTotalColumn = dataGridViewResults.Columns["Line Total"];
+                    lineTotalColumn.DefaultCellStyle.Format = "C2";
+                    lineTotalColumn.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 }
-                catch (Exception ex)
+
+                // Center align headers and cells
+                foreach (DataGridViewColumn column in dataGridViewResults.Columns)
                 {
-                    MessageBox.Show($"An error occurred: {ex.Message}\n\n{ex.StackTrace}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    column.HeaderCell.Style.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                    column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
                 }
+
+                // Auto-size columns
+                dataGridViewResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
+                MessageBox.Show("Query executed successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"An error occurred: {ex.Message}\n\n{ex.StackTrace}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -111,60 +106,60 @@ namespace BG_Menu.Forms.Sub_Forms
 
             // Warehouse mapping based on the provided data
             var warehouseMapping = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
-    {
-        { "Ableworld Birkenhead", "Birkenhead" },
-        { "Birkenhead Off-Line", "Birkenhead" },
-        { "Ableworld Burton", "Burton" },
-        { "Burton Off-Line", "Burton" },
-        { "Ableworld Chester", "Chester" },
-        { "Chester Off-Line", "Chester" },
-        { "Ableworld Congleton", "Congleton" },
-        { "Congleton Off-Line", "Congleton" },
-        { "Ableworld Cheltenham", "Cheltenham" },
-        { "Cheltenham Off-Line", "Cheltenham" },
-        { "Ableworld Crewe", "Crewe" },
-        { "Crewe Off-Line", "Crewe" },
-        { "Ableworld Darlington", "Darlington" },
-        { "Darlington Offline", "Darlington" },
-        { "Ableworld Gloucester", "Gloucester" },
-        { "Gloucester Offline", "Gloucester" },
-        { "Ableworld Hanley", "Hanley" },
-        { "Hanley Off-Line", "Hanley" },
-        { "Ableworld Lincoln", "Lincoln" },
-        { "Lincoln Offline", "Lincoln" },
-        { "Ableworld Llandudno", "Llandudno" },
-        { "Llandudno Off-Line", "Llandudno" },
-        { "Ableworld Nantwich", "Nantwich" },
-        { "Nantwich Off-Line", "Nantwich" },
-        { "Ableworld Newark", "Newark" },
-        { "Newark Offline", "Newark" },
-        { "Ableworld Newport", "Newport" },
-        { "Newport Off-Line", "Newport" },
-        { "Ableworld Northwich", "Northwich" },
-        { "Northwich Off-Line", "Northwich" },
-        { "Ableworld Oswestry", "Oswestry" },
-        { "Oswestry Off-Line", "Oswestry" },
-        { "Ableworld Queensferry", "Queensferry" },
-        { "Queensferry Off-line", "Queensferry" },
-        { "Ableworld Reading", "Reading" },
-        { "Reading Offline", "Reading" },
-        { "Ableworld Rhyl", "Rhyl" },
-        { "Rhyl Off-Line", "Rhyl" },
-        { "Ableworld Runcorn", "Runcorn" },
-        { "Runcorn Offline", "Runcorn" },
-        { "Ableworld Shrewsbury", "Shrewsbury" },
-        { "Shrewsbury Off-Line", "Shrewsbury" },
-        { "Ableworld Stafford", "Stafford" },
-        { "Stafford Off-Line", "Stafford" },
-        { "Ableworld Stockport", "Stockport" },
-        { "Stockport Off-Line", "Stockport" },
-        { "Ableworld Stockton", "Stockton" },
-        { "Stockton Offline", "Stockton" },
-        { "Ableworld Thatcham", "Thatcham" },
-        { "Thatcham Off-Line", "Thatcham" },
-        { "Ableworld Wrexham", "Wrexham" },
-        { "Wrexham Off-Line", "Wrexham" }
-    };
+                {
+                    { "Ableworld Birkenhead", "Birkenhead" },
+                    { "Birkenhead Off-Line", "Birkenhead" },
+                    { "Ableworld Burton", "Burton" },
+                    { "Burton Off-Line", "Burton" },
+                    { "Ableworld Chester", "Chester" },
+                    { "Chester Off-Line", "Chester" },
+                    { "Ableworld Congleton", "Congleton" },
+                    { "Congleton Off-Line", "Congleton" },
+                    { "Ableworld Cheltenham", "Cheltenham" },
+                    { "Cheltenham Off-Line", "Cheltenham" },
+                    { "Ableworld Crewe", "Crewe" },
+                    { "Crewe Off-Line", "Crewe" },
+                    { "Ableworld Darlington", "Darlington" },
+                    { "Darlington Offline", "Darlington" },
+                    { "Ableworld Gloucester", "Gloucester" },
+                    { "Gloucester Offline", "Gloucester" },
+                    { "Ableworld Hanley", "Hanley" },
+                    { "Hanley Off-Line", "Hanley" },
+                    { "Ableworld Lincoln", "Lincoln" },
+                    { "Lincoln Offline", "Lincoln" },
+                    { "Ableworld Llandudno", "Llandudno" },
+                    { "Llandudno Off-Line", "Llandudno" },
+                    { "Ableworld Nantwich", "Nantwich" },
+                    { "Nantwich Off-Line", "Nantwich" },
+                    { "Ableworld Newark", "Newark" },
+                    { "Newark Offline", "Newark" },
+                    { "Ableworld Newport", "Newport" },
+                    { "Newport Off-Line", "Newport" },
+                    { "Ableworld Northwich", "Northwich" },
+                    { "Northwich Off-Line", "Northwich" },
+                    { "Ableworld Oswestry", "Oswestry" },
+                    { "Oswestry Off-Line", "Oswestry" },
+                    { "Ableworld Queensferry", "Queensferry" },
+                    { "Queensferry Off-line", "Queensferry" },
+                    { "Ableworld Reading", "Reading" },
+                    { "Reading Offline", "Reading" },
+                    { "Ableworld Rhyl", "Rhyl" },
+                    { "Rhyl Off-Line", "Rhyl" },
+                    { "Ableworld Runcorn", "Runcorn" },
+                    { "Runcorn Offline", "Runcorn" },
+                    { "Ableworld Shrewsbury", "Shrewsbury" },
+                    { "Shrewsbury Off-Line", "Shrewsbury" },
+                    { "Ableworld Stafford", "Stafford" },
+                    { "Stafford Off-Line", "Stafford" },
+                    { "Ableworld Stockport", "Stockport" },
+                    { "Stockport Off-Line", "Stockport" },
+                    { "Ableworld Stockton", "Stockton" },
+                    { "Stockton Offline", "Stockton" },
+                    { "Ableworld Thatcham", "Thatcham" },
+                    { "Thatcham Off-Line", "Thatcham" },
+                    { "Ableworld Wrexham", "Wrexham" },
+                    { "Wrexham Off-Line", "Wrexham" }
+                };
 
             // Group by consolidated warehouse names
             var warehouseTotals = from row in dataTable.AsEnumerable()

@@ -40,19 +40,6 @@ namespace BG_Menu.Class.Design
             notifyIcon.DoubleClick += RestoreFromTray;
         }
 
-        public void MinimizeToTray()
-        {
-            // Hide the form and show the NotifyIcon
-            form.Hide();
-            notifyIcon.Visible = true;
-
-            // Show a balloon tip to notify the user
-            notifyIcon.BalloonTipIcon = ToolTipIcon.Info;
-            notifyIcon.BalloonTipTitle = "Application Minimized";
-            notifyIcon.BalloonTipText = "The application has been minimized to the system tray.";
-            notifyIcon.ShowBalloonTip(3000); // Show the balloon tip for 3 seconds
-        }
-
         private void RestoreFromTray(object sender, EventArgs e)
         {
             // Restore the form and hide the NotifyIcon

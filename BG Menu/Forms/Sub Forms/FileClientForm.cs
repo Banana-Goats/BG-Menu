@@ -478,5 +478,11 @@ namespace BG_Menu.Forms.Sub_Forms
                 MessageBox.Show($"Error refreshing folder view: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+
+        private void button7_Click(object sender, EventArgs e)
+        {
+            Updater form = new Updater();
+            form.ShowDialog();
+        }
     }
 }

@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace BG_Menu.Models
+namespace BG_Menu.Class.Functions
 {
     /// <summary>
     /// Represents a supplier with its associated properties.

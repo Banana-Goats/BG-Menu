@@ -41,6 +41,8 @@
             label1 = new Label();
             hoVpnStatusLabel = new Label();
             sapVpnStatusLabel = new Label();
+            networkTestListView = new ListView();
+            button1 = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)pictureBox3).BeginInit();
@@ -51,9 +53,9 @@
             loginButton.BackColor = Color.FromArgb(46, 51, 73);
             loginButton.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold);
             loginButton.ForeColor = SystemColors.Control;
-            loginButton.Location = new Point(53, 477);
+            loginButton.Location = new Point(56, 430);
             loginButton.Name = "loginButton";
-            loginButton.Size = new Size(166, 52);
+            loginButton.Size = new Size(108, 52);
             loginButton.TabIndex = 0;
             loginButton.Text = "Login";
             loginButton.UseVisualStyleBackColor = false;
@@ -65,7 +67,7 @@
             usernameTextBox.BorderStyle = BorderStyle.None;
             usernameTextBox.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold);
             usernameTextBox.ForeColor = SystemColors.Info;
-            usernameTextBox.Location = new Point(99, 360);
+            usernameTextBox.Location = new Point(102, 313);
             usernameTextBox.Name = "usernameTextBox";
             usernameTextBox.Size = new Size(296, 28);
             usernameTextBox.TabIndex = 1;
@@ -76,7 +78,7 @@
             passwordTextBox.BorderStyle = BorderStyle.None;
             passwordTextBox.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold);
             passwordTextBox.ForeColor = SystemColors.Info;
-            passwordTextBox.Location = new Point(99, 415);
+            passwordTextBox.Location = new Point(102, 368);
             passwordTextBox.Name = "passwordTextBox";
             passwordTextBox.Size = new Size(263, 28);
             passwordTextBox.TabIndex = 2;
@@ -87,9 +89,9 @@
             SetPasswordButton.BackColor = Color.FromArgb(46, 51, 73);
             SetPasswordButton.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold);
             SetPasswordButton.ForeColor = SystemColors.Control;
-            SetPasswordButton.Location = new Point(229, 477);
+            SetPasswordButton.Location = new Point(290, 430);
             SetPasswordButton.Name = "SetPasswordButton";
-            SetPasswordButton.Size = new Size(166, 52);
+            SetPasswordButton.Size = new Size(108, 52);
             SetPasswordButton.TabIndex = 3;
             SetPasswordButton.Text = "Exit";
             SetPasswordButton.UseVisualStyleBackColor = false;
@@ -98,7 +100,7 @@
             // pictureBox2
             // 
             pictureBox2.Image = Properties.Resources.Password;
-            pictureBox2.Location = new Point(53, 408);
+            pictureBox2.Location = new Point(56, 361);
             pictureBox2.Name = "pictureBox2";
             pictureBox2.Size = new Size(40, 40);
             pictureBox2.SizeMode = PictureBoxSizeMode.Zoom;
@@ -108,7 +110,7 @@
             // pictureBox1
             // 
             pictureBox1.Image = Properties.Resources.User;
-            pictureBox1.Location = new Point(53, 353);
+            pictureBox1.Location = new Point(56, 306);
             pictureBox1.Name = "pictureBox1";
             pictureBox1.Size = new Size(40, 40);
             pictureBox1.SizeMode = PictureBoxSizeMode.Zoom;
@@ -118,7 +120,7 @@
             // panel3
             // 
             panel3.BackColor = Color.White;
-            panel3.Location = new Point(99, 391);
+            panel3.Location = new Point(102, 344);
             panel3.Name = "panel3";
             panel3.Size = new Size(296, 1);
             panel3.TabIndex = 13;
@@ -126,7 +128,7 @@
             // panel1
             // 
             panel1.BackColor = Color.White;
-            panel1.Location = new Point(99, 447);
+            panel1.Location = new Point(102, 400);
             panel1.Name = "panel1";
             panel1.Size = new Size(296, 1);
             panel1.TabIndex = 14;
@@ -134,7 +136,7 @@
             // pictureBox3
             // 
             pictureBox3.Image = Properties.Resources.Eye;
-            pictureBox3.Location = new Point(367, 415);
+            pictureBox3.Location = new Point(370, 368);
             pictureBox3.Name = "pictureBox3";
             pictureBox3.Size = new Size(28, 28);
             pictureBox3.SizeMode = PictureBoxSizeMode.Zoom;
@@ -145,41 +147,71 @@
             // 
             label1.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             label1.ForeColor = SystemColors.ControlLightLight;
-            label1.Location = new Point(12, 551);
+            label1.Location = new Point(56, 496);
             label1.Name = "label1";
-            label1.Size = new Size(434, 37);
+            label1.Size = new Size(342, 37);
             label1.TabIndex = 16;
-            label1.Text = "Version : 2.7.5";
+            label1.Text = "Version : 2.9.3";
             label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // hoVpnStatusLabel
             // 
+            hoVpnStatusLabel.BorderStyle = BorderStyle.FixedSingle;
             hoVpnStatusLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             hoVpnStatusLabel.ForeColor = Color.FromArgb(46, 51, 73);
-            hoVpnStatusLabel.Location = new Point(11, 18);
+            hoVpnStatusLabel.Location = new Point(56, 252);
             hoVpnStatusLabel.Name = "hoVpnStatusLabel";
-            hoVpnStatusLabel.Size = new Size(434, 34);
+            hoVpnStatusLabel.Size = new Size(160, 34);
             hoVpnStatusLabel.TabIndex = 17;
             hoVpnStatusLabel.Text = "label2";
             hoVpnStatusLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // sapVpnStatusLabel
             // 
+            sapVpnStatusLabel.BorderStyle = BorderStyle.FixedSingle;
             sapVpnStatusLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             sapVpnStatusLabel.ForeColor = Color.FromArgb(46, 51, 73);
-            sapVpnStatusLabel.Location = new Point(11, 52);
+            sapVpnStatusLabel.Location = new Point(238, 252);
             sapVpnStatusLabel.Name = "sapVpnStatusLabel";
-            sapVpnStatusLabel.Size = new Size(434, 34);
+            sapVpnStatusLabel.Size = new Size(160, 34);
             sapVpnStatusLabel.TabIndex = 18;
             sapVpnStatusLabel.Text = "label2";
             sapVpnStatusLabel.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // networkTestListView
+            // 
+            networkTestListView.BackColor = Color.FromArgb(46, 51, 73);
+            networkTestListView.BorderStyle = BorderStyle.None;
+            networkTestListView.Font = new Font("Segoe UI", 9.25F, FontStyle.Bold);
+            networkTestListView.Location = new Point(56, 33);
+            networkTestListView.MultiSelect = false;
+            networkTestListView.Name = "networkTestListView";
+            networkTestListView.Size = new Size(342, 184);
+            networkTestListView.TabIndex = 19;
+            networkTestListView.UseCompatibleStateImageBehavior = false;
+            networkTestListView.View = View.List;
+            // 
+            // button1
+            // 
+            button1.BackColor = Color.FromArgb(46, 51, 73);
+            button1.Font = new Font("Segoe UI", 10.25F, FontStyle.Bold);
+            button1.ForeColor = SystemColors.Control;
+            button1.Location = new Point(173, 430);
+            button1.Name = "button1";
+            button1.Size = new Size(108, 52);
+            button1.TabIndex = 20;
+            button1.Text = "Network Test";
+            button1.UseVisualStyleBackColor = false;
+            button1.Click += button1_Click;
             // 
             // Login
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(46, 51, 73);
-            ClientSize = new Size(458, 611);
+            ClientSize = new Size(458, 566);
+            Controls.Add(button1);
+            Controls.Add(networkTestListView);
             Controls.Add(sapVpnStatusLabel);
             Controls.Add(hoVpnStatusLabel);
             Controls.Add(label1);
@@ -218,5 +250,7 @@
         private Label label1;
         private Label hoVpnStatusLabel;
         private Label sapVpnStatusLabel;
+        private ListView networkTestListView;
+        private Button button1;
     }
 }

@@ -26,6 +26,13 @@ namespace BG_Menu
                 return;
             }
 
+            string hanaClientPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "HANA_Client_Dlls");
+            string currentPath = Environment.GetEnvironmentVariable("PATH");
+            Environment.SetEnvironmentVariable("PATH", $"{hanaClientPath};{currentPath}");
+
+            //string hanaClientPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "HANA_Client_Dlls");
+            //Environment.SetEnvironmentVariable("PATH", hanaClientPath + ";" + Environment.GetEnvironmentVariable("PATH"));
+
             // Set the current working directory to the directory where the executable is located
             string appDirectory = Path.GetDirectoryName(Application.ExecutablePath);
             Directory.SetCurrentDirectory(appDirectory);

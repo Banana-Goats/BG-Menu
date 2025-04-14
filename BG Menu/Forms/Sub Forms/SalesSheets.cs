@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -46,7 +46,7 @@ namespace BG_Menu.Forms.Sub_Forms
         public SalesSheets()
         {
             InitializeComponent();
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial; // Required by EPPlus
+            ExcelPackage.License.SetNonCommercialOrganization("Ableworld");
             InitializeDataGridView();
         }
 

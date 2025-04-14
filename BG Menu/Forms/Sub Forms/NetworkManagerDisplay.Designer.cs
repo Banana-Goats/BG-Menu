@@ -29,6 +29,8 @@
         private void InitializeComponent()
         {
             panel1 = new Panel();
+            checkBoxTest = new CheckBox();
+            checkBoxStairlifts = new CheckBox();
             checkBoxLaptop = new CheckBox();
             checkBoxTablet = new CheckBox();
             checkBoxTill = new CheckBox();
@@ -41,6 +43,8 @@
             // 
             // panel1
             // 
+            panel1.Controls.Add(checkBoxTest);
+            panel1.Controls.Add(checkBoxStairlifts);
             panel1.Controls.Add(checkBoxLaptop);
             panel1.Controls.Add(checkBoxTablet);
             panel1.Controls.Add(checkBoxTill);
@@ -51,15 +55,47 @@
             panel1.Size = new Size(989, 40);
             panel1.TabIndex = 0;
             // 
+            // checkBoxTest
+            // 
+            checkBoxTest.AutoSize = true;
+            checkBoxTest.CheckAlign = ContentAlignment.BottomCenter;
+            checkBoxTest.Dock = DockStyle.Left;
+            checkBoxTest.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Bold);
+            checkBoxTest.ForeColor = Color.White;
+            checkBoxTest.Location = new Point(408, 0);
+            checkBoxTest.MinimumSize = new Size(100, 0);
+            checkBoxTest.Name = "checkBoxTest";
+            checkBoxTest.RightToLeft = RightToLeft.No;
+            checkBoxTest.Size = new Size(100, 40);
+            checkBoxTest.TabIndex = 19;
+            checkBoxTest.Text = "Test";
+            checkBoxTest.TextAlign = ContentAlignment.MiddleCenter;
+            checkBoxTest.UseVisualStyleBackColor = true;
+            // 
+            // checkBoxStairlifts
+            // 
+            checkBoxStairlifts.AutoSize = true;
+            checkBoxStairlifts.CheckAlign = ContentAlignment.BottomCenter;
+            checkBoxStairlifts.Dock = DockStyle.Left;
+            checkBoxStairlifts.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Bold);
+            checkBoxStairlifts.ForeColor = Color.White;
+            checkBoxStairlifts.Location = new Point(308, 0);
+            checkBoxStairlifts.MinimumSize = new Size(100, 0);
+            checkBoxStairlifts.Name = "checkBoxStairlifts";
+            checkBoxStairlifts.RightToLeft = RightToLeft.No;
+            checkBoxStairlifts.Size = new Size(100, 40);
+            checkBoxStairlifts.TabIndex = 18;
+            checkBoxStairlifts.Text = "Stairlifts";
+            checkBoxStairlifts.TextAlign = ContentAlignment.MiddleCenter;
+            checkBoxStairlifts.UseVisualStyleBackColor = true;
+            // 
             // checkBoxLaptop
             // 
             checkBoxLaptop.AutoSize = true;
             checkBoxLaptop.CheckAlign = ContentAlignment.BottomCenter;
-            checkBoxLaptop.Checked = true;
-            checkBoxLaptop.CheckState = CheckState.Checked;
             checkBoxLaptop.Dock = DockStyle.Left;
             checkBoxLaptop.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Bold);
-            checkBoxLaptop.ForeColor = Color.Black;
+            checkBoxLaptop.ForeColor = Color.White;
             checkBoxLaptop.Location = new Point(208, 0);
             checkBoxLaptop.MinimumSize = new Size(100, 0);
             checkBoxLaptop.Name = "checkBoxLaptop";
@@ -74,11 +110,9 @@
             // 
             checkBoxTablet.AutoSize = true;
             checkBoxTablet.CheckAlign = ContentAlignment.BottomCenter;
-            checkBoxTablet.Checked = true;
-            checkBoxTablet.CheckState = CheckState.Checked;
             checkBoxTablet.Dock = DockStyle.Left;
             checkBoxTablet.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Bold);
-            checkBoxTablet.ForeColor = Color.Black;
+            checkBoxTablet.ForeColor = Color.White;
             checkBoxTablet.Location = new Point(100, 0);
             checkBoxTablet.MinimumSize = new Size(100, 0);
             checkBoxTablet.Name = "checkBoxTablet";
@@ -97,7 +131,7 @@
             checkBoxTill.CheckState = CheckState.Checked;
             checkBoxTill.Dock = DockStyle.Left;
             checkBoxTill.Font = new Font("Microsoft Sans Serif", 11.25F, FontStyle.Bold);
-            checkBoxTill.ForeColor = Color.Black;
+            checkBoxTill.ForeColor = Color.White;
             checkBoxTill.Location = new Point(0, 0);
             checkBoxTill.MinimumSize = new Size(100, 0);
             checkBoxTill.Name = "checkBoxTill";
@@ -132,6 +166,7 @@
             dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             dataGridView1.Dock = DockStyle.Fill;
             dataGridView1.Location = new Point(0, 40);
+            dataGridView1.MultiSelect = false;
             dataGridView1.Name = "dataGridView1";
             dataGridView1.ReadOnly = true;
             dataGridView1.RowHeadersVisible = false;
@@ -174,5 +209,7 @@
         private CheckBox checkBoxLaptop;
         private CheckBox checkBoxTablet;
         private CheckBox checkBoxTill;
+        private CheckBox checkBoxStairlifts;
+        private CheckBox checkBoxTest;
     }
 }

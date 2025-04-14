@@ -6,7 +6,7 @@ using System.Windows.Forms;
 using System.DirectoryServices.AccountManagement;
 using System.Data;
 using System.Diagnostics;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Configuration;
 
 namespace BG_Menu.Forms.Sub_Forms
@@ -223,7 +223,18 @@ namespace BG_Menu.Forms.Sub_Forms
                             MessageBox.Show($"Password for {user.SamAccountName} has been changed successfully.", "Password Changed", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
-                    UpdatePasswordInDatabase(_selectedUser.SamAccountName, newPassword, Department);
+
+                    DialogResult dialogResult = MessageBox.Show(
+                    "Would you like to save this new password to the database?",
+                    "Save to Database",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question);
+
+                    if (dialogResult == DialogResult.Yes)
+                    {
+                        UpdatePasswordInDatabase(_selectedUser.SamAccountName, newPassword, Department);
+                    }
+
                 }
                 catch (Exception ex)
                 {

@@ -1,6 +1,6 @@
 ﻿using System;
 using System.Data;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -22,15 +22,15 @@ namespace BG_Menu.Forms.MIDS
 
         private void ConfigureDataGridView()
         {
-            dataGridView1.AutoGenerateColumns = false; // Turn off auto-generate columns
+            dataGridView1.AutoGenerateColumns = false;
 
-            // Define columns manually
+            // Existing columns...
             DataGridViewTextBoxColumn merchantIdColumn = new DataGridViewTextBoxColumn
             {
                 Name = "MerchantID",
                 HeaderText = "Merchant ID",
-                DataPropertyName = "MerchantID", // Bind to MerchantID from the DataTable
-                ReadOnly = true, // Make MerchantID column non-editable
+                DataPropertyName = "MerchantID",
+                ReadOnly = true,
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                 DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
             };
@@ -71,8 +71,47 @@ namespace BG_Menu.Forms.MIDS
                 DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
             };
 
-            // Add columns to the DataGridView
-            dataGridView1.Columns.AddRange(merchantIdColumn, merchantColumn, pciDssDateColumn, pciDssVersionColumn, pciDssPasswordColumn);
+            DataGridViewTextBoxColumn companyColumn = new DataGridViewTextBoxColumn
+            {
+                Name = "Company",
+                HeaderText = "Company",
+                DataPropertyName = "Company",
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
+            };
+
+            // New Aggregated Columns:
+            DataGridViewTextBoxColumn assignedUserColumn = new DataGridViewTextBoxColumn
+            {
+                Name = "AssignedUser",
+                HeaderText = "Assigned User",
+                DataPropertyName = "AssignedUser",
+                ReadOnly = true, // since these are aggregated values
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
+            };
+
+            DataGridViewTextBoxColumn locationColumn = new DataGridViewTextBoxColumn
+            {
+                Name = "Location",
+                HeaderText = "Location",
+                DataPropertyName = "Location",
+                ReadOnly = true, // aggregated
+                AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
+                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter }
+            };
+
+            // Add all columns to the DataGridView
+            dataGridView1.Columns.AddRange(
+                merchantIdColumn,
+                merchantColumn,
+                pciDssDateColumn,
+                pciDssVersionColumn,
+                pciDssPasswordColumn,
+                companyColumn,
+                assignedUserColumn,
+                locationColumn
+            );
 
             dataGridView1.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
         }
@@ -86,13 +125,31 @@ namespace BG_Menu.Forms.MIDS
                     connection.Open();
 
                     string query = @"
-                        SELECT DISTINCT
-                            MerchantID,
-                            Merchant,
-                            PCIDSSDate,
-                            PCIDSSVersion,
-                            PCIDSSPassword
-                        FROM PaymentDevices";
+                    SELECT 
+                        p.MerchantID,
+                        MAX(p.Merchant) AS Merchant,
+                        MAX(p.Company) AS Company,
+                        MAX(p.PCIDSSDate) AS PCIDSSDate,
+                        MAX(p.PCIDSSVersion) AS PCIDSSVersion,
+                        MAX(p.PCIDSSPassword) AS PCIDSSPassword,
+                        (
+                           SELECT STRING_AGG(t.AssignedUser, ', ')
+                           FROM (
+                               SELECT DISTINCT AssignedUser 
+                               FROM PaymentDevices 
+                               WHERE MerchantID = p.MerchantID
+                           ) t
+                        ) AS AssignedUser,
+                        (
+                           SELECT STRING_AGG(t.DepartmentStore, ', ')
+                           FROM (
+                               SELECT DISTINCT DepartmentStore 
+                               FROM PaymentDevices 
+                               WHERE MerchantID = p.MerchantID
+                           ) t
+                        ) AS Location
+                    FROM PaymentDevices p
+                    GROUP BY p.MerchantID";
 
                     using (SqlDataAdapter adapter = new SqlDataAdapter(query, connection))
                     {
@@ -122,20 +179,33 @@ namespace BG_Menu.Forms.MIDS
                         if (row.RowState == DataRowState.Modified) // Check if the row has been modified
                         {
                             string query = @"
-                                UPDATE PaymentDevices
-                                SET 
-                                    Merchant = @Merchant,
-                                    PCIDSSDate = @PCIDSSDate,
-                                    PCIDSSVersion = @PCIDSSVersion,
-                                    PCIDSSPassword = @PCIDSSPassword
-                                WHERE MerchantID = @MerchantID";
+                        UPDATE PaymentDevices
+                        SET 
+                            Merchant = @Merchant,
+                            Company = @Company,
+                            PCIDSSDate = @PCIDSSDate,
+                            PCIDSSVersion = @PCIDSSVersion,
+                            PCIDSSPassword = @PCIDSSPassword
+                        WHERE MerchantID = @MerchantID";
 
                             using (SqlCommand command = new SqlCommand(query, connection))
                             {
+                                // Merchant
                                 command.Parameters.AddWithValue("@Merchant", row["Merchant"] ?? DBNull.Value);
+
+                                // Company
+                                command.Parameters.AddWithValue("@Company", row["Company"] ?? DBNull.Value);
+
+                                // PCI DSS Date
                                 command.Parameters.AddWithValue("@PCIDSSDate", row["PCIDSSDate"] ?? DBNull.Value);
+
+                                // PCI DSS Version
                                 command.Parameters.AddWithValue("@PCIDSSVersion", row["PCIDSSVersion"] ?? DBNull.Value);
+
+                                // PCI DSS Password
                                 command.Parameters.AddWithValue("@PCIDSSPassword", row["PCIDSSPassword"] ?? DBNull.Value);
+
+                                // MerchantID (WHERE)
                                 command.Parameters.AddWithValue("@MerchantID", row["MerchantID"]);
 
                                 command.ExecuteNonQuery();

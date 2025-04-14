@@ -1,40 +1,102 @@
-﻿using Google.Cloud.Storage.V1;
-using OfficeOpenXml;
+﻿using OfficeOpenXml;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
 using System.Data;
-using System.Data.SqlClient;
-using System.Data.SQLite;
+using Microsoft.Data.SqlClient;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using System.Xml.Linq;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class BudgetsExtract : Form
     {
-
-        private SQLiteConnection sqlConnection;
-        private FirebaseStorage firebaseStorage;
+        private const string ConfigFilePath = "Config.xml";
 
         public BudgetsExtract()
         {
             InitializeComponent();
 
-            ExcelPackage.LicenseContext = OfficeOpenXml.LicenseContext.NonCommercial; // Required by EPPlus
+            ExcelPackage.License.SetNonCommercialOrganization("Ableworld"); // Required by EPPlus                     
 
-            var storageClient = StorageClient.Create(); // Assumes authentication via default Google credentials
-            firebaseStorage = new FirebaseStorage(storageClient);
+            PopulateMappingGridFromSqlTable();
 
-            dataGridView1.Columns.Clear();
-            dataGridView1.Columns.Add("Location", "Location");
-            dataGridView1.Columns.Add("Week", "Week");
-            dataGridView1.Columns.Add("Value", "Value");
+            LoadMappingConfig();
         }
 
-        private async void button1_Click(object sender, EventArgs e)
+        private class ExportData
+        {
+            public string Store { get; set; }
+            public int Week { get; set; }
+            public double Target { get; set; }
+            public double Sales2020 { get; set; }
+            public double Sales2021 { get; set; }
+            public double Sales2022 { get; set; }
+            public double Sales2023 { get; set; }
+        }
+
+        private void PopulateMappingGridFromSqlTable()
+        {
+            // Get SQL Server connection string from config.
+            string sqlConnStr = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+            var columns = new List<string>();
+
+            // Query the column names from Sales.SalesData in the Sales schema.
+            using (SqlConnection sqlConn = new SqlConnection(sqlConnStr))
+            {
+                sqlConn.Open();
+                string query = @"
+                    SELECT COLUMN_NAME 
+                    FROM INFORMATION_SCHEMA.COLUMNS 
+                    WHERE TABLE_SCHEMA = 'Sales' AND TABLE_NAME = 'SalesData'";
+                using (SqlCommand cmd = new SqlCommand(query, sqlConn))
+                {
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        while (reader.Read())
+                        {
+                            string colName = reader["COLUMN_NAME"].ToString();
+                            // Exclude the key columns (Store and Week) from the mapping.
+                            if (!colName.Equals("Store", StringComparison.OrdinalIgnoreCase) &&
+                                !colName.Equals("Week", StringComparison.OrdinalIgnoreCase))
+                            {
+                                columns.Add(colName);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Setup the mapping DataGridView with three columns: Field, Start Cell, and End Cell.
+            dataGridViewMapping.Columns.Clear();
+            dataGridViewMapping.Columns.Add("Field", "Field");
+            dataGridViewMapping.Columns.Add("StartCell", "Start Cell");
+            dataGridViewMapping.Columns.Add("EndCell", "End Cell");
+
+            dataGridViewMapping.Columns["Field"].ReadOnly = true;
+
+            // Populate one row per field dynamically.
+            foreach (var field in columns)
+            {
+                // Initially the cell ranges will be blank (or you can pre-populate with defaults).
+                dataGridViewMapping.Rows.Add(field, "", "");
+            }
+        }
+
+        private void UpdateProgress(int percent, string message)
+        {
+            Invoke(new Action(() =>
+            {
+                progressBar1.Value = percent;
+                labelProgress.Text = message;
+            }));
+        }
+
+        private async void button6_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
@@ -42,55 +104,90 @@ namespace BG_Menu.Forms.Sub_Forms
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     string filePath = openFileDialog.FileName;
-                    await ImportExcelDataAsync(filePath);
+                    await ImportExcelDataWithMappingAsync(filePath);
+                    button6.Enabled = false;
                 }
             }
         }
 
-        private Task ImportExcelDataAsync(string filePath)
+        private Task ImportExcelDataWithMappingAsync(string filePath)
         {
             return Task.Run(() =>
             {
-                var excludedRows = new HashSet<int> { 13, 14, 19, 20, 25, 26, 32, 33, 38, 39, 44, 45, 51, 52, 57, 58, 63, 64, 70, 71, 76, 77 }; // Cells to exclude
+                UpdateProgress(0, "Starting import...");
 
-                // Fetch the dictionary from SQL instead of hardcoding
-                var dictionaries = new Dictionary<string, string>();
+                // 1. Read the per-field mapping from the DataGridView.
+                var fieldMappings = new Dictionary<string, Tuple<string, string>>();
+                foreach (DataGridViewRow row in dataGridViewMapping.Rows)
+                {
+                    if (row.IsNewRow) continue;
 
-                string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+                    string fieldName = row.Cells["Field"].Value?.ToString();
+                    string startCell = row.Cells["StartCell"].Value?.ToString();
+                    string endCell = row.Cells["EndCell"].Value?.ToString();
 
-                using (var connection = new SqlConnection(connectionString))
+                    if (!string.IsNullOrEmpty(fieldName) &&
+                        !string.IsNullOrEmpty(startCell) &&
+                        !string.IsNullOrEmpty(endCell))
+                    {
+                        fieldMappings[fieldName] = Tuple.Create(startCell, endCell);
+                    }
+                }
+
+                if (fieldMappings.Count == 0)
+                {
+                    Invoke(new Action(() =>
+                    {
+                        MessageBox.Show("Please provide valid cell ranges in the mapping grid.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }));
+                    return;
+                }
+
+                UpdateProgress(10, "Mapping grid loaded.");
+
+                // 2. Define the rows to exclude.
+                var excludedRows = new HashSet<int> { 13, 14, 19, 20, 25, 26, 32, 33, 38, 39, 44, 45, 51, 52, 57, 58, 63, 64, 70, 71, 76, 77 };
+
+                // 3. Get the Excel tab-to-Store mapping from SQL.
+                var excelTabMappings = new Dictionary<string, string>();
+                string sqlConnStr = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+                using (var connection = new SqlConnection(sqlConnStr))
                 {
                     connection.Open();
                     using (var command = new SqlCommand("SELECT ExcelTab, StoreName FROM Store_Mapping WHERE Budgets = 'Yes'", connection))
+                    using (var reader = command.ExecuteReader())
                     {
-                        using (var reader = command.ExecuteReader())
+                        while (reader.Read())
                         {
-                            while (reader.Read())
+                            string excelTab = reader["ExcelTab"]?.ToString();
+                            string storeName = reader["StoreName"]?.ToString();
+                            if (!string.IsNullOrEmpty(excelTab) && !string.IsNullOrEmpty(storeName))
                             {
-                                // Expecting ExcelTab and StoreName columns
-                                string excelTab = reader["ExcelTab"]?.ToString();
-                                string storeName = reader["StoreName"]?.ToString();
-
-                                if (!string.IsNullOrEmpty(excelTab) && !string.IsNullOrEmpty(storeName))
-                                {
-                                    dictionaries[excelTab] = storeName;
-                                }
+                                excelTabMappings[excelTab] = storeName;
                             }
                         }
                     }
                 }
 
-                // Initialize a list to hold the data temporarily
-                var dataToDisplay = new List<Tuple<string, int, double>>();
+                UpdateProgress(15, "Excel tab mapping retrieved.");
 
-                string cellRange = textBox1.Text;
+                // 4. Prepare a dictionary to hold the merged data.
+                //    Key: Tuple of (Store, Week)
+                //    Value: A dynamic dictionary mapping each field (from the mapping grid) to its value.
+                var combinedData = new Dictionary<Tuple<string, int>, Dictionary<string, double>>();
 
+                // 5. Open the Excel file.
                 using (var package = new ExcelPackage(new FileInfo(filePath)))
                 {
-                    foreach (var entry in dictionaries)
+                    int totalSheets = excelTabMappings.Count;
+                    int sheetCounter = 0;
+                    // Process each worksheet based on the mapping.
+                    foreach (var entry in excelTabMappings)
                     {
-                        var sheetName = entry.Key;
-                        var locationName = entry.Value;
+                        sheetCounter++;
+                        string sheetName = entry.Key;
+                        string locationName = entry.Value;
+                        UpdateProgress(15 + (sheetCounter * 30 / totalSheets), $"Processing worksheet '{sheetName}' ({sheetCounter}/{totalSheets})");
 
                         var worksheet = package.Workbook.Worksheets[sheetName];
                         if (worksheet == null)
@@ -102,243 +199,239 @@ namespace BG_Menu.Forms.Sub_Forms
                             continue;
                         }
 
-                        // Fetch the entire data range at once for better performance
-                        var data = worksheet.Cells[cellRange].ToList();
-
-                        int weekNumber = 1;
-                        for (int i = 0; i < data.Count; i++)
+                        // For each field mapping, extract the values from the specified cell range.
+                        var fieldValues = new Dictionary<string, List<double>>();
+                        int? expectedCount = null;
+                        foreach (var mapping in fieldMappings)
                         {
-                            int rowIndex = data[i].Start.Row;
-                            if (excludedRows.Contains(rowIndex)) continue;
+                            string field = mapping.Key;
+                            string startCell = mapping.Value.Item1;
+                            string endCell = mapping.Value.Item2;
+                            string rangeStr = $"{startCell}:{endCell}";
 
-                            // Remove currency symbols and commas
-                            string cellValue = data[i].Text.Trim().Replace("£", "").Replace(",", "");
-
-                            if (string.IsNullOrWhiteSpace(cellValue))
+                            var cells = worksheet.Cells[rangeStr].ToList();
+                            var values = new List<double>();
+                            foreach (var cell in cells)
                             {
-                                cellValue = "0"; // Treat empty or null cells as 0
+                                // Only process if this cell’s row is not excluded.
+                                if (excludedRows.Contains(cell.Start.Row))
+                                    continue;
+
+                                string cellText = cell.Text.Trim().Replace("£", "").Replace(",", "");
+                                if (string.IsNullOrWhiteSpace(cellText))
+                                {
+                                    cellText = "0";
+                                }
+                                if (double.TryParse(cellText, out double parsed))
+                                {
+                                    values.Add(parsed);
+                                }
+                                else
+                                {
+                                    Invoke(new Action(() =>
+                                    {
+                                        MessageBox.Show($"Non-numeric value '{cell.Text}' found in sheet {sheetName} at cell {cell.Address} for field {field}.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    }));
+                                }
                             }
 
-                            if (double.TryParse(cellValue, out double value))
+                            // Check that all field mappings yield the same number of data points.
+                            if (expectedCount == null)
                             {
-                                dataToDisplay.Add(new Tuple<string, int, double>(locationName, weekNumber, value));
+                                expectedCount = values.Count;
                             }
-                            else
+                            else if (expectedCount != values.Count)
                             {
                                 Invoke(new Action(() =>
                                 {
-                                    MessageBox.Show($"Non-numeric value '{cellValue}' found in {sheetName} at row {rowIndex}.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                    MessageBox.Show($"The number of data points for field '{field}' in sheet '{sheetName}' does not match the expected count.", "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                                 }));
                                 continue;
                             }
+                            fieldValues[field] = values;
+                        }
 
-                            weekNumber++;
+                        // 6. Combine the extracted field values into records.
+                        if (expectedCount != null)
+                        {
+                            for (int i = 0; i < expectedCount; i++)
+                            {
+                                var key = Tuple.Create(locationName, i + 1); // Week is assigned sequentially (i+1)
+                                if (!combinedData.ContainsKey(key))
+                                {
+                                    combinedData[key] = new Dictionary<string, double>();
+                                }
+                                // For each dynamic field, assign the corresponding value.
+                                foreach (var mapping in fieldMappings)
+                                {
+                                    string field = mapping.Key;
+                                    double value = (fieldValues.ContainsKey(field) && fieldValues[field].Count > i) ? fieldValues[field][i] : 0;
+                                    combinedData[key][field] = value;
+                                }
+                            }
                         }
                     }
                 }
 
-                // Batch update the DataGridView on the UI thread
-                if (dataToDisplay.Any())
+                UpdateProgress(50, "Finished processing worksheets. Updating records...");
+
+                // 7. Update/Insert the merged data into the SQL Server table (Sales.SalesData).
+                //    Build the SQL queries dynamically based on the dynamic fields.
+                List<string> dynamicFields = fieldMappings.Keys.ToList();
+                string sqlServerConnString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+                try
                 {
+                    using (var sqlConn = new SqlConnection(sqlServerConnString))
+                    {
+                        sqlConn.Open();
+                        using (var transaction = sqlConn.BeginTransaction())
+                        {
+                            int totalRecords = combinedData.Count;
+                            int recordCounter = 0;
+                            foreach (var kvp in combinedData)
+                            {
+                                recordCounter++;
+                                var key = kvp.Key;
+                                string store = key.Item1;
+                                int week = key.Item2;
+                                var fieldData = kvp.Value;
+
+                                int progressVal = 50 + (recordCounter * 45 / totalRecords);
+                                UpdateProgress(progressVal, $"Updating record for {store}, Week {week} ({recordCounter}/{totalRecords})");
+
+                                // First, check if the record exists.
+                                string checkQuery = "SELECT COUNT(*) FROM Sales.SalesData WHERE Store = @Store AND Week = @Week";
+                                using (var checkCmd = new SqlCommand(checkQuery, sqlConn, transaction))
+                                {
+                                    checkCmd.Parameters.AddWithValue("@Store", store);
+                                    checkCmd.Parameters.AddWithValue("@Week", week);
+                                    int count = (int)checkCmd.ExecuteScalar();
+
+                                    if (count > 0)
+                                    {
+                                        // Build dynamic UPDATE query.
+                                        string setClause = string.Join(", ", dynamicFields.Select(f => $"[{f}] = @{f}"));
+                                        string updateQuery = $"UPDATE Sales.SalesData SET {setClause} WHERE Store = @Store AND Week = @Week";
+                                        using (var updateCmd = new SqlCommand(updateQuery, sqlConn, transaction))
+                                        {
+                                            updateCmd.Parameters.AddWithValue("@Store", store);
+                                            updateCmd.Parameters.AddWithValue("@Week", week);
+                                            foreach (string field in dynamicFields)
+                                            {
+                                                double value = fieldData.ContainsKey(field) ? fieldData[field] : 0;
+                                                updateCmd.Parameters.AddWithValue("@" + field, value);
+                                            }
+                                            updateCmd.ExecuteNonQuery();
+                                        }
+                                    }
+                                    else
+                                    {
+                                        // Build dynamic INSERT query.
+                                        var allColumns = new List<string> { "Store", "Week" };
+                                        allColumns.AddRange(dynamicFields);
+                                        string columnNames = string.Join(", ", allColumns.Select(c => $"[{c}]"));
+                                        string parameterNames = string.Join(", ", allColumns.Select(c => "@" + c));
+                                        string insertQuery = $"INSERT INTO Sales.SalesData ({columnNames}) VALUES ({parameterNames})";
+                                        using (var insertCmd = new SqlCommand(insertQuery, sqlConn, transaction))
+                                        {
+                                            insertCmd.Parameters.AddWithValue("@Store", store);
+                                            insertCmd.Parameters.AddWithValue("@Week", week);
+                                            foreach (string field in dynamicFields)
+                                            {
+                                                double value = fieldData.ContainsKey(field) ? fieldData[field] : 0;
+                                                insertCmd.Parameters.AddWithValue("@" + field, value);
+                                            }
+                                            insertCmd.ExecuteNonQuery();
+                                        }
+                                    }
+                                }
+                            }
+                            transaction.Commit();
+                        }
+                    }
+                    UpdateProgress(100, "Excel data imported successfully using dynamic mapping!");
+
+                    // After a successful import, save the current mapping config.
+                    SaveMappingConfig();
+
                     Invoke(new Action(() =>
                     {
-                        dataGridView1.SuspendLayout();
-                        foreach (var item in dataToDisplay)
-                        {
-                            dataGridView1.Rows.Add(item.Item1, item.Item2, item.Item3);
-                        }
-                        dataGridView1.ResumeLayout();
+                        MessageBox.Show("Excel data imported successfully using dynamic mapping!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        button6.Enabled = true;
                     }));
                 }
-                else
+                catch (Exception ex)
                 {
                     Invoke(new Action(() =>
                     {
-                        MessageBox.Show("No data loaded into the DataGridView. Please check the Excel file for valid data.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show("Error exporting to SQL Server: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        button6.Enabled = true;
                     }));
                 }
             });
         }
 
-        private void button2_Click(object sender, EventArgs e)
+        private void LoadMappingConfig()
         {
-            string appDataPath = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
-            string dbFolderPath = Path.Combine(appDataPath, "BG-Menu");
-            string dbFilePath = Path.Combine(dbFolderPath, "Targets.db"); // Replace with your actual database file name
-
-            if (!File.Exists(dbFilePath))
+            if (!File.Exists(ConfigFilePath))
             {
-                MessageBox.Show("Database file does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // No config exists yet—first run.
                 return;
             }
 
-            LoadDatabase(dbFilePath);            
-        }
-
-        private void LoadDatabase(string dbFilePath)
-        {
             try
             {
-                if (!File.Exists(dbFilePath))
-                {
-                    MessageBox.Show("Database file does not exist.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    return;
-                }
+                XDocument doc = XDocument.Load(ConfigFilePath);
 
-                if (sqlConnection != null)
+                foreach (DataGridViewRow row in dataGridViewMapping.Rows)
                 {
-                    sqlConnection.Close();
-                }
-
-                // Ensure you are opening the database with write permissions
-                sqlConnection = new SQLiteConnection($"Data Source={dbFilePath};Version=3;Read Only=False;");
-                sqlConnection.Open();
-
-                // Populate ComboBox with table names
-                using (var cmd = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='table';", sqlConnection))
-                using (var reader = cmd.ExecuteReader())
-                {
-                    comboBoxTables.Items.Clear();
-                    while (reader.Read())
+                    if (row.IsNewRow) continue;
+                    string fieldName = row.Cells["Field"].Value?.ToString();
+                    if (!string.IsNullOrEmpty(fieldName))
                     {
-                        comboBoxTables.Items.Add(reader["name"].ToString());
-                    }
-                }
-
-                if (comboBoxTables.Items.Count > 0)
-                {
-                    comboBoxTables.SelectedIndex = 0;
-                    LoadSelectedTableData();
-                }
-
-                MessageBox.Show("Database loaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            }
-            catch (SQLiteException ex)
-            {
-                MessageBox.Show($"Unable to open database file: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An unexpected error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void comboBoxTables_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            LoadSelectedTableData();
-        }
-
-        private void LoadSelectedTableData()
-        {
-            if (sqlConnection == null || comboBoxTables.SelectedItem == null)
-            {
-                return;
-            }
-
-            string selectedTable = comboBoxTables.SelectedItem.ToString();
-            string query = $"SELECT * FROM {selectedTable}";
-
-            using (var cmd = new SQLiteCommand(query, sqlConnection))
-            using (var adapter = new SQLiteDataAdapter(cmd))
-            {
-                DataTable table = new DataTable();
-                adapter.Fill(table);
-
-                dataGridViewDB.DataSource = table;
-            }
-        }
-
-
-        private void button3_Click(object sender, EventArgs e)
-        {
-            if (sqlConnection == null || comboBoxTables.SelectedItem == null)
-            {
-                MessageBox.Show("Please load a database and select a table.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            string selectedTable = comboBoxTables.SelectedItem.ToString();
-            UpdateDatabase(selectedTable);
-        }
-
-
-        private void UpdateDatabase(string tableName)
-        {
-            try
-            {
-                using (var transaction = sqlConnection.BeginTransaction())
-                {
-                    foreach (DataGridViewRow row in dataGridView1.Rows)
-                    {
-                        if (row.IsNewRow) continue;
-
-                        string store = row.Cells["Location"].Value?.ToString();
-                        int week = Convert.ToInt32(row.Cells["Week"].Value);
-                        double value = Convert.ToDouble(row.Cells["Value"].Value);
-
-                        string column = tableName.Contains("Sales") ? "Sales" : "Target";
-
-                        // First, check if the record exists
-                        string checkQuery = $"SELECT COUNT(*) FROM {tableName} WHERE Store = @Store AND Week = @Week";
-                        using (var checkCmd = new SQLiteCommand(checkQuery, sqlConnection, transaction))
+                        var fieldElement = doc.Root.Elements("Field")
+                            .FirstOrDefault(e => e.Attribute("name")?.Value == fieldName);
+                        if (fieldElement != null)
                         {
-                            checkCmd.Parameters.AddWithValue("@Store", store);
-                            checkCmd.Parameters.AddWithValue("@Week", week);
-                            long count = (long)checkCmd.ExecuteScalar();
-
-                            if (count > 0)
-                            {
-                                // Record exists, perform an update
-                                string updateQuery = $"UPDATE {tableName} SET {column} = @Value WHERE Store = @Store AND Week = @Week";
-                                using (var updateCmd = new SQLiteCommand(updateQuery, sqlConnection, transaction))
-                                {
-                                    updateCmd.Parameters.AddWithValue("@Store", store);
-                                    updateCmd.Parameters.AddWithValue("@Week", week);
-                                    updateCmd.Parameters.AddWithValue("@Value", value);
-                                    updateCmd.ExecuteNonQuery();
-                                }
-                            }
-                            else
-                            {
-                                // Record doesn't exist, perform an insert
-                                string insertQuery = $"INSERT INTO {tableName} (Store, Week, {column}) VALUES (@Store, @Week, @Value)";
-                                using (var insertCmd = new SQLiteCommand(insertQuery, sqlConnection, transaction))
-                                {
-                                    insertCmd.Parameters.AddWithValue("@Store", store);
-                                    insertCmd.Parameters.AddWithValue("@Week", week);
-                                    insertCmd.Parameters.AddWithValue("@Value", value);
-                                    insertCmd.ExecuteNonQuery();
-                                }
-                            }
+                            row.Cells["StartCell"].Value = fieldElement.Attribute("StartCell")?.Value;
+                            row.Cells["EndCell"].Value = fieldElement.Attribute("EndCell")?.Value;
                         }
                     }
-
-                    transaction.Commit();
                 }
-
-                MessageBox.Show("Database updated successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LoadSelectedTableData();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error updating database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error loading mapping config: " + ex.Message,
+                    "Config Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
-        private async void button4_Click(object sender, EventArgs e)
+        private void SaveMappingConfig()
         {
             try
             {
-                // Call the upload method from FirebaseStorage class
-                bool success = await firebaseStorage.UploadBudgetsCalcFileFromBudgetsReportFolderAsync(sqlConnection);
-                if (success)
+                XDocument doc = new XDocument(new XElement("Mapping"));
+                foreach (DataGridViewRow row in dataGridViewMapping.Rows)
                 {
-                    MessageBox.Show("The database file has been uploaded successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    if (row.IsNewRow) continue;
+                    string fieldName = row.Cells["Field"].Value?.ToString();
+                    string startCell = row.Cells["StartCell"].Value?.ToString();
+                    string endCell = row.Cells["EndCell"].Value?.ToString();
+                    if (!string.IsNullOrEmpty(fieldName))
+                    {
+                        XElement fieldElement = new XElement("Field",
+                            new XAttribute("name", fieldName),
+                            new XAttribute("StartCell", startCell ?? string.Empty),
+                            new XAttribute("EndCell", endCell ?? string.Empty));
+                        doc.Root.Add(fieldElement);
+                    }
                 }
+                doc.Save(ConfigFilePath);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error saving mapping config: " + ex.Message,
+                    "Config Save Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
     }

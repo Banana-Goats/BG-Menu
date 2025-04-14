@@ -1,13 +1,13 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Management;
-using System.Net;
-using System.Net.NetworkInformation;
-using System.Threading.Tasks;
-using System.Windows.Forms;
-using System.DirectoryServices.AccountManagement;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Configuration;
+using System.DirectoryServices.AccountManagement;
+using System.Management;
+using System.Threading.Tasks;
+using System.Threading.Tasks.Dataflow;  // <-- TPL Dataflow
+using System.Windows.Forms;
+using System.Net.NetworkInformation;   // <-- For Ping
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -17,107 +17,171 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             InitializeComponent();
 
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "MachineName", HeaderText = "Machine Name", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "User", HeaderText = "Logged-In User", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "Description", HeaderText = "User Description", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "CPU", HeaderText = "CPU", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "RAM", HeaderText = "RAM", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "HDD", HeaderText = "HDD ( Used Space )", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "OS", HeaderText = "Operating System", SortMode = DataGridViewColumnSortMode.Automatic });
-            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn { Name = "Build", HeaderText = "Build Number", SortMode = DataGridViewColumnSortMode.Automatic });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "MachineName",
+                HeaderText = "Machine Name",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "User",
+                HeaderText = "Logged-In User",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Description",
+                HeaderText = "User Description",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "CPU",
+                HeaderText = "CPU",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "RAM",
+                HeaderText = "RAM",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "HDD",
+                HeaderText = "HDD ( Used Space )",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "OS",
+                HeaderText = "Operating System",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
+            dataGridViewPCInfo.Columns.Add(new DataGridViewTextBoxColumn
+            {
+                Name = "Build",
+                HeaderText = "Build Number",
+                SortMode = DataGridViewColumnSortMode.Automatic
+            });
 
             PopulateDataGrid();
         }
 
         private async void PopulateDataGrid()
         {
-            dataGridViewPCInfo.Rows.Clear(); // Clear existing rows before adding new data           
+            dataGridViewPCInfo.Rows.Clear(); // Clear existing rows before adding new data
 
-            var tasks = new List<Task>();
-
-            // Define patterns to match
-            var patterns = new List<string>
-        {
-            "WS-{0:D2}",    // Matches WS-??
-            "LT-{0:D2}",    // Matches LT-??
-            "ABL000{0:D2}"    // Matches ABL0???
-        };
-
-            foreach (var pattern in patterns)
+            var patternConfigurations = new List<(string pattern, int start, int end)>
             {
-                int start = pattern.Contains("D2") ? 1 : 0; // D2 pattern starts from 1; D3 pattern starts from 0
-                int end = pattern.Contains("D2") ? 99 : 999; // D2 has 2 digits; D3 has 3 digits
+                ("WS-{0:D2}", 1, 80) // WS-01 to WS-80
+            };
 
+            var generatedMachineNames = new List<string>();
+            foreach (var (pattern, start, end) in patternConfigurations)
+            {
                 for (int i = start; i <= end; i++)
                 {
-                    string machineName = string.Format(pattern, i);
-
-                    var task = Task.Run(async () =>
-                    {
-                        var info = GetMachineInfo(machineName);
-
-                        // Check if the CPU field has valid data
-                        if (!string.IsNullOrEmpty(info["CPU"]) && info["CPU"] != "N/A")
-                        {
-                            // Add data to the DataGridView
-                            this.Invoke(new Action(() =>
-                            {
-                                dataGridViewPCInfo.Rows.Add(
-                                    machineName,
-                                    info["User"],
-                                    info["Description"],
-                                    info["CPU"],
-                                    info["RAM"],
-                                    info["HDD"],
-                                    info["OS"],
-                                    info["Build"]
-                                );
-
-                                // Sort the DataGridView by the MachineName column
-                                dataGridViewPCInfo.Sort(dataGridViewPCInfo.Columns["MachineName"], System.ComponentModel.ListSortDirection.Ascending);
-                            }));
-
-                            // Save data to SQL Server
-                            await SaveToDatabaseAsync(
-                                machineName,
-                                info["User"],  // Maps to Location
-                                info["CPU"],
-                                info["RAM"],
-                                info["HDD"],   // Maps to StorageInfo
-                                info["OS"],    // Maps to WindowsOS
-                                info["Build"]  // Maps to BuildNumber
-                            );
-                        }
-                    });
-
-                    tasks.Add(task);
+                    generatedMachineNames.Add(string.Format(pattern, i));
                 }
             }
 
-            await Task.WhenAll(tasks);
-        }
-               
+            var staticMachines = new List<string> { 
+                "LT-71",
+                "WS-54-Primary"
+            };
+            var allMachineNames = new List<string>();
+            allMachineNames.AddRange(generatedMachineNames);
+            allMachineNames.AddRange(staticMachines);
 
-        private async Task SaveToDatabaseAsync(string machineName, string location, string cpu, string ram, string storageInfo, string os, string buildNumber)
+            var getInfoBlock = new TransformBlock<string, (string, Dictionary<string, string>)>(
+                async machineName =>
+                {
+                    if (!IsMachineReachable(machineName, 1000)) return (machineName, null);
+                    var info = GetMachineInfo(machineName);
+                    return (machineName, info);
+                },
+                new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10 }
+            );
+
+            var processInfoBlock = new ActionBlock<(string, Dictionary<string, string>)>(
+                async tuple =>
+                {
+                    var (machineName, info) = tuple;
+                    if (info == null || info["CPU"] == "N/A") return;
+
+                    this.Invoke(new Action(() =>
+                    {
+                        dataGridViewPCInfo.Rows.Add(
+                            machineName,
+                            info["User"],
+                            info["Description"],
+                            info["CPU"],
+                            info["RAM"],
+                            info["HDD"],
+                            info["OS"],
+                            info["Build"]
+                        );
+                    }));
+
+                    await SaveToDatabaseAsync(
+                        machineName,
+                        info["User"],
+                        info["CPU"],
+                        info["RAM"],
+                        info["HDD"],
+                        info["OS"],
+                        info["Build"]
+                    );
+                },
+                new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 }
+            );
+
+            getInfoBlock.LinkTo(processInfoBlock, new DataflowLinkOptions { PropagateCompletion = true });
+
+            foreach (var machineName in allMachineNames)
+            {
+                await getInfoBlock.SendAsync(machineName);
+            }
+
+            getInfoBlock.Complete();
+            await processInfoBlock.Completion;
+
+            dataGridViewPCInfo.Sort(
+                dataGridViewPCInfo.Columns["MachineName"],
+                System.ComponentModel.ListSortDirection.Ascending
+            );
+
+            MessageBox.Show(
+                "All machines have been processed!",
+                "Finished",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information
+            );
+        }
+
+        private async Task SaveToDatabaseAsync(string machineName, string location, string cpu, string ram,
+                                       string storageInfo, string os, string buildNumber)
         {
-            // Replace with your actual connection string
             string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
             string query = @"
-        MERGE INTO MachineData AS target
-        USING (SELECT @MachineName AS MachineName) AS source
-        ON target.MachineName = source.MachineName
+        MERGE INTO HOPC AS target
+        USING (SELECT @MachineName AS Name) AS source
+        ON target.Name = source.Name
         WHEN MATCHED THEN
             UPDATE SET
-                Location = @Location,
-                CPUInfo = @CPU,
-                RAMInfo = @RAM,
-                StorageInfo = @StorageInfo,
-                WindowsOS = @OS,
-                BuildNumber = @BuildNumber
+                Store = @Location,
+                CPU = @CPU,
+                Ram = @RAM,
+                HHD = @StorageInfo,
+                OS = @OS,
+                OS_Version = @BuildNumber
         WHEN NOT MATCHED THEN
-            INSERT (MachineName, Location, CPUInfo, RAMInfo, StorageInfo, WindowsOS, BuildNumber)
-            VALUES (@MachineName, @Location, @CPU, @RAM, @StorageInfo, @OS, @BuildNumber);";
+            INSERT (Name, Store, CPU, Ram, HHD, OS, OS_Version)
+            VALUES (@MachineName, @Location, @CPU, @RAM, @StorageInfo, @OS, @BuildNumber);
+    ";
 
             try
             {
@@ -133,56 +197,63 @@ namespace BG_Menu.Forms.Sub_Forms
                     command.Parameters.AddWithValue("@OS", os ?? (object)DBNull.Value);
                     command.Parameters.AddWithValue("@BuildNumber", buildNumber ?? (object)DBNull.Value);
 
-                    // Open the connection and execute the query
                     await connection.OpenAsync();
                     await command.ExecuteNonQueryAsync();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saving to database: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error saving to database: {ex.Message}",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         private Dictionary<string, string> GetMachineInfo(string machineName)
         {
-            Dictionary<string, string> machineInfo = new Dictionary<string, string>();
+            var machineInfo = new Dictionary<string, string>
+            {
+                ["CPU"] = "N/A",
+                ["RAM"] = "N/A",
+                ["HDD"] = "N/A",
+                ["OS"] = "N/A",
+                ["Build"] = "N/A",
+                ["User"] = "N/A",
+                ["Description"] = "N/A"
+            };
 
             try
             {
+                // Connect to WMI
                 ConnectionOptions options = new ConnectionOptions();
+                // If desired, you can shorten the WMI timeout here:
+                // options.Timeout = new TimeSpan(0,0,2);
+
                 ManagementScope scope = new ManagementScope($@"\\{machineName}\root\cimv2", options);
                 scope.Connect();
 
-                // Get CPU Information
+                // CPU
                 machineInfo["CPU"] = GetCPUInfo(scope);
 
-                // Get RAM Information
+                // RAM
                 machineInfo["RAM"] = GetRamInfo(scope);
 
-                // Get HDD Information
+                // Storage
                 machineInfo["HDD"] = GetStorageInfo(scope);
 
-                // Get OS Information
+                // OS
                 machineInfo["OS"] = GetWindowsOS(scope);
 
-                // Get Build Number
+                // Build
                 machineInfo["Build"] = GetBuildNumber(scope);
 
-                // Get Logged-In User and Description
+                // User
                 var (user, description) = GetLoggedInUser(scope);
                 machineInfo["User"] = user;
                 machineInfo["Description"] = description;
             }
             catch
             {
-                machineInfo["CPU"] = "N/A";
-                machineInfo["RAM"] = "N/A";
-                machineInfo["HDD"] = "N/A";
-                machineInfo["OS"] = "N/A";
-                machineInfo["Build"] = "N/A";
-                machineInfo["User"] = "N/A";
-                machineInfo["Description"] = "N/A";
+                // If we fail to connect, we keep "N/A" values
             }
 
             return machineInfo;
@@ -202,23 +273,19 @@ namespace BG_Menu.Forms.Sub_Forms
                     string username = obj["UserName"]?.ToString();
                     if (!string.IsNullOrEmpty(username))
                     {
-                        // AD usernames are often in the format DOMAIN\username, so we split to get the actual username
+                        // AD usernames often look like DOMAIN\username
                         string[] parts = username.Split('\\');
-                        if (parts.Length > 1)
-                        {
-                            (loggedInUser, userDescription) = GetFullNameAndDescriptionFromAD(parts[1]);
-                        }
-                        else
-                        {
-                            (loggedInUser, userDescription) = GetFullNameAndDescriptionFromAD(username);
-                        }
+                        string userNameOnly = (parts.Length > 1) ? parts[1] : username;
+
+                        (loggedInUser, userDescription) = GetFullNameAndDescriptionFromAD(userNameOnly);
                     }
-                    break; // Assuming single user
+                    break; // Just assume one user
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving logged-in user information: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error retrieving logged-in user information: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return (loggedInUser, userDescription);
@@ -234,17 +301,17 @@ namespace BG_Menu.Forms.Sub_Forms
                 using (PrincipalContext context = new PrincipalContext(ContextType.Domain))
                 {
                     UserPrincipal user = UserPrincipal.FindByIdentity(context, IdentityType.SamAccountName, username);
-
                     if (user != null)
                     {
-                        fullName = $"{user.GivenName} {user.Surname}";
+                        fullName = $"{user.GivenName} {user.Surname}".Trim();
                         description = user.Description ?? "No description available";
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving user information from Active Directory: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error retrieving user information from Active Directory: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
             return (fullName, description);
@@ -252,81 +319,84 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private string GetCPUInfo(ManagementScope scope)
         {
-            string cpuInfo = string.Empty;
-
             try
             {
-                ObjectQuery query = new ObjectQuery("SELECT * FROM Win32_Processor");
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+                var query = new ObjectQuery("SELECT Name FROM Win32_Processor");
+                var searcher = new ManagementObjectSearcher(scope, query);
+
                 foreach (ManagementObject obj in searcher.Get())
                 {
-                    cpuInfo = obj["Name"].ToString();
-                    break; // Assuming single CPU
-                }
-
-                // Extract the manufacturer and model
-                if (cpuInfo.Contains("Intel"))
-                {
-                    cpuInfo = "Intel " + ExtractIntelModel(cpuInfo);
-                }
-                else if (cpuInfo.Contains("AMD"))
-                {
-                    cpuInfo = "AMD " + ExtractAMDModel(cpuInfo);
+                    string cpuInfo = obj["Name"].ToString();
+                    // Optionally parse the CPU info to something friendlier
+                    if (cpuInfo.Contains("Intel"))
+                    {
+                        cpuInfo = "Intel " + ExtractIntelModel(cpuInfo);
+                    }
+                    else if (cpuInfo.Contains("AMD"))
+                    {
+                        cpuInfo = "AMD " + ExtractAMDModel(cpuInfo);
+                    }
+                    return cpuInfo;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving CPU information: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error retrieving CPU information: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            return cpuInfo;
+            return "N/A";
         }
 
         private string ExtractIntelModel(string cpuName)
         {
-            string[] parts = cpuName.Split(' ');
+            var parts = cpuName.Split(' ');
             foreach (string part in parts)
             {
+                // e.g. i5-8350U, i7-10700, etc.
                 if (part.StartsWith("i") && part.Contains("-"))
                 {
                     return part;
                 }
             }
-            return "Unknown Model";
+            return "Unknown Intel Model";
         }
 
         private string ExtractAMDModel(string cpuName)
         {
-            string[] parts = cpuName.Split(' ');
+            var parts = cpuName.Split(' ');
             for (int i = 0; i < parts.Length; i++)
             {
+                // e.g. AMD Ryzen 7 3700U
                 if (parts[i].Equals("Ryzen", StringComparison.OrdinalIgnoreCase))
                 {
-                    return $"{parts[i]} {parts[i + 1]} {parts[i + 2]}";
+                    // Safely handle index
+                    if (i + 2 < parts.Length)
+                        return $"{parts[i]} {parts[i + 1]} {parts[i + 2]}";
                 }
             }
-            return "Unknown Model";
+            return "Unknown AMD Model";
         }
 
         private string GetRamInfo(ManagementScope scope)
         {
-            ulong totalMemory = 0;
-
             try
             {
-                ObjectQuery query = new ObjectQuery("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+                var query = new ObjectQuery("SELECT TotalPhysicalMemory FROM Win32_ComputerSystem");
+                var searcher = new ManagementObjectSearcher(scope, query);
                 foreach (ManagementObject obj in searcher.Get())
                 {
-                    totalMemory = (ulong)obj["TotalPhysicalMemory"];
+                    if (ulong.TryParse(obj["TotalPhysicalMemory"].ToString(), out ulong totalMemory))
+                    {
+                        return $"{(totalMemory / (1024 * 1024 * 1024)):0}GB";
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving RAM information: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error retrieving RAM information: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            return $"{(totalMemory / (1024 * 1024 * 1024)):0}GB";
+            return "N/A";
         }
 
         private string GetStorageInfo(ManagementScope scope)
@@ -336,80 +406,92 @@ namespace BG_Menu.Forms.Sub_Forms
 
             try
             {
-                ObjectQuery query = new ObjectQuery("SELECT Size, FreeSpace FROM Win32_LogicalDisk WHERE DriveType=3"); // 3 indicates a local disk
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+                var query = new ObjectQuery("SELECT Size, FreeSpace FROM Win32_LogicalDisk WHERE DriveType=3");
+                var searcher = new ManagementObjectSearcher(scope, query);
+
                 foreach (ManagementObject obj in searcher.Get())
                 {
-                    totalSize += Convert.ToInt64(obj["Size"]);
-                    availableSpace += Convert.ToInt64(obj["FreeSpace"]);
+                    if (long.TryParse(obj["Size"]?.ToString(), out long sizeVal))
+                        totalSize += sizeVal;
+
+                    if (long.TryParse(obj["FreeSpace"]?.ToString(), out long freeVal))
+                        availableSpace += freeVal;
                 }
+
+                long usedSpace = totalSize - availableSpace;
+                return $"{(usedSpace / (1024 * 1024 * 1024)):0}/{(totalSize / (1024 * 1024 * 1024)):0}GB";
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving storage information: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error retrieving storage information: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            long usedSpace = totalSize - availableSpace;
-            return $"{(usedSpace / (1024 * 1024 * 1024)):0}/{(totalSize / (1024 * 1024 * 1024)):0}GB";
+            return "N/A";
         }
 
         private string GetWindowsOS(ManagementScope scope)
         {
-            string osName = string.Empty;
-
             try
             {
-                ObjectQuery query = new ObjectQuery("SELECT Caption FROM Win32_OperatingSystem");
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
+                var query = new ObjectQuery("SELECT Caption FROM Win32_OperatingSystem");
+                var searcher = new ManagementObjectSearcher(scope, query);
                 foreach (ManagementObject os in searcher.Get())
                 {
-                    osName = os["Caption"].ToString();
-                    break; // Assuming single OS instance
-                }
-
-                if (osName.StartsWith("Microsoft"))
-                {
-                    osName = osName.Replace("Microsoft", "").Trim();
+                    string osName = os["Caption"].ToString();
+                    if (osName.StartsWith("Microsoft"))
+                    {
+                        osName = osName.Replace("Microsoft", "").Trim();
+                    }
+                    return osName;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving OS information: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                osName = "Unknown OS";
+                MessageBox.Show("Error retrieving OS information: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            return osName;
+            return "Unknown OS";
         }
 
         private string GetBuildNumber(ManagementScope scope)
         {
-            string buildNumber = "Unknown Build";
-
             try
             {
-                ObjectQuery query = new ObjectQuery("SELECT Version FROM Win32_OperatingSystem");
-                ManagementObjectSearcher searcher = new ManagementObjectSearcher(scope, query);
-
+                var query = new ObjectQuery("SELECT Version FROM Win32_OperatingSystem");
+                var searcher = new ManagementObjectSearcher(scope, query);
                 foreach (ManagementObject obj in searcher.Get())
                 {
-                    buildNumber = obj["Version"].ToString();
-                    break; // Assuming single OS instance
-                }
-
-                // The build number is typically the part after the third dot in the version string.
-                var buildParts = buildNumber.Split('.');
-                if (buildParts.Length >= 4)
-                {
-                    buildNumber = buildParts[3]; // Extract the build number part
+                    string versionStr = obj["Version"]?.ToString();
+                    if (!string.IsNullOrEmpty(versionStr))
+                    {
+                        var parts = versionStr.Split('.');
+                        // Return the last segment of the version string
+                        return parts[parts.Length - 1];
+                    }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error retrieving build number from remote machine: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error retrieving build number from remote machine: " + ex.Message,
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            return buildNumber;
+            return "Unknown Build";
         }
 
+        private bool IsMachineReachable(string machineName, int timeoutMs = 200)
+        {
+            try
+            {
+                using (var ping = new Ping())
+                {
+                    var reply = ping.Send(machineName, timeoutMs);
+                    return (reply != null && reply.Status == IPStatus.Success);
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 }

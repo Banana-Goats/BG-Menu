@@ -1,5 +1,4 @@
-﻿using System.Data.Entity.Core.Metadata.Edm;
-
+﻿
 namespace BG_Menu.Forms.Sub_Forms
 {
     partial class DashBoard
@@ -46,12 +45,14 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridView2 = new DataGridView();
             Folder = new DataGridViewTextBoxColumn();
             Process = new DataGridViewButtonColumn();
-            progressTextBox = new TextBox();
+            progressTextBox = new RichTextBox();
+            listView1 = new ListView();
             tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             ((System.ComponentModel.ISupportInitialize)splitContainer2).BeginInit();
             splitContainer2.Panel1.SuspendLayout();
+            splitContainer2.Panel2.SuspendLayout();
             splitContainer2.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).BeginInit();
             splitContainer1.Panel1.SuspendLayout();
@@ -178,6 +179,10 @@ namespace BG_Menu.Forms.Sub_Forms
             // splitContainer2.Panel1
             // 
             splitContainer2.Panel1.Controls.Add(splitContainer1);
+            // 
+            // splitContainer2.Panel2
+            // 
+            splitContainer2.Panel2.Controls.Add(listView1);
             splitContainer2.Size = new Size(415, 298);
             splitContainer2.SplitterDistance = 199;
             splitContainer2.TabIndex = 7;
@@ -238,12 +243,26 @@ namespace BG_Menu.Forms.Sub_Forms
             progressTextBox.BackColor = Color.FromArgb(46, 51, 73);
             progressTextBox.BorderStyle = BorderStyle.None;
             progressTextBox.Dock = DockStyle.Fill;
-            progressTextBox.ForeColor = Color.White;
             progressTextBox.Location = new Point(0, 0);
-            progressTextBox.Multiline = true;
             progressTextBox.Name = "progressTextBox";
             progressTextBox.Size = new Size(199, 164);
             progressTextBox.TabIndex = 0;
+            progressTextBox.Text = "";
+            // 
+            // listView1
+            // 
+            listView1.BackColor = Color.FromArgb(46, 51, 73);
+            listView1.BorderStyle = BorderStyle.None;
+            listView1.Dock = DockStyle.Fill;
+            listView1.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            listView1.ForeColor = Color.White;
+            listView1.Location = new Point(0, 0);
+            listView1.Name = "listView1";
+            listView1.Size = new Size(212, 298);
+            listView1.TabIndex = 0;
+            listView1.UseCompatibleStateImageBehavior = false;
+            listView1.View = View.List;
+            listView1.DoubleClick += listView1_DoubleClick;
             // 
             // DashBoard
             // 
@@ -260,11 +279,11 @@ namespace BG_Menu.Forms.Sub_Forms
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             splitContainer2.Panel1.ResumeLayout(false);
+            splitContainer2.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)splitContainer2).EndInit();
             splitContainer2.ResumeLayout(false);
             splitContainer1.Panel1.ResumeLayout(false);
             splitContainer1.Panel2.ResumeLayout(false);
-            splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)splitContainer1).EndInit();
             splitContainer1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridView2).EndInit();
@@ -279,10 +298,11 @@ namespace BG_Menu.Forms.Sub_Forms
         private DataGridViewTextBoxColumn Folder;
         private DataGridViewButtonColumn Process;
         private SplitContainer splitContainer1;
-        private TextBox progressTextBox;
         private SplitContainer splitContainer2;
         private DataGridViewTextBoxColumn machineNameColumn;
         private DataGridViewTextBoxColumn locationColumn;
         private DataGridViewTextBoxColumn faultColumn;
+        private RichTextBox progressTextBox;
+        private ListView listView1;
     }
 }

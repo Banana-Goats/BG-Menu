@@ -71,7 +71,8 @@ public class UserSession
         "stocktake",
         "mids/tids",
         "Sales/Budgets",
-        "Refunds"
+        "Refunds",
+        "Report"
         
         // Add more permissions here as needed
     };

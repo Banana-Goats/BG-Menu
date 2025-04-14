@@ -38,23 +38,18 @@
             dataGridViewFranchiseStores = new DataGridView();
             dataGridViewCompanyStores = new DataGridView();
             comboBox1 = new ComboBox();
-            chkShow2022 = new CheckBox();
-            chkShow2021 = new CheckBox();
-            chkShow2020 = new CheckBox();
             button1 = new Button();
-            button2 = new Button();
-            lblStoresOverTarget = new Label();
-            lblStoresOverProgress = new Label();
             lblCurrentWeek = new Label();
             splitContainer1 = new SplitContainer();
             splitContainer2 = new SplitContainer();
             tableLayoutPanel1 = new TableLayoutPanel();
-            listBoxWeeks = new Class.Design.Custom_Items.CenteredListBox();
+            listBoxWeeks = new ListBox();
             tableLayoutPanel2 = new TableLayoutPanel();
-            chkShow2023 = new CheckBox();
+            btnAuto = new Button();
             button3 = new Button();
             button4 = new Button();
-            tableLayoutPanel3 = new TableLayoutPanel();
+            btnToggleYearOptions = new Button();
+            button2 = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridViewUKStores).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFranchiseStores).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewCompanyStores).BeginInit();
@@ -68,7 +63,6 @@
             splitContainer2.SuspendLayout();
             tableLayoutPanel1.SuspendLayout();
             tableLayoutPanel2.SuspendLayout();
-            tableLayoutPanel3.SuspendLayout();
             SuspendLayout();
             // 
             // dataGridViewUKStores
@@ -102,7 +96,8 @@
             dataGridViewUKStores.ReadOnly = true;
             dataGridViewUKStores.RowHeadersVisible = false;
             dataGridViewUKStores.RowHeadersWidth = 62;
-            dataGridViewUKStores.Size = new Size(647, 784);
+            dataGridViewUKStores.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewUKStores.Size = new Size(647, 783);
             dataGridViewUKStores.TabIndex = 4;
             // 
             // dataGridViewFranchiseStores
@@ -136,7 +131,8 @@
             dataGridViewFranchiseStores.ReadOnly = true;
             dataGridViewFranchiseStores.RowHeadersVisible = false;
             dataGridViewFranchiseStores.RowHeadersWidth = 62;
-            dataGridViewFranchiseStores.Size = new Size(707, 421);
+            dataGridViewFranchiseStores.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewFranchiseStores.Size = new Size(707, 450);
             dataGridViewFranchiseStores.TabIndex = 5;
             // 
             // dataGridViewCompanyStores
@@ -170,7 +166,8 @@
             dataGridViewCompanyStores.ReadOnly = true;
             dataGridViewCompanyStores.RowHeadersVisible = false;
             dataGridViewCompanyStores.RowHeadersWidth = 62;
-            dataGridViewCompanyStores.Size = new Size(707, 359);
+            dataGridViewCompanyStores.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dataGridViewCompanyStores.Size = new Size(707, 329);
             dataGridViewCompanyStores.TabIndex = 6;
             // 
             // comboBox1
@@ -188,57 +185,6 @@
             comboBox1.TabIndex = 9;
             comboBox1.Text = "Month Selection";
             // 
-            // chkShow2022
-            // 
-            chkShow2022.AutoSize = true;
-            chkShow2022.CheckAlign = ContentAlignment.BottomCenter;
-            chkShow2022.Dock = DockStyle.Fill;
-            chkShow2022.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            chkShow2022.ForeColor = Color.Black;
-            chkShow2022.Location = new Point(373, 3);
-            chkShow2022.Name = "chkShow2022";
-            chkShow2022.RightToLeft = RightToLeft.No;
-            chkShow2022.Size = new Size(44, 30);
-            chkShow2022.TabIndex = 12;
-            chkShow2022.Text = "2022";
-            chkShow2022.TextAlign = ContentAlignment.MiddleCenter;
-            chkShow2022.UseVisualStyleBackColor = true;
-            chkShow2022.CheckedChanged += PreviousYearChange;
-            // 
-            // chkShow2021
-            // 
-            chkShow2021.AutoSize = true;
-            chkShow2021.CheckAlign = ContentAlignment.BottomCenter;
-            chkShow2021.Dock = DockStyle.Fill;
-            chkShow2021.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            chkShow2021.ForeColor = Color.Black;
-            chkShow2021.Location = new Point(423, 3);
-            chkShow2021.Name = "chkShow2021";
-            chkShow2021.RightToLeft = RightToLeft.No;
-            chkShow2021.Size = new Size(44, 30);
-            chkShow2021.TabIndex = 13;
-            chkShow2021.Text = "2021";
-            chkShow2021.TextAlign = ContentAlignment.MiddleCenter;
-            chkShow2021.UseVisualStyleBackColor = true;
-            chkShow2021.CheckedChanged += PreviousYearChange;
-            // 
-            // chkShow2020
-            // 
-            chkShow2020.AutoSize = true;
-            chkShow2020.CheckAlign = ContentAlignment.BottomCenter;
-            chkShow2020.Dock = DockStyle.Fill;
-            chkShow2020.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            chkShow2020.ForeColor = Color.Black;
-            chkShow2020.Location = new Point(473, 3);
-            chkShow2020.Name = "chkShow2020";
-            chkShow2020.RightToLeft = RightToLeft.No;
-            chkShow2020.Size = new Size(44, 30);
-            chkShow2020.TabIndex = 14;
-            chkShow2020.Text = "2020";
-            chkShow2020.TextAlign = ContentAlignment.MiddleCenter;
-            chkShow2020.UseVisualStyleBackColor = true;
-            chkShow2020.CheckedChanged += PreviousYearChange;
-            // 
             // button1
             // 
             button1.BackColor = SystemColors.Control;
@@ -248,59 +194,20 @@
             button1.Location = new Point(202, 2);
             button1.Margin = new Padding(2);
             button1.Name = "button1";
-            button1.Size = new Size(116, 32);
+            button1.Size = new Size(116, 33);
             button1.TabIndex = 19;
             button1.Text = "Load Sales";
             button1.UseVisualStyleBackColor = false;
             button1.Click += button1_Click;
-            // 
-            // button2
-            // 
-            button2.Dock = DockStyle.Fill;
-            button2.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            button2.Location = new Point(1320, 2);
-            button2.Margin = new Padding(2);
-            button2.Name = "button2";
-            button2.Size = new Size(36, 32);
-            button2.TabIndex = 20;
-            button2.Text = "%";
-            button2.UseVisualStyleBackColor = true;
-            button2.Click += button2_Click;
-            // 
-            // lblStoresOverTarget
-            // 
-            lblStoresOverTarget.AutoSize = true;
-            lblStoresOverTarget.Dock = DockStyle.Fill;
-            lblStoresOverTarget.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            lblStoresOverTarget.ForeColor = Color.Black;
-            lblStoresOverTarget.Location = new Point(3, 0);
-            lblStoresOverTarget.Name = "lblStoresOverTarget";
-            lblStoresOverTarget.Size = new Size(198, 15);
-            lblStoresOverTarget.TabIndex = 21;
-            lblStoresOverTarget.Text = "-";
-            lblStoresOverTarget.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // lblStoresOverProgress
-            // 
-            lblStoresOverProgress.AutoSize = true;
-            lblStoresOverProgress.Dock = DockStyle.Fill;
-            lblStoresOverProgress.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            lblStoresOverProgress.ForeColor = Color.Black;
-            lblStoresOverProgress.Location = new Point(3, 15);
-            lblStoresOverProgress.Name = "lblStoresOverProgress";
-            lblStoresOverProgress.Size = new Size(198, 15);
-            lblStoresOverProgress.TabIndex = 22;
-            lblStoresOverProgress.Text = "-";
-            lblStoresOverProgress.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // lblCurrentWeek
             // 
             lblCurrentWeek.AutoSize = true;
             lblCurrentWeek.Dock = DockStyle.Fill;
             lblCurrentWeek.ForeColor = Color.Black;
-            lblCurrentWeek.Location = new Point(733, 0);
+            lblCurrentWeek.Location = new Point(443, 0);
             lblCurrentWeek.Name = "lblCurrentWeek";
-            lblCurrentWeek.Size = new Size(204, 36);
+            lblCurrentWeek.Size = new Size(94, 37);
             lblCurrentWeek.TabIndex = 23;
             lblCurrentWeek.Text = "-";
             lblCurrentWeek.TextAlign = ContentAlignment.MiddleCenter;
@@ -308,7 +215,7 @@
             // splitContainer1
             // 
             splitContainer1.Dock = DockStyle.Fill;
-            splitContainer1.Location = new Point(38, 36);
+            splitContainer1.Location = new Point(38, 37);
             splitContainer1.Name = "splitContainer1";
             // 
             // splitContainer1.Panel1
@@ -318,7 +225,7 @@
             // splitContainer1.Panel2
             // 
             splitContainer1.Panel2.Controls.Add(splitContainer2);
-            splitContainer1.Size = new Size(1358, 784);
+            splitContainer1.Size = new Size(1358, 783);
             splitContainer1.SplitterDistance = 647;
             splitContainer1.TabIndex = 24;
             // 
@@ -336,8 +243,8 @@
             // splitContainer2.Panel2
             // 
             splitContainer2.Panel2.Controls.Add(dataGridViewCompanyStores);
-            splitContainer2.Size = new Size(707, 784);
-            splitContainer2.SplitterDistance = 421;
+            splitContainer2.Size = new Size(707, 783);
+            splitContainer2.SplitterDistance = 450;
             splitContainer2.TabIndex = 27;
             // 
             // tableLayoutPanel1
@@ -355,13 +262,10 @@
             // 
             // listBoxWeeks
             // 
-            listBoxWeeks.BackColor = SystemColors.Control;
             listBoxWeeks.Dock = DockStyle.Fill;
-            listBoxWeeks.DrawMode = DrawMode.OwnerDrawFixed;
-            listBoxWeeks.Enabled = false;
-            listBoxWeeks.Font = new Font("Segoe UI", 9F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            listBoxWeeks.ForeColor = Color.Black;
+            listBoxWeeks.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
             listBoxWeeks.FormattingEnabled = true;
+            listBoxWeeks.ItemHeight = 17;
             listBoxWeeks.Location = new Point(3, 3);
             listBoxWeeks.Name = "listBoxWeeks";
             listBoxWeeks.SelectionMode = SelectionMode.MultiExtended;
@@ -371,54 +275,42 @@
             // tableLayoutPanel2
             // 
             tableLayoutPanel2.BackColor = SystemColors.Control;
-            tableLayoutPanel2.ColumnCount = 12;
+            tableLayoutPanel2.ColumnCount = 8;
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 200F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 50F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210F));
-            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 210F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 120F));
+            tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 100F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
+            tableLayoutPanel2.Controls.Add(btnAuto, 4, 0);
             tableLayoutPanel2.Controls.Add(comboBox1, 0, 0);
             tableLayoutPanel2.Controls.Add(button1, 1, 0);
-            tableLayoutPanel2.Controls.Add(lblCurrentWeek, 7, 0);
-            tableLayoutPanel2.Controls.Add(chkShow2022, 3, 0);
-            tableLayoutPanel2.Controls.Add(chkShow2021, 4, 0);
-            tableLayoutPanel2.Controls.Add(chkShow2023, 2, 0);
-            tableLayoutPanel2.Controls.Add(chkShow2020, 5, 0);
-            tableLayoutPanel2.Controls.Add(button2, 11, 0);
-            tableLayoutPanel2.Controls.Add(button3, 9, 0);
-            tableLayoutPanel2.Controls.Add(button4, 10, 0);
-            tableLayoutPanel2.Controls.Add(tableLayoutPanel3, 6, 0);
+            tableLayoutPanel2.Controls.Add(button3, 5, 0);
+            tableLayoutPanel2.Controls.Add(button4, 6, 0);
+            tableLayoutPanel2.Controls.Add(btnToggleYearOptions, 2, 0);
+            tableLayoutPanel2.Controls.Add(button2, 7, 0);
+            tableLayoutPanel2.Controls.Add(lblCurrentWeek, 3, 0);
             tableLayoutPanel2.Dock = DockStyle.Top;
             tableLayoutPanel2.Location = new Point(38, 0);
             tableLayoutPanel2.Name = "tableLayoutPanel2";
             tableLayoutPanel2.RowCount = 1;
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
-            tableLayoutPanel2.Size = new Size(1358, 36);
+            tableLayoutPanel2.Size = new Size(1358, 37);
             tableLayoutPanel2.TabIndex = 26;
             // 
-            // chkShow2023
+            // btnAuto
             // 
-            chkShow2023.AutoSize = true;
-            chkShow2023.CheckAlign = ContentAlignment.BottomCenter;
-            chkShow2023.Dock = DockStyle.Fill;
-            chkShow2023.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            chkShow2023.ForeColor = Color.Black;
-            chkShow2023.Location = new Point(323, 3);
-            chkShow2023.Name = "chkShow2023";
-            chkShow2023.RightToLeft = RightToLeft.No;
-            chkShow2023.Size = new Size(44, 30);
-            chkShow2023.TabIndex = 13;
-            chkShow2023.Text = "2023";
-            chkShow2023.TextAlign = ContentAlignment.MiddleCenter;
-            chkShow2023.UseVisualStyleBackColor = true;
-            chkShow2023.CheckedChanged += PreviousYearChange;
+            btnAuto.Dock = DockStyle.Right;
+            btnAuto.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
+            btnAuto.Location = new Point(1173, 3);
+            btnAuto.Name = "btnAuto";
+            btnAuto.Size = new Size(62, 31);
+            btnAuto.TabIndex = 30;
+            btnAuto.Text = "Auto";
+            btnAuto.UseVisualStyleBackColor = true;
+            btnAuto.Click += btnAuto_Click;
             // 
             // button3
             // 
@@ -426,7 +318,7 @@
             button3.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
             button3.Location = new Point(1241, 3);
             button3.Name = "button3";
-            button3.Size = new Size(34, 30);
+            button3.Size = new Size(34, 31);
             button3.TabIndex = 23;
             button3.Text = "<";
             button3.UseVisualStyleBackColor = true;
@@ -438,26 +330,41 @@
             button4.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
             button4.Location = new Point(1281, 3);
             button4.Name = "button4";
-            button4.Size = new Size(34, 30);
+            button4.Size = new Size(34, 31);
             button4.TabIndex = 24;
             button4.Text = ">";
             button4.UseVisualStyleBackColor = true;
             button4.Click += button4_Click;
             // 
-            // tableLayoutPanel3
+            // btnToggleYearOptions
             // 
-            tableLayoutPanel3.ColumnCount = 1;
-            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50F));
-            tableLayoutPanel3.Controls.Add(lblStoresOverProgress, 0, 1);
-            tableLayoutPanel3.Controls.Add(lblStoresOverTarget, 0, 0);
-            tableLayoutPanel3.Dock = DockStyle.Fill;
-            tableLayoutPanel3.Location = new Point(523, 3);
-            tableLayoutPanel3.Name = "tableLayoutPanel3";
-            tableLayoutPanel3.RowCount = 2;
-            tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel3.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
-            tableLayoutPanel3.Size = new Size(204, 30);
-            tableLayoutPanel3.TabIndex = 27;
+            btnToggleYearOptions.BackColor = SystemColors.Control;
+            btnToggleYearOptions.Dock = DockStyle.Fill;
+            btnToggleYearOptions.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnToggleYearOptions.ForeColor = Color.Black;
+            btnToggleYearOptions.Location = new Point(322, 2);
+            btnToggleYearOptions.Margin = new Padding(2);
+            btnToggleYearOptions.Name = "btnToggleYearOptions";
+            btnToggleYearOptions.Size = new Size(116, 33);
+            btnToggleYearOptions.TabIndex = 28;
+            btnToggleYearOptions.Text = "Years";
+            btnToggleYearOptions.UseVisualStyleBackColor = false;
+            btnToggleYearOptions.Click += btnToggleYearOptions_Click;
+            // 
+            // button2
+            // 
+            button2.BackColor = SystemColors.Control;
+            button2.Dock = DockStyle.Fill;
+            button2.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            button2.ForeColor = Color.Black;
+            button2.Location = new Point(1320, 2);
+            button2.Margin = new Padding(2);
+            button2.Name = "button2";
+            button2.Size = new Size(36, 33);
+            button2.TabIndex = 29;
+            button2.Text = "%";
+            button2.UseVisualStyleBackColor = false;
+            button2.Click += button2_Click;
             // 
             // SalesSummary
             // 
@@ -470,6 +377,7 @@
             Margin = new Padding(2);
             Name = "SalesSummary";
             Text = "Sales Summary";
+            Load += SalesSummary_Load;
             ((System.ComponentModel.ISupportInitialize)dataGridViewUKStores).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFranchiseStores).EndInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewCompanyStores).EndInit();
@@ -484,8 +392,6 @@
             tableLayoutPanel1.ResumeLayout(false);
             tableLayoutPanel2.ResumeLayout(false);
             tableLayoutPanel2.PerformLayout();
-            tableLayoutPanel3.ResumeLayout(false);
-            tableLayoutPanel3.PerformLayout();
             ResumeLayout(false);
         }
 
@@ -498,18 +404,13 @@
         private DataGridView dataGridViewFranchiseStores;
         private DataGridView dataGridViewCompanyStores;
         private ComboBox comboBox1;
-        private CheckBox chkShow2022;
-        private CheckBox chkShow2021;
-        private CheckBox chkShow2020;
         private Button button1;
-        private Button button2;
-        private Label lblStoresOverTarget;
-        private Label lblStoresOverProgress;
         private Label lblCurrentWeek;
         private Button button3;
         private Button button4;
-        private TableLayoutPanel tableLayoutPanel3;
-        private CheckBox chkShow2023;
-        private Class.Design.Custom_Items.CenteredListBox listBoxWeeks;
+        private Button btnToggleYearOptions;
+        private Button button2;        
+        private Button btnAuto;
+        private ListBox listBoxWeeks;
     }
 }

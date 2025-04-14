@@ -1,9 +1,8 @@
-﻿using BG_Menu.Helpers; // Ensure this namespace is included
-using BG_Menu.Models;  // Ensure this namespace is included
+﻿using BG_Menu.Class.Functions;
 using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SqlClient;
+//using Microsoft.Data.SqlClient;
 using System.Globalization; // For CultureInfo
 using System.IO;
 using System.Linq;
@@ -12,11 +11,14 @@ using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
+using BG_Menu.Data;
+using System.Data;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class NewCreditCard : Form
     {
+        private SalesRepository salesRepository;
         private ContextMenuStrip loadButtonContextMenu;
 
         public NewCreditCard()
@@ -24,16 +26,16 @@ namespace BG_Menu.Forms.Sub_Forms
             InitializeComponent();
             InitializeDataGridView();
 
+            salesRepository = new SalesRepository();
+
             // Load supplier configurations from the database
             SupplierConfigLoader.LoadSuppliers();
 
             InitializeContextMenu();
 
-            // Subscribe to DataGridView events for automatic Value calculation and tracking changes
             dataGridView1.CellValueChanged += DataGridView1_CellValueChanged;
             dataGridView1.CurrentCellDirtyStateChanged += DataGridView1_CurrentCellDirtyStateChanged;
 
-            // Populate the ComboMonth ComboBox with unique ReportPeriods and the current working month
             PopulateReportPeriodComboBox();
         }
         private void InitializeContextMenu()
@@ -57,8 +59,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 // Optionally, refresh any UI elements that depend on supplier data
                 // For example, re-apply logic to existing rows if necessary
                 RefreshSupplierDependentLogic();
-
-                MessageBox.Show("Suppliers successfully reloaded.", "Reload Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                
                 LogMessage("Suppliers successfully reloaded.");
             }
             catch (Exception ex)
@@ -155,9 +156,6 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridView1.Columns.Add(invoiceColumn);
         }
 
-        /// <summary>
-        /// Populates the ComboMonth ComboBox with unique ReportPeriod values from the database and the current working month.
-        /// </summary>
         private void PopulateReportPeriodComboBox()
         {
             // Clear existing items
@@ -189,51 +187,30 @@ namespace BG_Menu.Forms.Sub_Forms
             ComboMonth.SelectedItem = currentWorkingMonth;
         }
 
-        /// <summary>
-        /// Retrieves a list of unique ReportPeriod values from the CreditCardTransactions table.
-        /// </summary>
-        /// <returns>List of unique ReportPeriod strings.</returns>
         private List<string> GetUniqueReportPeriodsFromDatabase()
         {
             List<string> reportPeriods = new List<string>();
-
-            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
-
             string query = "SELECT DISTINCT ReportPeriod FROM CreditCardTransactions";
-
             try
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
-                using (SqlCommand cmd = new SqlCommand(query, conn))
+                DataTable dt = salesRepository.ExecuteSqlQuery(query);
+                foreach (DataRow row in dt.Rows)
                 {
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    string rp = row["ReportPeriod"]?.ToString();
+                    if (!string.IsNullOrEmpty(rp))
                     {
-                        while (reader.Read())
-                        {
-                            string reportPeriod = reader["ReportPeriod"]?.ToString();
-                            if (!string.IsNullOrEmpty(reportPeriod))
-                            {
-                                reportPeriods.Add(reportPeriod);
-                            }
-                        }
+                        reportPeriods.Add(rp);
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error retrieving Report Periods from SQL Server:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error retrieving Report Periods:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LogMessage($"Error retrieving Report Periods: {ex.Message}");
             }
-
             return reportPeriods;
         }
 
-        /// <summary>
-        /// Calculates the current working month based on today's date.
-        /// If today is the 10th or later, the working month is the next month; otherwise, it's the current month.
-        /// </summary>
-        /// <returns>Formatted working month string (e.g., "January 2025").</returns>
         private string CalculateCurrentWorkingMonth()
         {
             DateTime today = DateTime.Today;
@@ -254,10 +231,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return workingMonthDate.ToString("MMMM yyyy", CultureInfo.InvariantCulture);
         }
 
-        /// <summary>
-        /// Retrieves the invoice folder path from app.config.
-        /// </summary>
-        /// <returns>Network path as a string.</returns>
         private string GetInvoiceFolderPath()
         {
             string path = ConfigurationManager.AppSettings["InvoiceFolderPath"];
@@ -269,12 +242,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return path;
         }
 
-        /// <summary>
-        /// Copies the PDF file to the target directory with a standardized naming convention.
-        /// </summary>
-        /// <param name="sourceFilePath">Original PDF file path.</param>
-        /// <param name="description">Description extracted from the PDF.</param>
-        /// <param name="total">Total amount extracted from the PDF.</param>
         private void CopyPdfToTargetFolder(string sourceFilePath, string description, string total)
         {
             string targetFolder = GetInvoiceFolderPath();
@@ -349,11 +316,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Removes invalid characters from filenames.
-        /// </summary>
-        /// <param name="input">Original filename string.</param>
-        /// <returns>Sanitized filename string.</returns>
         private string SanitizeFileName(string input)
         {
             foreach (char c in Path.GetInvalidFileNameChars())
@@ -363,9 +325,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return input;
         }
 
-        /// <summary>
-        /// Checks if the filename is a reserved Windows name.
-        /// </summary>
         private bool IsReservedFileName(string fileName)
         {
             string[] reservedNames = { "CON", "PRN", "AUX", "NUL",
@@ -376,10 +335,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return reservedNames.Contains(nameWithoutExtension);
         }
 
-        /// <summary>
-        /// Logs messages to a text file for auditing and troubleshooting.
-        /// </summary>
-        /// <param name="message">Message to log.</param>
         private void LogMessage(string message)
         {
             string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ImportLog.txt");
@@ -393,9 +348,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Handles the Import button click event.
-        /// </summary>
         private void btnImport_Click(object sender, EventArgs e)
         {
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
@@ -432,10 +384,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Extracts data from a PDF file and populates the DataGridView.
-        /// Also copies the PDF to the target directory with a standardized name.
-        /// </summary>
         private void ExtractDataFromPdfAndPopulate(string filePath, string department, string reportPeriod)
         {
             try
@@ -497,9 +445,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Extracts text from a PDF file using PdfPig.
-        /// </summary>
         private string ExtractTextFromPdf(string filePath)
         {
             StringBuilder text = new StringBuilder();
@@ -516,9 +461,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return text.ToString();
         }
 
-        /// <summary>
-        /// Detects the supplier from the extracted text using loaded supplier mappings.
-        /// </summary>
         private string DetectSupplier(string extractedText)
         {
             foreach (var supplier in SupplierConfigLoader.Suppliers)
@@ -535,9 +477,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return "Unknown Supplier";
         }
 
-        /// <summary>
-        /// Extracts the total amount from the PDF based on the supplier.
-        /// </summary>
         private string ExtractTotalFromPdf(string extractedText, Supplier supplier)
         {
             if (supplier.TotalExtractionRegexes != null && supplier.TotalExtractionRegexes.Count > 0)
@@ -558,20 +497,14 @@ namespace BG_Menu.Forms.Sub_Forms
             return null; // Return null if no matches are found
         }
 
-        /// <summary>
-        /// Generates a unique description by appending a sequential number based on existing entries.
-        /// </summary>
-        /// <param name="baseDescription">Base description (e.g., "Amazon").</param>
-        /// <param name="department">Selected Department.</param>
-        /// <param name="reportPeriod">Selected Report Period.</param>
-        /// <returns>Unique description string (e.g., "Amazon 3").</returns>
+
         private string GetUniqueDescription(string baseDescription, string department, string reportPeriod)
         {
             int maxNumber = 0;
             string query = @"SELECT Description FROM CreditCardTransactions 
-                             WHERE Department = @Department 
-                             AND ReportPeriod = @ReportPeriod 
-                             AND Description LIKE @DescriptionPattern";
+                     WHERE Department = @Department 
+                     AND ReportPeriod = @ReportPeriod 
+                     AND Description LIKE @DescriptionPattern";
 
             // Find the supplier to get the description pattern
             var supplier = SupplierConfigLoader.Suppliers.FirstOrDefault(s =>
@@ -583,40 +516,38 @@ namespace BG_Menu.Forms.Sub_Forms
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(ConfigurationManager.ConnectionStrings["SQL"].ConnectionString))
-                using (SqlCommand cmd = new SqlCommand(query, conn))
-                {
-                    cmd.Parameters.AddWithValue("@Department", department);
-                    cmd.Parameters.AddWithValue("@ReportPeriod", reportPeriod);
-                    cmd.Parameters.AddWithValue("@DescriptionPattern", descriptionPattern);
-
-                    conn.Open();
-                    using (SqlDataReader reader = cmd.ExecuteReader())
+                // Use the repository method to execute the query
+                var parameters = new Dictionary<string, object>
                     {
-                        while (reader.Read())
+                        { "@Department", department },
+                        { "@ReportPeriod", reportPeriod },
+                        { "@DescriptionPattern", descriptionPattern }
+                    };
+
+                DataTable dt = salesRepository.ExecuteSqlQuery(query, parameters);
+                foreach (DataRow row in dt.Rows)
+                {
+                    string existingDescription = row["Description"]?.ToString();
+                    if (existingDescription != null)
+                    {
+                        // Extract the number from descriptions like "Amazon 1"
+                        var match = Regex.Match(existingDescription, $@"^{Regex.Escape(baseDescription)} (\d+)$");
+                        if (match.Success && int.TryParse(match.Groups[1].Value, out int number))
                         {
-                            string existingDescription = reader["Description"]?.ToString();
-                            if (existingDescription != null)
-                            {
-                                // Extract the number from descriptions like "Amazon 1"
-                                var match = Regex.Match(existingDescription, $@"^{Regex.Escape(baseDescription)} (\d+)$");
-                                if (match.Success && int.TryParse(match.Groups[1].Value, out int number))
-                                {
-                                    if (number > maxNumber)
-                                        maxNumber = number;
-                                }
-                            }
+                            if (number > maxNumber)
+                                maxNumber = number;
                         }
                     }
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error retrieving existing descriptions from SQL Server: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error retrieving existing descriptions from SQL Server: {ex.Message}",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LogMessage($"Error retrieving descriptions for '{baseDescription}' in '{department}' during '{reportPeriod}': {ex.Message}");
             }
 
-            // Check the DataGridView for any in-memory entries
+            // Also check the DataGridView for any in-memory entries
             foreach (DataGridViewRow row in dataGridView1.Rows)
             {
                 if (!row.IsNewRow && row.Cells["Description"].Value != null)
@@ -640,7 +571,6 @@ namespace BG_Menu.Forms.Sub_Forms
                 string uniqueDescription = supplier.DescriptionPattern
                     .Replace("{SupplierName}", baseDescription)
                     .Replace("{Number}", nextNumber.ToString());
-
                 return uniqueDescription;
             }
             else
@@ -649,9 +579,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Applies business logic to a newly added row based on its description.
-        /// </summary>
         private void ApplyLogicForRow(int rowIndex)
         {
             if (rowIndex < 0)
@@ -698,18 +625,12 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Extracts the base description by removing any trailing numbers and spaces.
-        /// </summary>
         private string GetBaseDescription(string description)
         {
             // Use regex to remove trailing numbers and spaces from the description
             return Regex.Replace(description, @"\s+\d+$", "").Trim();
         }
 
-        /// <summary>
-        /// Handles the CellValueChanged event to recalculate the Value column when VAT or Total changes and mark the row as modified.
-        /// </summary>
         private void DataGridView1_CellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
             // Ensure the change is in the VAT or Total column
@@ -732,10 +653,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Handles the CurrentCellDirtyStateChanged event to commit edits immediately.
-        /// This ensures that the CellValueChanged event is fired when a ComboBox selection changes.
-        /// </summary>
         private void DataGridView1_CurrentCellDirtyStateChanged(object sender, EventArgs e)
         {
             if (dataGridView1.IsCurrentCellDirty)
@@ -744,88 +661,69 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        /// <summary>
-        /// Saves the new data from the DataGridView to the SQL Server database.
-        /// Only inserts rows where ID = 0, indicating new records.
-        /// After insertion, updates the DataGridView row with the generated ID.
-        /// </summary>
         private void SaveDataToSqlServer(string department, string reportPeriod)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
-
-            using (SqlConnection conn = new SqlConnection(connectionString))
+            // Iterate through DataGridView rows
+            foreach (DataGridViewRow row in dataGridView1.Rows)
             {
-                conn.Open();
+                if (row.IsNewRow)
+                    continue;
 
-                foreach (DataGridViewRow row in dataGridView1.Rows)
+                // Skip existing rows (only insert if ID is 0 or not set)
+                if (!int.TryParse(row.Cells["ID"].Value?.ToString(), out int id) || id == 0)
                 {
-                    if (row.IsNewRow) continue;
-
-                    // Retrieve the ID; skip if ID is missing or not zero
-                    if (!int.TryParse(row.Cells["ID"].Value?.ToString(), out int id) || id != 0)
-                    {
-                        // Existing row; skip insertion to prevent duplicates
-                        continue;
-                    }
-
-                    // Retrieve cell values
+                    // New row: proceed to insert
                     string description = row.Cells["Description"].Value?.ToString();
                     string glAccount = row.Cells["GLAccount"].Value?.ToString();
                     string dimension = row.Cells["Dimension"].Value?.ToString();
                     string glName = row.Cells["GLName"].Value?.ToString();
                     string vat = row.Cells["VAT"].Value?.ToString();
-                    string total = row.Cells["Total"].Value?.ToString();
+                    string totalStr = row.Cells["Total"].Value?.ToString();
 
-                    // Skip rows with incomplete data
+                    // Validate required fields
                     if (string.IsNullOrEmpty(description) || string.IsNullOrEmpty(glAccount) ||
                         string.IsNullOrEmpty(dimension) || string.IsNullOrEmpty(glName) ||
-                        string.IsNullOrEmpty(vat) || string.IsNullOrEmpty(total) ||
-                        string.IsNullOrEmpty(department) ||
-                        string.IsNullOrEmpty(reportPeriod))
+                        string.IsNullOrEmpty(vat) || string.IsNullOrEmpty(totalStr) ||
+                        string.IsNullOrEmpty(department) || string.IsNullOrEmpty(reportPeriod))
                     {
                         continue;
                     }
 
-                    // Prepare the INSERT command and retrieve the inserted ID using SCOPE_IDENTITY()
+                    // Parse Total to decimal
+                    if (!decimal.TryParse(totalStr, out decimal total))
+                        continue;
+
                     string insertQuery = @"INSERT INTO CreditCardTransactions 
-                                           (Description, GLAccount, Dimension, GLName, VAT, Total, Department, ReportPeriod)
-                                           VALUES (@Description, @GLAccount, @Dimension, @GLName, @VAT, @Total, @Department, @ReportPeriod);
-                                           SELECT CAST(scope_identity() AS int)";
+                                   (Description, GLAccount, Dimension, GLName, VAT, Total, Department, ReportPeriod)
+                                   VALUES (@Description, @GLAccount, @Dimension, @GLName, @VAT, @Total, @Department, @ReportPeriod);
+                                   SELECT CAST(scope_identity() AS int)";
 
-                    using (SqlCommand cmd = new SqlCommand(insertQuery, conn))
+                    var parameters = new Dictionary<string, object>
+                        {
+                            { "@Description", description },
+                            { "@GLAccount", glAccount },
+                            { "@Dimension", dimension },
+                            { "@GLName", glName },
+                            { "@VAT", vat },
+                            { "@Total", total },
+                            { "@Department", department },
+                            { "@ReportPeriod", reportPeriod }
+                        };
+
+                    try
                     {
-                        cmd.Parameters.AddWithValue("@Description", description);
-                        cmd.Parameters.AddWithValue("@GLAccount", glAccount);
-                        cmd.Parameters.AddWithValue("@Dimension", dimension);
-                        cmd.Parameters.AddWithValue("@GLName", glName);
-                        cmd.Parameters.AddWithValue("@VAT", vat);
-                        cmd.Parameters.AddWithValue("@Total", decimal.Parse(total)); // Ensure 'Total' is a decimal
-                        cmd.Parameters.AddWithValue("@Department", department);
-                        cmd.Parameters.AddWithValue("@ReportPeriod", reportPeriod);
-
-                        try
-                        {
-                            // Execute the INSERT command and retrieve the new ID
-                            int newId = (int)cmd.ExecuteScalar();
-
-                            // Update the DataGridView row with the new ID
-                            row.Cells["ID"].Value = newId;
-
-                            // Optionally, mark the row as not modified
-                            row.Cells["IsModified"].Value = false;
-                        }
-                        catch (Exception ex)
-                        {
-                            MessageBox.Show($"Error inserting data into SQL Server: {ex.Message}", "Insertion Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            LogMessage($"Error inserting record '{description}': {ex.Message}");
-                        }
+                        // Use ExecuteSqlScalar to get the new ID
+                        int newId = salesRepository.ExecuteSqlScalar(insertQuery, parameters);
+                        row.Cells["ID"].Value = newId;
+                        row.Cells["IsModified"].Value = false;
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error inserting data: {ex.Message}", "Insertion Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        LogMessage($"Error inserting record '{description}': {ex.Message}");
                     }
                 }
-
-                conn.Close();
-            }
-
-            MessageBox.Show("Data successfully imported and saved to SQL Server.", "Import Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }            
         }
 
         /// <summary>
@@ -834,90 +732,61 @@ namespace BG_Menu.Forms.Sub_Forms
         /// </summary>
         private void LoadDataFromDatabase(string department, string reportPeriod)
         {
-            // Validate selections
             if (string.IsNullOrEmpty(department) || string.IsNullOrEmpty(reportPeriod))
             {
                 MessageBox.Show("Please select both Department and Report Period before loading data.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Retrieve the connection string from configuration
-            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+            string query = @"
+                SELECT ID, Description, GLAccount, Dimension, GLName, VAT, Total 
+                FROM CreditCardTransactions 
+                WHERE Department = @Department AND ReportPeriod = @ReportPeriod";
+            var parameters = new Dictionary<string, object>
+            {
+                { "@Department", department },
+                { "@ReportPeriod", reportPeriod }
+            };
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                DataTable dt = salesRepository.ExecuteSqlQuery(query, parameters);
+                dataGridView1.Rows.Clear();
+
+                foreach (DataRow row in dt.Rows)
                 {
-                    conn.Open();
+                    int id = row["ID"] != DBNull.Value ? Convert.ToInt32(row["ID"]) : 0;
+                    string description = row["Description"]?.ToString() ?? "";
+                    string glAccount = row["GLAccount"]?.ToString() ?? "";
+                    string dimension = row["Dimension"]?.ToString() ?? "";
+                    string glName = row["GLName"]?.ToString() ?? "";
+                    string vat = row["VAT"]?.ToString() ?? "";
+                    decimal total = row["Total"] != DBNull.Value ? Convert.ToDecimal(row["Total"]) : 0m;
+                    decimal value = vat == "I1" ? total * 1.2m : total * 1.0m;
 
-                    // Define the SELECT query with parameters, including ID
-                    string selectQuery = @"
-                        SELECT ID, Description, GLAccount, Dimension, GLName, VAT, Total 
-                        FROM CreditCardTransactions 
-                        WHERE Department = @Department AND ReportPeriod = @ReportPeriod";
-
-                    using (SqlCommand cmd = new SqlCommand(selectQuery, conn))
-                    {
-                        // Add parameters to prevent SQL injection
-                        cmd.Parameters.AddWithValue("@Department", department);
-                        cmd.Parameters.AddWithValue("@ReportPeriod", reportPeriod);
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            // Clear existing rows in the DataGridView
-                            dataGridView1.Rows.Clear();
-
-                            // Read each record and add it to the DataGridView
-                            while (reader.Read())
-                            {
-                                // Retrieve values from the reader
-                                int id = reader["ID"] != DBNull.Value ? Convert.ToInt32(reader["ID"]) : 0;
-                                string description = reader["Description"]?.ToString() ?? string.Empty;
-                                string glAccount = reader["GLAccount"]?.ToString() ?? string.Empty;
-                                string dimension = reader["Dimension"]?.ToString() ?? string.Empty;
-                                string glName = reader["GLName"]?.ToString() ?? string.Empty;
-                                string vat = reader["VAT"]?.ToString() ?? string.Empty;
-                                decimal total = reader["Total"] != DBNull.Value ? Convert.ToDecimal(reader["Total"]) : 0m;
-
-                                // Calculate the Value based on VAT
-                                decimal value = vat == "I1" ? total * 1.2m : total * 1.0m;
-
-                                // Add the row to the DataGridView, including the ID and IsModified flag set to false
-                                dataGridView1.Rows.Add(
-                                    id, // ID
-                                    description,
-                                    glAccount,
-                                    dimension,
-                                    glName,
-                                    vat,
-                                    total.ToString("0.00"),
-                                    value.ToString("0.00"),
-                                    false, // IsModified flag set to false
-                                    "Missing" // Initial value for Invoice column
-                                );
-                            }
-                        }
-                    }
-
-                    conn.Close();
+                    dataGridView1.Rows.Add(
+                        id,
+                        description,
+                        glAccount,
+                        dimension,
+                        glName,
+                        vat,
+                        total.ToString("0.00"),
+                        value.ToString("0.00"),
+                        false, // IsModified
+                        "Missing" // Invoice status
+                    );
                 }
-
-                // Update the Invoice status after loading data
-                UpdateInvoiceStatus();
-
-                MessageBox.Show("Data successfully loaded from SQL Server.", "Load Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                // Handle any errors that occur during the database operations
-                MessageBox.Show($"Error loading data from SQL Server:\n{ex.Message}", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error loading data:\n{ex.Message}", "Load Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LogMessage($"Error loading data: {ex.Message}");
             }
+
+            UpdateInvoiceStatus();            
         }
 
-        /// <summary>
-        /// Handles the Load button click event to load saved data from SQL Server based on selected Department and Report Period.
-        /// </summary>
         private void btnLoad_Click(object sender, EventArgs e)
         {
             // Retrieve selected Department and Report Period
@@ -928,9 +797,6 @@ namespace BG_Menu.Forms.Sub_Forms
             LoadDataFromDatabase(department, reportPeriod);
         }
 
-        /// <summary>
-        /// Handles the Update button click event to update all rows in the SQL Server database.
-        /// </summary>
         private void btnUpdate_Click(object sender, EventArgs e)
         {
             // Retrieve selected Department and Report Period
@@ -940,7 +806,8 @@ namespace BG_Menu.Forms.Sub_Forms
             // Validate selections
             if (string.IsNullOrEmpty(department) || string.IsNullOrEmpty(reportPeriod))
             {
-                MessageBox.Show("Please select both Department and Report Period before updating data.", "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Please select both Department and Report Period before updating data.",
+                                "Selection Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
@@ -950,139 +817,113 @@ namespace BG_Menu.Forms.Sub_Forms
                                                 MessageBoxButtons.YesNo,
                                                 MessageBoxIcon.Question);
             if (confirmResult != DialogResult.Yes)
-            {
                 return;
-            }
 
-            // Retrieve the connection string from configuration
-            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+            // Define the UPDATE query
+            string updateQuery = @"
+        UPDATE CreditCardTransactions
+        SET Description = @Description,
+            GLAccount = @GLAccount,
+            Dimension = @Dimension,
+            GLName = @GLName,
+            VAT = @VAT,
+            Total = @Total
+        WHERE ID = @ID";
 
             try
             {
-                using (SqlConnection conn = new SqlConnection(connectionString))
+                // Iterate through each row in the DataGridView
+                foreach (DataGridViewRow row in dataGridView1.Rows)
                 {
-                    conn.Open();
+                    if (row.IsNewRow)
+                        continue;
 
-                    foreach (DataGridViewRow row in dataGridView1.Rows)
+                    // Retrieve the ID; skip if missing or invalid
+                    if (row.Cells["ID"].Value == null ||
+                        !int.TryParse(row.Cells["ID"].Value.ToString(), out int id))
+                        continue;
+
+                    // Retrieve cell values
+                    string description = row.Cells["Description"].Value?.ToString();
+                    string glAccount = row.Cells["GLAccount"].Value?.ToString();
+                    string dimension = row.Cells["Dimension"].Value?.ToString();
+                    string glName = row.Cells["GLName"].Value?.ToString();
+                    string vat = row.Cells["VAT"].Value?.ToString();
+                    string totalStr = row.Cells["Total"].Value?.ToString();
+
+                    // Validate required fields
+                    if (string.IsNullOrEmpty(description) || string.IsNullOrEmpty(glAccount) ||
+                        string.IsNullOrEmpty(dimension) || string.IsNullOrEmpty(glName) ||
+                        string.IsNullOrEmpty(vat) || string.IsNullOrEmpty(totalStr))
                     {
-                        if (row.IsNewRow) continue;
-
-                        // Retrieve the ID; skip if ID is missing or invalid
-                        if (row.Cells["ID"].Value == null || !int.TryParse(row.Cells["ID"].Value.ToString(), out int id))
-                        {
-                            continue;
-                        }
-
-                        // Retrieve cell values
-                        string description = row.Cells["Description"].Value?.ToString();
-                        string glAccount = row.Cells["GLAccount"].Value?.ToString();
-                        string dimension = row.Cells["Dimension"].Value?.ToString();
-                        string glName = row.Cells["GLName"].Value?.ToString();
-                        string vat = row.Cells["VAT"].Value?.ToString();
-                        string totalStr = row.Cells["Total"].Value?.ToString();
-
-                        // Validate required fields
-                        if (string.IsNullOrEmpty(description) || string.IsNullOrEmpty(glAccount) ||
-                            string.IsNullOrEmpty(dimension) || string.IsNullOrEmpty(glName) ||
-                            string.IsNullOrEmpty(vat) || string.IsNullOrEmpty(totalStr))
-                        {
-                            // Optionally, you can notify the user about incomplete rows
-                            continue;
-                        }
-
-                        // Parse Total to decimal
-                        if (!decimal.TryParse(totalStr, out decimal total))
-                        {
-                            // Optionally, notify the user about invalid total values
-                            continue;
-                        }
-
-                        // Prepare the UPDATE command
-                        string updateQuery = @"
-                            UPDATE CreditCardTransactions
-                            SET Description = @Description,
-                                GLAccount = @GLAccount,
-                                Dimension = @Dimension,
-                                GLName = @GLName,
-                                VAT = @VAT,
-                                Total = @Total
-                            WHERE ID = @ID";
-
-                        using (SqlCommand cmd = new SqlCommand(updateQuery, conn))
-                        {
-                            cmd.Parameters.AddWithValue("@Description", description);
-                            cmd.Parameters.AddWithValue("@GLAccount", glAccount);
-                            cmd.Parameters.AddWithValue("@Dimension", dimension);
-                            cmd.Parameters.AddWithValue("@GLName", glName);
-                            cmd.Parameters.AddWithValue("@VAT", vat);
-                            cmd.Parameters.AddWithValue("@Total", total);
-                            cmd.Parameters.AddWithValue("@ID", id);
-
-                            try
-                            {
-                                int rowsAffected = cmd.ExecuteNonQuery();
-                                if (rowsAffected > 0)
-                                {
-                                    // Optionally, mark the row as updated (e.g., change background color)
-                                    row.DefaultCellStyle.BackColor = System.Drawing.Color.LightGreen;
-                                    // Reset the IsModified flag
-                                    row.Cells["IsModified"].Value = false;
-                                }
-                                else
-                                {
-                                    // Optionally, notify the user if no rows were updated
-                                }
-                            }
-                            catch (Exception ex)
-                            {
-                                MessageBox.Show($"Error updating record ID {id}: {ex.Message}", "Update Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                                LogMessage($"Error updating record ID {id}: {ex.Message}");
-                            }
-                        }
+                        continue;
                     }
 
-                    conn.Close();
+                    // Parse Total to decimal
+                    if (!decimal.TryParse(totalStr, out decimal total))
+                        continue;
+
+                    // Prepare parameters for the update query
+                    var parameters = new Dictionary<string, object>
+                        {
+                            { "@Description", description },
+                            { "@GLAccount", glAccount },
+                            { "@Dimension", dimension },
+                            { "@GLName", glName },
+                            { "@VAT", vat },
+                            { "@Total", total },
+                            { "@ID", id }
+                        };
+
+                    // Execute the update via SalesRepository
+                    try
+                    {
+                        int rowsAffected = salesRepository.ExecuteSqlNonQuery(updateQuery, parameters);
+                        if (rowsAffected > 0)
+                        {
+                            row.DefaultCellStyle.BackColor = System.Drawing.Color.LightGreen;
+                            row.Cells["IsModified"].Value = false;
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error updating record ID {id}: {ex.Message}",
+                                        "Update Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        LogMessage($"Error updating record ID {id}: {ex.Message}");
+                    }
                 }
-
-                MessageBox.Show("All records have been successfully updated.", "Update Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                // Reload the data to reflect the latest updates
+                
                 LoadDataFromDatabase(department, reportPeriod);
             }
             catch (Exception ex)
             {
-                // Handle any errors that occur during the database operations
-                MessageBox.Show($"Error updating data in SQL Server:\n{ex.Message}", "Update Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error updating data in SQL Server:\n{ex.Message}",
+                                "Update Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 LogMessage($"Error updating data: {ex.Message}");
             }
         }
 
-        /// <summary>
-        /// Checks if the invoice PDF exists in the Invoice folder based on Description and Total.
-        /// </summary>
-        /// <param name="description">Description from the DataGridView row.</param>
-        /// <param name="total">Total from the DataGridView row.</param>
-        /// <returns>True if the invoice exists; otherwise, false.</returns>
+
         private bool CheckInvoiceExists(string description, string total)
         {
             string targetFolder = GetInvoiceFolderPath();
             if (string.IsNullOrEmpty(targetFolder))
             {
-                // Path is not configured; consider invoice as missing
+
                 return false;
             }
 
-            // Find the supplier based on the description
+
             var supplier = SupplierConfigLoader.Suppliers.FirstOrDefault(s =>
                 description.StartsWith(s.Name, StringComparison.OrdinalIgnoreCase));
 
             if (supplier == null)
             {
-                // Supplier not found; consider invoice as missing
+
                 return false;
             }
 
-            // Construct the expected filename using supplier's filename pattern
+
             string filenamePattern = supplier.FilenamePattern ?? "{Description}.pdf";
             string sanitizedDescription = SanitizeFileName(description);
             string sanitizedTotal = SanitizeFileName(total);
@@ -1090,11 +931,10 @@ namespace BG_Menu.Forms.Sub_Forms
                 .Replace("{Description}", sanitizedDescription)
                 .Replace("{Number}", sanitizedTotal);
 
-            // Check if exact filename exists
+
             string exactFilePath = Path.Combine(targetFolder, expectedFileName);
             bool exists = File.Exists(exactFilePath);
 
-            // If not found, check for files with timestamps or variations
             if (!exists)
             {
                 exists = Directory.EnumerateFiles(targetFolder, "*.pdf")
@@ -1105,10 +945,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return exists;
         }
 
-        /// <summary>
-        /// Updates the Invoice column status for all rows in the DataGridView.
-        /// Sets the background color to YellowGreen if the invoice exists, otherwise Tomato.
-        /// </summary>
         private void UpdateInvoiceStatus()
         {
             foreach (DataGridViewRow row in dataGridView1.Rows)

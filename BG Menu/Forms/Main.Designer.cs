@@ -30,6 +30,7 @@
         {
             panel1 = new Panel();
             pnlFinance = new Panel();
+            btnRefunds = new Button();
             btnBudgetsExtract = new Button();
             btnSalesSheets = new Button();
             btnSalesSummary = new Button();
@@ -38,6 +39,7 @@
             button7 = new Button();
             btnFileServer = new Button();
             pnlServiceTools = new Panel();
+            button2 = new Button();
             button6 = new Button();
             button3 = new Button();
             btnFSM = new Button();
@@ -66,7 +68,6 @@
             btnClose = new Button();
             FormLoader = new Panel();
             panel6 = new Panel();
-            btnRefunds = new Button();
             panel1.SuspendLayout();
             pnlFinance.SuspendLayout();
             pnlServiceTools.SuspendLayout();
@@ -111,11 +112,34 @@
             pnlFinance.Controls.Add(btnCreditcard);
             pnlFinance.Controls.Add(paymentdevices);
             pnlFinance.Dock = DockStyle.Top;
-            pnlFinance.Location = new Point(0, 635);
+            pnlFinance.Location = new Point(0, 690);
             pnlFinance.Name = "pnlFinance";
             pnlFinance.Size = new Size(203, 330);
             pnlFinance.TabIndex = 17;
             pnlFinance.Visible = false;
+            // 
+            // btnRefunds
+            // 
+            btnRefunds.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            btnRefunds.BackgroundImageLayout = ImageLayout.Zoom;
+            btnRefunds.Dock = DockStyle.Top;
+            btnRefunds.FlatAppearance.BorderSize = 0;
+            btnRefunds.FlatAppearance.MouseOverBackColor = Color.Silver;
+            btnRefunds.FlatStyle = FlatStyle.Flat;
+            btnRefunds.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            btnRefunds.ForeColor = Color.FromArgb(158, 161, 176);
+            btnRefunds.Image = Properties.Resources.Home;
+            btnRefunds.ImageAlign = ContentAlignment.MiddleLeft;
+            btnRefunds.Location = new Point(0, 275);
+            btnRefunds.Margin = new Padding(2);
+            btnRefunds.Name = "btnRefunds";
+            btnRefunds.RightToLeft = RightToLeft.No;
+            btnRefunds.Size = new Size(203, 55);
+            btnRefunds.TabIndex = 16;
+            btnRefunds.Text = "Refunds";
+            btnRefunds.TextImageRelation = TextImageRelation.ImageBeforeText;
+            btnRefunds.UseVisualStyleBackColor = true;
+            btnRefunds.Click += btnRefunds_Click;
             // 
             // btnBudgetsExtract
             // 
@@ -185,7 +209,6 @@
             btnSalesSummary.TextImageRelation = TextImageRelation.ImageBeforeText;
             btnSalesSummary.UseMnemonic = false;
             btnSalesSummary.UseVisualStyleBackColor = true;
-            btnSalesSummary.Click += btnSalesSummary_Click;
             // 
             // btnCreditcard
             // 
@@ -245,7 +268,7 @@
             button7.Font = new Font("Yu Gothic", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
             button7.ForeColor = Color.White;
             button7.ImageAlign = ContentAlignment.MiddleLeft;
-            button7.Location = new Point(0, 595);
+            button7.Location = new Point(0, 650);
             button7.Margin = new Padding(2);
             button7.Name = "button7";
             button7.RightToLeft = RightToLeft.No;
@@ -269,7 +292,7 @@
             btnFileServer.ForeColor = Color.FromArgb(158, 161, 176);
             btnFileServer.Image = Properties.Resources.Folder;
             btnFileServer.ImageAlign = ContentAlignment.MiddleLeft;
-            btnFileServer.Location = new Point(0, 965);
+            btnFileServer.Location = new Point(0, 1020);
             btnFileServer.Margin = new Padding(2);
             btnFileServer.Name = "btnFileServer";
             btnFileServer.RightToLeft = RightToLeft.No;
@@ -283,15 +306,39 @@
             // pnlServiceTools
             // 
             pnlServiceTools.AutoSize = true;
+            pnlServiceTools.Controls.Add(button2);
             pnlServiceTools.Controls.Add(button6);
             pnlServiceTools.Controls.Add(button3);
             pnlServiceTools.Controls.Add(btnFSM);
             pnlServiceTools.Dock = DockStyle.Top;
             pnlServiceTools.Location = new Point(0, 430);
             pnlServiceTools.Name = "pnlServiceTools";
-            pnlServiceTools.Size = new Size(203, 165);
+            pnlServiceTools.Size = new Size(203, 220);
             pnlServiceTools.TabIndex = 13;
             pnlServiceTools.Visible = false;
+            // 
+            // button2
+            // 
+            button2.AutoSizeMode = AutoSizeMode.GrowAndShrink;
+            button2.BackgroundImageLayout = ImageLayout.Stretch;
+            button2.Dock = DockStyle.Top;
+            button2.FlatAppearance.BorderSize = 0;
+            button2.FlatAppearance.MouseOverBackColor = Color.Silver;
+            button2.FlatStyle = FlatStyle.Flat;
+            button2.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            button2.ForeColor = Color.FromArgb(158, 161, 176);
+            button2.Image = Properties.Resources.Phone;
+            button2.ImageAlign = ContentAlignment.MiddleLeft;
+            button2.Location = new Point(0, 165);
+            button2.Margin = new Padding(2);
+            button2.Name = "button2";
+            button2.RightToLeft = RightToLeft.No;
+            button2.Size = new Size(203, 55);
+            button2.TabIndex = 10;
+            button2.Text = "VAT Export";
+            button2.TextImageRelation = TextImageRelation.ImageBeforeText;
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click_1;
             // 
             // button6
             // 
@@ -397,7 +444,7 @@
             btnAdminSettings.ForeColor = Color.FromArgb(158, 161, 176);
             btnAdminSettings.Image = Properties.Resources.Admin;
             btnAdminSettings.ImageAlign = ContentAlignment.MiddleLeft;
-            btnAdminSettings.Location = new Point(0, 1020);
+            btnAdminSettings.Location = new Point(0, 1075);
             btnAdminSettings.Margin = new Padding(2);
             btnAdminSettings.Name = "btnAdminSettings";
             btnAdminSettings.RightToLeft = RightToLeft.No;
@@ -420,7 +467,7 @@
             btnSettings.ForeColor = Color.FromArgb(158, 161, 176);
             btnSettings.Image = Properties.Resources.Settings;
             btnSettings.ImageAlign = ContentAlignment.MiddleLeft;
-            btnSettings.Location = new Point(0, 1075);
+            btnSettings.Location = new Point(0, 1130);
             btnSettings.Margin = new Padding(2);
             btnSettings.Name = "btnSettings";
             btnSettings.RightToLeft = RightToLeft.No;
@@ -434,7 +481,7 @@
             // BtnSpacerPnl
             // 
             BtnSpacerPnl.Dock = DockStyle.Bottom;
-            BtnSpacerPnl.Location = new Point(0, 1130);
+            BtnSpacerPnl.Location = new Point(0, 1185);
             BtnSpacerPnl.Name = "BtnSpacerPnl";
             BtnSpacerPnl.Size = new Size(203, 5);
             BtnSpacerPnl.TabIndex = 10;
@@ -620,7 +667,7 @@
             // 
             pictureBox1.BackColor = Color.FromArgb(24, 30, 54);
             pictureBox1.Dock = DockStyle.Top;
-            pictureBox1.Image = Properties.Resources.Grinch;
+            pictureBox1.Image = Properties.Resources.Account;
             pictureBox1.InitialImage = Properties.Resources.Account;
             pictureBox1.Location = new Point(0, 0);
             pictureBox1.Margin = new Padding(2);
@@ -630,7 +677,6 @@
             pictureBox1.TabIndex = 1;
             pictureBox1.TabStop = false;
             pictureBox1.WaitOnLoad = true;
-            pictureBox1.Click += pictureBox1_Click;
             // 
             // button8
             // 
@@ -787,29 +833,6 @@
             panel6.Size = new Size(989, 1);
             panel6.TabIndex = 3;
             // 
-            // btnRefunds
-            // 
-            btnRefunds.AutoSizeMode = AutoSizeMode.GrowAndShrink;
-            btnRefunds.BackgroundImageLayout = ImageLayout.Zoom;
-            btnRefunds.Dock = DockStyle.Top;
-            btnRefunds.FlatAppearance.BorderSize = 0;
-            btnRefunds.FlatAppearance.MouseOverBackColor = Color.Silver;
-            btnRefunds.FlatStyle = FlatStyle.Flat;
-            btnRefunds.Font = new Font("Yu Gothic", 12F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            btnRefunds.ForeColor = Color.FromArgb(158, 161, 176);
-            btnRefunds.Image = Properties.Resources.Home;
-            btnRefunds.ImageAlign = ContentAlignment.MiddleLeft;
-            btnRefunds.Location = new Point(0, 275);
-            btnRefunds.Margin = new Padding(2);
-            btnRefunds.Name = "btnRefunds";
-            btnRefunds.RightToLeft = RightToLeft.No;
-            btnRefunds.Size = new Size(203, 55);
-            btnRefunds.TabIndex = 16;
-            btnRefunds.Text = "Refunds";
-            btnRefunds.TextImageRelation = TextImageRelation.ImageBeforeText;
-            btnRefunds.UseVisualStyleBackColor = true;
-            btnRefunds.Click += btnRefunds_Click;
-            // 
             // Main
             // 
             AutoScaleDimensions = new SizeF(96F, 96F);
@@ -877,5 +900,6 @@
         private Panel pnlFinance;
         private Button button8;
         private Button btnRefunds;
+        private Button button2;
     }
 }

@@ -42,9 +42,12 @@
             tableLayoutPanel1 = new TableLayoutPanel();
             splitContainer1 = new SplitContainer();
             txtQuery1 = new TextBox();
+            button2 = new Button();
+            button1 = new Button();
             panel2 = new Panel();
             btnExecute = new Button();
             btnSetLogin = new Button();
+            button3 = new Button();
             ((System.ComponentModel.ISupportInitialize)dataGridViewPermissions).BeginInit();
             ((System.ComponentModel.ISupportInitialize)dataGridViewStoresFranchises).BeginInit();
             panel1.SuspendLayout();
@@ -242,6 +245,9 @@
             // 
             // splitContainer1.Panel2
             // 
+            splitContainer1.Panel2.Controls.Add(button3);
+            splitContainer1.Panel2.Controls.Add(button2);
+            splitContainer1.Panel2.Controls.Add(button1);
             splitContainer1.Panel2.Controls.Add(panel2);
             splitContainer1.Size = new Size(136, 563);
             splitContainer1.SplitterDistance = 95;
@@ -255,6 +261,30 @@
             txtQuery1.Name = "txtQuery1";
             txtQuery1.Size = new Size(136, 95);
             txtQuery1.TabIndex = 0;
+            // 
+            // button2
+            // 
+            button2.Dock = DockStyle.Top;
+            button2.Location = new Point(0, 30);
+            button2.MinimumSize = new Size(0, 30);
+            button2.Name = "button2";
+            button2.Size = new Size(136, 30);
+            button2.TabIndex = 3;
+            button2.Text = "Till Status";
+            button2.UseVisualStyleBackColor = true;
+            button2.Click += button2_Click;
+            // 
+            // button1
+            // 
+            button1.Dock = DockStyle.Top;
+            button1.Location = new Point(0, 0);
+            button1.MinimumSize = new Size(0, 30);
+            button1.Name = "button1";
+            button1.Size = new Size(136, 30);
+            button1.TabIndex = 2;
+            button1.Text = "Update Network Detector";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
             // 
             // panel2
             // 
@@ -281,17 +311,17 @@
             btnExecute.UseVisualStyleBackColor = true;
             btnExecute.Click += BtnExecute_Click;
             // 
-            // btnSetLogin
+            // button3
             // 
-            btnSetLogin.Dock = DockStyle.Left;
-            btnSetLogin.Location = new Point(0, 0);
-            btnSetLogin.MinimumSize = new Size(0, 30);
-            btnSetLogin.Name = "btnSetLogin";
-            btnSetLogin.Size = new Size(75, 30);
-            btnSetLogin.TabIndex = 0;
-            btnSetLogin.Text = "Login";
-            btnSetLogin.UseVisualStyleBackColor = true;
-            btnSetLogin.Click += btnSetLogin_Click;
+            button3.Dock = DockStyle.Top;
+            button3.Location = new Point(0, 60);
+            button3.MinimumSize = new Size(0, 30);
+            button3.Name = "button3";
+            button3.Size = new Size(136, 30);
+            button3.TabIndex = 4;
+            button3.Text = "Update Till Updater";
+            button3.UseVisualStyleBackColor = true;
+            button3.Click += button3_Click;
             // 
             // UserManagement
             // 
@@ -332,5 +362,8 @@
         private Button btnExecute;
         private Button btnSetLogin;
         private TextBox txtQuery1;
+        private Button button1;
+        private Button button2;
+        private Button button3;
     }
 }

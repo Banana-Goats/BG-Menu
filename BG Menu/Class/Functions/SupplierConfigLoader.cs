@@ -1,24 +1,18 @@
-﻿using BG_Menu.Models;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SqlClient;
+using Microsoft.Data.SqlClient;
 using System.Linq;
 using System.Windows.Forms;
 
-namespace BG_Menu.Helpers
+namespace BG_Menu.Class.Functions
 {
-    /// <summary>
-    /// Loads supplier configurations from the SQL Server database.
-    /// </summary>
+
     public static class SupplierConfigLoader
     {
         private static readonly object SuppliersLock = new object();
         public static List<Supplier> Suppliers { get; private set; } = new List<Supplier>();
 
-        /// <summary>
-        /// Loads suppliers and their detection keywords from the database.
-        /// </summary>
         public static void LoadSuppliers()
         {
             string connectionString = ConfigurationManager.ConnectionStrings["SQL"]?.ConnectionString;
@@ -108,10 +102,10 @@ namespace BG_Menu.Helpers
         /// <param name="message">Message to log.</param>
         private static void LogMessage(string message)
         {
-            string logFilePath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ImportLog.txt");
+            string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ImportLog.txt");
             try
             {
-                System.IO.File.AppendAllText(logFilePath, $"{DateTime.Now}: {message}{Environment.NewLine}");
+                File.AppendAllText(logFilePath, $"{DateTime.Now}: {message}{Environment.NewLine}");
             }
             catch
             {

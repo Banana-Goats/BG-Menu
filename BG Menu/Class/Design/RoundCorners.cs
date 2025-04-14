@@ -2,7 +2,7 @@
 using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 
-namespace BG_Menu
+namespace BG_Menu.Class.Design
 {
     public class RoundedCorners
     {

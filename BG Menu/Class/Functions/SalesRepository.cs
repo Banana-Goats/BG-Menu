@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using Sap.Data.Hana;
 using BG_Menu.Class.Sales_Summary;
 
+
 namespace BG_Menu.Data
 {
     public class SalesRepository
@@ -13,55 +14,85 @@ namespace BG_Menu.Data
         private readonly string sqlConnectionString;
         private WeekDateManager weekDateManager;
 
-        public async Task InitializeAsync()
-        {
-            // Instead of 'new WeekDateManager()', do:
-            weekDateManager = await WeekDateManager.CreateAsync();
-        }
-
-        public SalesRepository()
+        public SalesRepository(WeekDateManager wdm)
         {
             hanaConnectionString = ConfigurationManager.ConnectionStrings["Hana"].ConnectionString;
             sqlConnectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+            weekDateManager = wdm;
         }
 
         public async Task<DataTable> GetHanaSalesDataAsync(DateTime? selectedDate = null)
         {
-            return await Task.Run(() =>
+            DataTable dt = new DataTable();
+            using (var connection = new HanaConnection(hanaConnectionString))
             {
-                DataTable dt = new DataTable();
-                using (HanaConnection connection = new HanaConnection(hanaConnectionString))
+                try
                 {
-                    try
-                    {
-                        connection.Open();
-                        DateTime effectiveDate = selectedDate ?? new DateTime(2024, 9, 1);
+                    // If your HanaConnection supports asynchronous operations:
+                    await connection.OpenAsync();
 
-                        string query = $@"
-                            SELECT 
-                                T1.""TaxDate"",
-                                T1.""ItmsGrpNam"",
-                                T1.""WhsName"",
-                                T1.""NET""
-                            FROM 
-                                ""sap.sboawuknewlive.cloud::MASTER_SALES"" T1
-                            WHERE 
-                                T1.""TaxDate"" >= '{effectiveDate:yyyy-MM-dd}'
-                            ORDER BY 
-                                T1.""TaxDate"" ASC";
+                    DateTime effectiveDate = selectedDate ?? await GetDefaultStartDateAsyncFromSql();
 
-                        HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
-                        adapter.Fill(dt);
-                        dt.Columns["TaxDate"].DataType = typeof(DateTime);
-                    }
-                    catch (Exception ex)
+                    string query = $@"
+                SELECT 
+                    T1.""TaxDate"",
+                    T1.""ItmsGrpNam"",
+                    T1.""WhsName"",
+                    T1.""NET""
+                FROM 
+                    ""sap.sboawuknewlive.cloud::MASTER_SALES"" T1
+                WHERE 
+                    T1.""TaxDate"" >= '{effectiveDate:yyyy-MM-dd}'
+                ORDER BY 
+                    T1.""TaxDate"" ASC";
+
+                    // If an async adapter is available, use it. Otherwise, consider wrapping synchronous calls.
+                    HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
+                    adapter.Fill(dt);
+                    dt.Columns["TaxDate"].DataType = typeof(DateTime);
+                }
+                catch (Exception ex)
+                {
+                    // Instead of directly showing a MessageBox from a background thread, consider:
+                    // - Logging the error 
+                    // - Or, marshaling the call to the UI thread if you need to display an error.
+                    // For example:
+                    System.Diagnostics.Debug.WriteLine($"Error: {ex}");
+                }
+            }
+            return dt;
+        }
+
+        private async Task<DateTime> GetDefaultStartDateAsyncFromSql()
+        {
+            // Get the connection string from your configuration (assuming it is set in App.config/Web.config).
+            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (SqlCommand command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                SELECT [Value] 
+                FROM [Config].[AppConfigs] 
+                WHERE [Application] = 'BG Menu' AND [Config] = 'Start Date'";
+
+                    object result = await command.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
                     {
-                        // Consider logging instead of MessageBox in a background thread.
-                        MessageBox.Show("Something Went Wrong, Blame Elliot");
+                        string dateString = result.ToString();
+                        DateTime parsedDate;
+                        // Attempt to parse the date string.
+                        if (DateTime.TryParse(dateString, out parsedDate))
+                        {
+                            return parsedDate;
+                        }
                     }
                 }
-                return dt;
-            });
+            }
+            // Fallback if retrieval or parsing fails.
+            return new DateTime(2025, 9, 1);
         }
 
         public DataTable GetSalesDataFromSQL()

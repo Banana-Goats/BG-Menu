@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.IO;
@@ -14,27 +15,25 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Microsoft.Data.SqlClient;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class FSMUsers : Form
     {
-        // Path for storing the OAuth token temporarily.
-        private readonly string tokenFilePath = Path.Combine(Path.GetTempPath(), "sap_fsm_token.txt");
-
         // OAuth endpoint details and client credentials.
         private const string TokenUrl = "https://eu.fsm.cloud.sap/api/oauth2/v2/token";
         private const string ClientId = "00016ccf-5e51-4e97-adcc-c5b42533cbe7";
         private const string ClientSecret = "568b27f0-7ff8-4c50-b156-98aab1f61e43";
 
-        // Base API endpoint for users (without paging parameters).
         private const string UsersUrl = "https://eu.fsm.cloud.sap/api/user/v1/users?account=Ableworld_P1";
 
-        // Class-level variable to hold the access token.
+        private readonly string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
         private string _token = string.Empty;
+
         private DateTime _tokenExpiration = DateTime.MinValue;
 
-        // Holds the complete filtered (active and planable) user list.
         private List<UserModel> _fullFilteredUserList = new List<UserModel>();
 
         public FSMUsers()
@@ -51,7 +50,6 @@ namespace BG_Menu.Forms.Sub_Forms
             this.Load += FSMUsers_Load;
         }
 
-        // Form Load event handler that preloads the token.
         private async void FSMUsers_Load(object sender, EventArgs e)
         {
             try
@@ -64,7 +62,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        // Event: When a row is selected in the aggregation grid, filter the detailed grid accordingly.
         private void DataGridView2_SelectionChanged(object sender, EventArgs e)
         {
             // If no row selected, show full filtered list.
@@ -105,7 +102,6 @@ namespace BG_Menu.Forms.Sub_Forms
             dataGridView1.DataSource = filtered.ToList();
         }
 
-        // Button click event: Retrieve user data and perform aggregation.
         private async void button1_Click(object sender, EventArgs e)
         {
             try
@@ -216,7 +212,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        // Helper method: Sets double buffering on a control using reflection.
         private void SetDoubleBuffered(Control control, bool value)
         {
             typeof(Control)
@@ -224,47 +219,93 @@ namespace BG_Menu.Forms.Sub_Forms
                 .SetValue(control, value, null);
         }
 
-        // Retrieves the access token from file or calls the token endpoint.
         private async Task<string> GetAccessTokenAsync()
         {
-            string token = string.Empty;
-
-            if (File.Exists(tokenFilePath))
-            {
-                token = File.ReadAllText(tokenFilePath);
-            }
-
+            string token = await GetTokenFromDbAsync();
             if (string.IsNullOrWhiteSpace(token))
             {
-                using (var client = new HttpClient())
+                // No token found in the DB – get one from the OAuth endpoint.
+                token = await GetNewAccessTokenAsync();
+                await SaveTokenToDbAsync(token);
+            }
+            return token;
+        }
+
+        private async Task<string> GetTokenFromDbAsync()
+        {
+            string token = string.Empty;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = connection.CreateCommand())
                 {
-                    string authString = $"{ClientId}:{ClientSecret}";
-                    string authBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(authString));
-                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authBase64);
-
-                    var formData = new FormUrlEncodedContent(new[]
+                    command.CommandText = @"SELECT [Value] FROM [Config].[AppConfigs]
+                                            WHERE [Application] = @app AND [Config] = @config";
+                    command.Parameters.AddWithValue("@app", "BG Menu");
+                    command.Parameters.AddWithValue("@config", "FSM Token");
+                    object result = await command.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
                     {
-                        new KeyValuePair<string, string>("grant_type", "client_credentials")
-                    });
-
-                    HttpResponseMessage response = await client.PostAsync(TokenUrl, formData);
-                    if (response.IsSuccessStatusCode)
-                    {
-                        string jsonResponse = await response.Content.ReadAsStringAsync();
-                        dynamic tokenData = JsonConvert.DeserializeObject(jsonResponse);
-                        token = tokenData.access_token;
-                        File.WriteAllText(tokenFilePath, token);
-                    }
-                    else
-                    {
-                        throw new Exception("Error retrieving token: " + response.ReasonPhrase);
+                        token = Convert.ToString(result);
                     }
                 }
             }
             return token;
         }
 
-        // Retrieves all pages of user data from the API.
+        private async Task SaveTokenToDbAsync(string token)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    // SQL Server MERGE statement to perform an upsert.
+                    command.CommandText = @"
+                    MERGE INTO [Config].[AppConfigs] AS target
+                    USING (SELECT @app AS [Application], @config AS [Config]) AS source
+                    ON (target.[Application] = source.[Application] AND target.[Config] = source.[Config])
+                    WHEN MATCHED THEN
+                        UPDATE SET [Value] = @value
+                    WHEN NOT MATCHED THEN
+                        INSERT ([Application], [Config], [Note], [Value])
+                        VALUES (@app, @config, 'Token Used for connecting to FSM', @value);";
+                    command.Parameters.AddWithValue("@app", "BG Menu");
+                    command.Parameters.AddWithValue("@config", "FSM Token");
+                    command.Parameters.AddWithValue("@value", token);
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        private async Task<string> GetNewAccessTokenAsync()
+        {
+            using (var client = new HttpClient())
+            {
+                string authString = $"{ClientId}:{ClientSecret}";
+                string authBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(authString));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authBase64);
+
+                var formData = new FormUrlEncodedContent(new[]
+                {
+                    new KeyValuePair<string, string>("grant_type", "client_credentials")
+                });
+
+                HttpResponseMessage response = await client.PostAsync(TokenUrl, formData);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
+                    dynamic tokenData = JsonConvert.DeserializeObject(jsonResponse);
+                    // Optionally handle token expiration (e.g., if "expires_in" is returned).
+                    return tokenData.access_token;
+                }
+                else
+                {
+                    throw new Exception("Error retrieving token: " + response.ReasonPhrase);
+                }
+            }
+        }
+
         private async Task<List<UserModel>> GetAllUsersDataAsync(string accessToken)
         {
             List<UserModel> allUsers = new List<UserModel>();
@@ -289,7 +330,6 @@ namespace BG_Menu.Forms.Sub_Forms
             return allUsers;
         }
 
-        // Calls the Users API for a given URL (supports paging).
         private async Task<string> GetUsersDataAsync(string accessToken, string url = null)
         {
             using (var client = new HttpClient())
@@ -301,18 +341,10 @@ namespace BG_Menu.Forms.Sub_Forms
                 string finalUrl = url ?? UsersUrl;
                 HttpResponseMessage response = await client.GetAsync(finalUrl);
 
-                // If unauthorized, clear both the cached token and the token file, then retry.
+                // If unauthorized, clear the token and retry with a new one.
                 if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
                 {
-                    _token = string.Empty; // clear the in-memory token
-
-                    // Delete the token file if it exists.
-                    if (File.Exists(tokenFilePath))
-                    {
-                        File.Delete(tokenFilePath);
-                    }
-
-                    // Get a new token.
+                    _token = string.Empty; // Clear in-memory token.
                     accessToken = await GetAccessTokenAsync();
                     client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
                     response = await client.GetAsync(finalUrl);
@@ -329,7 +361,6 @@ namespace BG_Menu.Forms.Sub_Forms
             }
         }
 
-        // Configures columns for dataGridView1 (detailed user grid).
         private void SetupDataGridView()
         {
             dataGridView1.Invoke((System.Windows.Forms.MethodInvoker)delegate
@@ -376,7 +407,6 @@ namespace BG_Menu.Forms.Sub_Forms
             });
         }
 
-        // Configures columns for dataGridView2 (aggregation grid).
         private void SetupDataGridView2()
         {
             dataGridView2.Invoke((System.Windows.Forms.MethodInvoker)delegate
@@ -431,7 +461,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 // Build the full API URL.
                 string apiUrl = $"https://eu.fsm.cloud.sap/api/query/v1?account=Ableworld_P1&company=SBO_AWUK_NEWLIVE&dtos=Person.25;PersonReservation.21;PersonReservationType.17&query={encodedQuery}";
 
-                // Use the preloaded token (_token). If not available, retrieve one.
+                // Ensure we have a valid token.
                 if (string.IsNullOrWhiteSpace(_token))
                 {
                     _token = await GetAccessTokenAsync();

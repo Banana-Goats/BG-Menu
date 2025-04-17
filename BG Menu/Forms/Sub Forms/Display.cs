@@ -15,11 +15,18 @@ using Document = Spire.Doc.Document;
 using Color = System.Drawing.Color;
 using Font = System.Drawing.Font;
 using Control = System.Windows.Forms.Control;
+using BG_Menu.Data;
+using BG_Menu.Class.Sales_Summary;
+using System.Diagnostics;
+using System.Data;
+using System.Reflection;
+using System.Text;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class Display : Form
     {
+        private Timer refreshTimer;
         private Timer checkTimer = new Timer();
         private bool isProcessing = false;
         private DateTime lastProcessedDate = DateTime.MinValue;
@@ -27,8 +34,6 @@ namespace BG_Menu.Forms.Sub_Forms
         private string hanaConnectionString;
 
         private SemaphoreSlim _mergeSemaphore = new SemaphoreSlim(1);
-
-        private Timer refreshTimer;
         private List<TileData> _currentData = new List<TileData>();
 
         private Timer dailyFolderProcessingTimer;
@@ -36,11 +41,16 @@ namespace BG_Menu.Forms.Sub_Forms
         private DateTime? _lastRecordingProcessedDate;
         private int _totalCallsProcessed = 0;
 
+        private SalesRepository salesRepository;
+        private decimal _lastTotalUploaded = 0;
+
+
         public Display()
         {
             InitializeComponent();
 
             hanaConnectionString = ConfigurationManager.ConnectionStrings["Hana"].ConnectionString;
+            salesRepository = GlobalInstances.SalesRepository;
 
             flowLayoutPanelTiles.FlowDirection = FlowDirection.TopDown;
             flowLayoutPanelTiles.WrapContents = false;
@@ -55,8 +65,11 @@ namespace BG_Menu.Forms.Sub_Forms
             LoadTiles();
             UpdateRecordingsSummaryTile();
 
-            //ProcessRecordingFoldersAsync();
-            //ProcessVatForms();
+            StartSalesUpdateTimer();
+
+            SetDoubleBuffered(dataGridViewCompanies, true);
+
+            InitializeFSM();
 
         }
 
@@ -82,7 +95,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 await ProcessVatForms();
 
                 lastProcessedDate = now.Date;
-                isProcessing = false; 
+                isProcessing = false;
 
                 AppendProgress($"Folder processing completed at {DateTime.Now:HH:mm:ss}.");
             }
@@ -1095,5 +1108,467 @@ namespace BG_Menu.Forms.Sub_Forms
 
         #endregion
 
+        #region Sales Summary Update
+
+        private Timer salesUpdateTimer;
+
+        private void StartSalesUpdateTimer()
+        {
+            salesUpdateTimer = new Timer { Interval = 60 * 1000 };
+
+            salesUpdateTimer.Tick += async (s, e) =>
+            {
+                salesUpdateTimer.Stop();
+                try
+                {
+                    await RunSalesUpdateAsync();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Sales auto-update error: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    salesUpdateTimer.Start();
+                }
+            };
+
+            salesUpdateTimer.Start();
+        }
+
+        private async Task RunSalesUpdateAsync()
+        {
+            GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync();
+            await Task.Run(() =>
+            {
+                try
+                {
+                    salesRepository.UpdateSalesDataCache(GlobalInstances.GlobalSalesData);
+                }
+                catch (Exception ex)
+                {
+                    Debug.WriteLine($"Error updating sales data cache: {ex.Message}");
+                }
+            });
+
+            decimal currentTotal = GetGlobalTotalFromSalesData();
+
+            decimal difference = currentTotal - _lastTotalUploaded;
+            _lastTotalUploaded = currentTotal;
+
+            this.Invoke(new Action(() =>
+            {
+                lblLastRunTime.Text = "Last Successful Run: " + DateTime.Now.ToString("HH:mm:ss dd/MM/yyyy");
+                lblLatestTotal.Text = "Latest Total Uploaded: £" + currentTotal.ToString("N0");
+                lblDifference.Text = "Difference since last run: £" + difference.ToString("N0");
+            }));
+        }
+
+        private decimal GetGlobalTotalFromSalesData()
+        {
+            decimal total = 0;
+
+            if (GlobalInstances.GlobalSalesData != null)
+            {
+                var allowedWarehouses = new HashSet<string>(
+                    StoreWarehouseMapping.GetUKStoreMapping()
+                        .SelectMany(store => store.WarehouseNames),
+                    StringComparer.OrdinalIgnoreCase
+                );
+
+                int currentWeek = GlobalInstances.WeekDateManager.GetWeekNumber(DateTime.Now);
+
+                foreach (DataRow row in GlobalInstances.GlobalSalesData.Rows)
+                {
+                    if (row["TaxDate"] == null || row["TaxDate"] == DBNull.Value)
+                        continue;
+
+                    DateTime taxDate = Convert.ToDateTime(row["TaxDate"]);
+
+                    int weekNum = GlobalInstances.WeekDateManager.GetWeekNumber(taxDate);
+                    if (weekNum != currentWeek)
+                        continue;
+
+                    string warehouseName = row["WhsName"]?.ToString() ?? string.Empty;
+                    if (!allowedWarehouses.Contains(warehouseName))
+                        continue;
+
+                    if (decimal.TryParse(row["NET"]?.ToString(), out decimal value))
+                    {
+                        total += value;
+                    }
+                }
+            }
+
+            return total;
+        }
+
+
+
+        #endregion
+
+        #region FSM
+
+        private const string TokenUrl = "https://eu.fsm.cloud.sap/api/oauth2/v2/token";
+        private const string ClientId = "00016ccf-5e51-4e97-adcc-c5b42533cbe7";
+        private const string ClientSecret = "568b27f0-7ff8-4c50-b156-98aab1f61e43";
+
+        private const string UsersUrl = "https://eu.fsm.cloud.sap/api/user/v1/users?account=Ableworld_P1";
+
+        private readonly string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+
+        private string _token = string.Empty;
+        private DateTime _tokenExpiration = DateTime.MinValue;
+
+        private Timer refreshFSMTimer;
+
+
+        private async void InitializeFSM()
+        {
+
+            await GetToken();
+
+            GetFSM();
+
+            StartRefreshTimer();
+        }
+
+        private void StartRefreshTimer()
+        {
+            refreshTimer = new Timer();
+            refreshTimer.Interval = 60000; // 60,000 milliseconds = 1 minute.
+            refreshTimer.Tick += refreshFSMTimer_Tick;
+            refreshTimer.Start();
+        }
+
+        private void refreshFSMTimer_Tick(object sender, EventArgs e)
+        {
+            GetFSM();
+        }
+
+        private async void GetFSM()
+        {
+            try
+            {
+                // Ensure a valid token.
+                if (string.IsNullOrWhiteSpace(_token))
+                {
+                    _token = await GetAccessTokenAsync();
+                }
+
+                // Retrieve all pages of user data.
+                List<UserModel> usersList = await GetAllUsersDataAsync(_token);
+
+                // Define your company mapping (companyId -> Company Name).
+                var companyMapping = new Dictionary<int, string>
+                {
+                    { 109076, "AMD" },
+                    { 109697, "AWG" },
+                    { 106565, "UK" },
+                    { 109089, "GRMR" },
+                    { 108953, "SML" },
+                    { 108954, "JSCD" },
+                    { 109094, "MGB" },
+                    { 108827, "SJLK" }
+                };
+
+                // Process each user record to compute the computed properties.
+                foreach (var user in usersList)
+                {
+                    user.planable = user.companies != null && user.companies.Any(c => c.groupId.HasValue);
+                    if (user.companies != null)
+                    {
+                        var mappedCompanies = user.companies
+                            .Where(c => c.groupId.HasValue && companyMapping.ContainsKey(c.companyId))
+                            .Select(c => companyMapping[c.companyId])
+                            .Distinct()
+                            .ToList();
+
+                        user.IsMultiCompany = mappedCompanies.Count > 1;
+                        // Rule: if mapped to multiple companies, use "UK"; if only one, display that company.
+                        if (mappedCompanies.Count > 1)
+                        {
+                            user.companiesDisplay = "UK";
+                        }
+                        else if (mappedCompanies.Count == 1)
+                        {
+                            user.companiesDisplay = mappedCompanies.First();
+                        }
+                        else
+                        {
+                            user.companiesDisplay = string.Empty;
+                        }
+                    }
+                    else
+                    {
+                        user.companiesDisplay = string.Empty;
+                        user.IsMultiCompany = false;
+                    }
+                }
+
+                // Filter the user list to only include active and planable users.
+                var filteredUsers = usersList.Where(u => u.active && u.planable).ToList();
+
+                // Aggregate data: count the number of users per company.
+                var aggregation = new Dictionary<string, int>();
+                foreach (var user in filteredUsers)
+                {
+                    string companyToCount = user.companiesDisplay;
+                    if (!string.IsNullOrEmpty(companyToCount))
+                    {
+                        if (!aggregation.ContainsKey(companyToCount))
+                        {
+                            aggregation[companyToCount] = 0;
+                        }
+                        aggregation[companyToCount]++;
+                    }
+                }
+                // Optionally add a "Total" count.
+                aggregation["Total"] = filteredUsers.Count;
+
+                // Create a list of AggregationModel objects from the aggregation dictionary.
+                var aggregationList = aggregation.Select(a => new AggregationModel
+                {
+                    Company = a.Key,
+                    Count = a.Value
+                }).ToList();
+
+                SetupDataGridViewCompanies();
+                dataGridViewCompanies.DataSource = aggregationList;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading companies: " + ex.Message);
+            }
+        }
+
+        private async Task GetToken()
+        {
+            try
+            {
+                _token = await GetAccessTokenAsync();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error preloading token: " + ex.Message);
+            }
+        }
+
+        private void SetDoubleBuffered(Control control, bool value)
+        {
+            typeof(Control)
+                .GetProperty("DoubleBuffered", BindingFlags.Instance | BindingFlags.NonPublic)
+                .SetValue(control, value, null);
+        }
+
+        private async Task<string> GetAccessTokenAsync(bool forceRefresh = false)
+        {
+            if (!forceRefresh)
+            {
+                string token = await GetTokenFromDbAsync();
+                if (!string.IsNullOrWhiteSpace(token))
+                    return token;
+            }
+            // No token found or forced refresh requested – get a new one and save.
+            string newToken = await GetNewAccessTokenAsync();
+            await SaveTokenToDbAsync(newToken);
+            return newToken;
+        }
+
+        private async Task<string> GetTokenFromDbAsync()
+        {
+            string token = string.Empty;
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"SELECT [Value] FROM [Config].[AppConfigs]
+                                    WHERE [Application] = @app AND [Config] = @config";
+                    command.Parameters.AddWithValue("@app", "BG Menu");
+                    command.Parameters.AddWithValue("@config", "FSM Token");
+                    object result = await command.ExecuteScalarAsync();
+                    if (result != null && result != DBNull.Value)
+                    {
+                        token = Convert.ToString(result);
+                    }
+                }
+            }
+            return token;
+        }
+
+        private async Task SaveTokenToDbAsync(string token)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+            MERGE INTO [Config].[AppConfigs] AS target
+            USING (SELECT @app AS [Application], @config AS [Config]) AS source
+            ON (target.[Application] = source.[Application] AND target.[Config] = source.[Config])
+            WHEN MATCHED THEN
+                UPDATE SET [Value] = @value
+            WHEN NOT MATCHED THEN
+                INSERT ([Application], [Config], [Note], [Value])
+                VALUES (@app, @config, 'Token Used for connecting to FSM', @value);";
+                    command.Parameters.AddWithValue("@app", "BG Menu");
+                    command.Parameters.AddWithValue("@config", "FSM Token");
+                    command.Parameters.AddWithValue("@value", token);
+                    await command.ExecuteNonQueryAsync();
+                }
+            }
+        }
+
+        private async Task<string> GetNewAccessTokenAsync()
+        {
+            using (var client = new HttpClient())
+            {
+                string authString = $"{ClientId}:{ClientSecret}";
+                string authBase64 = Convert.ToBase64String(Encoding.UTF8.GetBytes(authString));
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Basic", authBase64);
+
+                var formData = new FormUrlEncodedContent(new[]
+                {
+            new KeyValuePair<string, string>("grant_type", "client_credentials")
+        });
+
+                HttpResponseMessage response = await client.PostAsync(TokenUrl, formData);
+                if (response.IsSuccessStatusCode)
+                {
+                    string jsonResponse = await response.Content.ReadAsStringAsync();
+                    dynamic tokenData = JsonConvert.DeserializeObject(jsonResponse);
+                    // Optionally, if "expires_in" is returned you could handle token expiration.
+                    return tokenData.access_token;
+                }
+                else
+                {
+                    throw new Exception("Error retrieving token: " + response.ReasonPhrase);
+                }
+            }
+        }
+
+        private async Task<List<UserModel>> GetAllUsersDataAsync(string accessToken)
+        {
+            List<UserModel> allUsers = new List<UserModel>();
+            int currentPage = 0;
+            int totalPages = 1;
+
+            do
+            {
+                string pageUrl = UsersUrl + $"&page={currentPage}";
+                string json = await GetUsersDataAsync(accessToken, pageUrl);
+                UsersResponse response = JsonConvert.DeserializeObject<UsersResponse>(json);
+
+                if (response?.content != null)
+                {
+                    allUsers.AddRange(response.content);
+                }
+
+                totalPages = response.totalPages;
+                currentPage++;
+            } while (currentPage < totalPages);
+
+            return allUsers;
+        }
+
+        private async Task<string> GetUsersDataAsync(string accessToken, string url = null)
+        {
+            using (var client = new HttpClient())
+            {
+                client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                client.DefaultRequestHeaders.Add("X-Client-ID", ClientId);
+                client.DefaultRequestHeaders.Add("X-Client-Version", "0");
+
+                string finalUrl = url ?? UsersUrl;
+                HttpResponseMessage response = await client.GetAsync(finalUrl);
+
+                // If token expired or unauthorized, force a refresh, update the header, and retry.
+                if (response.StatusCode == System.Net.HttpStatusCode.Unauthorized)
+                {
+                    _token = string.Empty; // Clear the current token.
+                    accessToken = await GetAccessTokenAsync(forceRefresh: true);
+                    client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", accessToken);
+                    response = await client.GetAsync(finalUrl);
+                }
+
+                if (response.IsSuccessStatusCode)
+                {
+                    return await response.Content.ReadAsStringAsync();
+                }
+                else
+                {
+                    throw new Exception("Error retrieving users: " + response.ReasonPhrase);
+                }
+            }
+        }
+
+        private void SetupDataGridViewCompanies()
+        {
+            dataGridViewCompanies.Invoke((System.Windows.Forms.MethodInvoker)delegate
+            {
+                dataGridViewCompanies.Columns.Clear();
+                dataGridViewCompanies.AutoGenerateColumns = false;
+                dataGridViewCompanies.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    DataPropertyName = "Company",
+                    HeaderText = "Company"
+                });
+                dataGridViewCompanies.Columns.Add(new DataGridViewTextBoxColumn
+                {
+                    DataPropertyName = "Count",
+                    HeaderText = "User Count"
+                });
+            });
+        }
+
+        public class UsersResponse
+        {
+            public List<UserModel> content { get; set; }
+            public object pageable { get; set; }
+            public int totalPages { get; set; }
+            public bool last { get; set; }
+            public int totalElements { get; set; }
+            public object sort { get; set; }
+            public bool first { get; set; }
+            public int size { get; set; }
+            public int number { get; set; }
+            public int numberOfElements { get; set; }
+            public bool empty { get; set; }
+        }
+
+        public class UserModel
+        {
+            public string email { get; set; }
+            public string firstName { get; set; }
+            public string lastName { get; set; }
+            public string phone { get; set; }
+            public string name { get; set; }
+            public bool active { get; set; }
+            public List<string> roles { get; set; }
+            public List<CompanyModel> companies { get; set; }
+            public int id { get; set; }
+            public DateTime created { get; set; }
+            public DateTime lastChanged { get; set; }
+            // Computed properties:
+            public bool planable { get; set; }
+            public string companiesDisplay { get; set; }
+            public bool IsMultiCompany { get; set; }
+        }
+
+        public class CompanyModel
+        {
+            public int companyId { get; set; }
+            public int? groupId { get; set; }
+        }
+
+        public class AggregationModel
+        {
+            public string Company { get; set; }
+            public int Count { get; set; }
+        }
+
+        #endregion
     }
 }

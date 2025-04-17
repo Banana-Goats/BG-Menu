@@ -28,8 +28,19 @@
         /// </summary>
         private void InitializeComponent()
         {
+            DataGridViewCellStyle dataGridViewCellStyle1 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             tableLayoutPanel1 = new TableLayoutPanel();
+            tableLayoutPanel3 = new TableLayoutPanel();
+            roundedPanel7 = new Class.Design.Custom_Items.RoundedPanel();
+            label12 = new Label();
+            dataGridViewCompanies = new DataGridView();
             tableLayoutPanel2 = new TableLayoutPanel();
+            roundedPanel4 = new Class.Design.Custom_Items.RoundedPanel();
+            lblDifference = new Label();
+            lblLatestTotal = new Label();
+            lblLastRunTime = new Label();
+            label4 = new Label();
             roundedPanel2 = new Class.Design.Custom_Items.RoundedPanel();
             button1 = new Button();
             progressBarSAP = new ProgressBar();
@@ -43,7 +54,11 @@
             roundedPanel3 = new Class.Design.Custom_Items.RoundedPanel();
             flowLayoutPanelTiles = new FlowLayoutPanel();
             tableLayoutPanel1.SuspendLayout();
+            tableLayoutPanel3.SuspendLayout();
+            roundedPanel7.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)dataGridViewCompanies).BeginInit();
             tableLayoutPanel2.SuspendLayout();
+            roundedPanel4.SuspendLayout();
             roundedPanel2.SuspendLayout();
             roundedPanel1.SuspendLayout();
             roundedPanel3.SuspendLayout();
@@ -57,6 +72,7 @@
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 50.0000076F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 400F));
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 400F));
+            tableLayoutPanel1.Controls.Add(tableLayoutPanel3, 1, 0);
             tableLayoutPanel1.Controls.Add(tableLayoutPanel2, 2, 0);
             tableLayoutPanel1.Controls.Add(roundedPanel3, 3, 0);
             tableLayoutPanel1.Dock = DockStyle.Fill;
@@ -64,13 +80,93 @@
             tableLayoutPanel1.Name = "tableLayoutPanel1";
             tableLayoutPanel1.RowCount = 1;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
+            tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
             tableLayoutPanel1.Size = new Size(1536, 648);
             tableLayoutPanel1.TabIndex = 0;
+            // 
+            // tableLayoutPanel3
+            // 
+            tableLayoutPanel3.ColumnCount = 1;
+            tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel3.Controls.Add(roundedPanel7, 0, 0);
+            tableLayoutPanel3.Dock = DockStyle.Fill;
+            tableLayoutPanel3.Location = new Point(370, 3);
+            tableLayoutPanel3.Name = "tableLayoutPanel3";
+            tableLayoutPanel3.RowCount = 3;
+            tableLayoutPanel3.RowStyles.Add(new RowStyle());
+            tableLayoutPanel3.RowStyles.Add(new RowStyle());
+            tableLayoutPanel3.RowStyles.Add(new RowStyle());
+            tableLayoutPanel3.Size = new Size(362, 642);
+            tableLayoutPanel3.TabIndex = 5;
+            // 
+            // roundedPanel7
+            // 
+            roundedPanel7.BackColor = Color.Transparent;
+            roundedPanel7.BorderColor = Color.White;
+            roundedPanel7.BorderRadius = 20;
+            roundedPanel7.BorderWidth = 3;
+            roundedPanel7.Controls.Add(label12);
+            roundedPanel7.Controls.Add(dataGridViewCompanies);
+            roundedPanel7.Dock = DockStyle.Top;
+            roundedPanel7.Location = new Point(3, 3);
+            roundedPanel7.Name = "roundedPanel7";
+            roundedPanel7.Padding = new Padding(10);
+            roundedPanel7.Size = new Size(356, 349);
+            roundedPanel7.TabIndex = 3;
+            // 
+            // label12
+            // 
+            label12.Dock = DockStyle.Top;
+            label12.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Underline);
+            label12.ForeColor = Color.White;
+            label12.Location = new Point(10, 10);
+            label12.Name = "label12";
+            label12.Size = new Size(336, 50);
+            label12.TabIndex = 6;
+            label12.Text = "* FSM Users *";
+            label12.TextAlign = ContentAlignment.MiddleCenter;
+            // 
+            // dataGridViewCompanies
+            // 
+            dataGridViewCompanies.AllowUserToAddRows = false;
+            dataGridViewCompanies.AllowUserToDeleteRows = false;
+            dataGridViewCompanies.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridViewCompanies.BackgroundColor = Color.FromArgb(46, 51, 73);
+            dataGridViewCompanies.BorderStyle = BorderStyle.None;
+            dataGridViewCompanies.CellBorderStyle = DataGridViewCellBorderStyle.None;
+            dataGridViewCompanies.ColumnHeadersBorderStyle = DataGridViewHeaderBorderStyle.None;
+            dataGridViewCellStyle1.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.BackColor = Color.Transparent;
+            dataGridViewCellStyle1.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            dataGridViewCellStyle1.ForeColor = Color.White;
+            dataGridViewCellStyle1.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = Color.Transparent;
+            dataGridViewCellStyle1.WrapMode = DataGridViewTriState.True;
+            dataGridViewCompanies.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            dataGridViewCompanies.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle2.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle2.BackColor = Color.FromArgb(46, 51, 73);
+            dataGridViewCellStyle2.Font = new Font("Segoe UI", 11.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            dataGridViewCellStyle2.ForeColor = Color.White;
+            dataGridViewCellStyle2.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle2.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle2.WrapMode = DataGridViewTriState.False;
+            dataGridViewCompanies.DefaultCellStyle = dataGridViewCellStyle2;
+            dataGridViewCompanies.Dock = DockStyle.Bottom;
+            dataGridViewCompanies.GridColor = Color.White;
+            dataGridViewCompanies.Location = new Point(10, 60);
+            dataGridViewCompanies.MultiSelect = false;
+            dataGridViewCompanies.Name = "dataGridViewCompanies";
+            dataGridViewCompanies.ReadOnly = true;
+            dataGridViewCompanies.RowHeadersVisible = false;
+            dataGridViewCompanies.Size = new Size(336, 279);
+            dataGridViewCompanies.TabIndex = 4;
             // 
             // tableLayoutPanel2
             // 
             tableLayoutPanel2.ColumnCount = 1;
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
+            tableLayoutPanel2.Controls.Add(roundedPanel4, 0, 2);
             tableLayoutPanel2.Controls.Add(roundedPanel2, 0, 1);
             tableLayoutPanel2.Controls.Add(roundedPanel1, 0, 0);
             tableLayoutPanel2.Dock = DockStyle.Fill;
@@ -82,6 +178,78 @@
             tableLayoutPanel2.RowStyles.Add(new RowStyle());
             tableLayoutPanel2.Size = new Size(394, 642);
             tableLayoutPanel2.TabIndex = 2;
+            // 
+            // roundedPanel4
+            // 
+            roundedPanel4.AutoSize = true;
+            roundedPanel4.BackColor = Color.Transparent;
+            roundedPanel4.BorderColor = Color.White;
+            roundedPanel4.BorderRadius = 20;
+            roundedPanel4.BorderWidth = 3;
+            roundedPanel4.Controls.Add(lblDifference);
+            roundedPanel4.Controls.Add(lblLatestTotal);
+            roundedPanel4.Controls.Add(lblLastRunTime);
+            roundedPanel4.Controls.Add(label4);
+            roundedPanel4.Dock = DockStyle.Top;
+            roundedPanel4.Location = new Point(3, 379);
+            roundedPanel4.Name = "roundedPanel4";
+            roundedPanel4.Padding = new Padding(10);
+            roundedPanel4.Size = new Size(388, 175);
+            roundedPanel4.TabIndex = 5;
+            // 
+            // lblDifference
+            // 
+            lblDifference.AutoSize = true;
+            lblDifference.Dock = DockStyle.Top;
+            lblDifference.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblDifference.ForeColor = Color.White;
+            lblDifference.Location = new Point(10, 130);
+            lblDifference.Name = "lblDifference";
+            lblDifference.Padding = new Padding(0, 5, 0, 5);
+            lblDifference.Size = new Size(65, 35);
+            lblDifference.TabIndex = 9;
+            lblDifference.Text = "label1";
+            lblDifference.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // lblLatestTotal
+            // 
+            lblLatestTotal.AutoSize = true;
+            lblLatestTotal.Dock = DockStyle.Top;
+            lblLatestTotal.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblLatestTotal.ForeColor = Color.White;
+            lblLatestTotal.Location = new Point(10, 95);
+            lblLatestTotal.Name = "lblLatestTotal";
+            lblLatestTotal.Padding = new Padding(0, 5, 0, 5);
+            lblLatestTotal.Size = new Size(65, 35);
+            lblLatestTotal.TabIndex = 8;
+            lblLatestTotal.Text = "label1";
+            lblLatestTotal.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // lblLastRunTime
+            // 
+            lblLastRunTime.AutoSize = true;
+            lblLastRunTime.Dock = DockStyle.Top;
+            lblLastRunTime.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            lblLastRunTime.ForeColor = Color.White;
+            lblLastRunTime.Location = new Point(10, 60);
+            lblLastRunTime.Name = "lblLastRunTime";
+            lblLastRunTime.Padding = new Padding(0, 5, 0, 5);
+            lblLastRunTime.Size = new Size(65, 35);
+            lblLastRunTime.TabIndex = 4;
+            lblLastRunTime.Text = "label1";
+            lblLastRunTime.TextAlign = ContentAlignment.MiddleLeft;
+            // 
+            // label4
+            // 
+            label4.Dock = DockStyle.Top;
+            label4.Font = new Font("Segoe UI", 18F, FontStyle.Bold | FontStyle.Underline);
+            label4.ForeColor = Color.White;
+            label4.Location = new Point(10, 10);
+            label4.Name = "label4";
+            label4.Size = new Size(368, 50);
+            label4.TabIndex = 7;
+            label4.Text = "* Sales Data *";
+            label4.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // roundedPanel2
             // 
@@ -246,8 +414,13 @@
             Name = "Display";
             Text = "Display";
             tableLayoutPanel1.ResumeLayout(false);
+            tableLayoutPanel3.ResumeLayout(false);
+            roundedPanel7.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)dataGridViewCompanies).EndInit();
             tableLayoutPanel2.ResumeLayout(false);
             tableLayoutPanel2.PerformLayout();
+            roundedPanel4.ResumeLayout(false);
+            roundedPanel4.PerformLayout();
             roundedPanel2.ResumeLayout(false);
             roundedPanel2.PerformLayout();
             roundedPanel1.ResumeLayout(false);
@@ -272,5 +445,14 @@
         private Class.Design.Custom_Items.RoundedPanel roundedPanel1;
         private Class.Design.Custom_Items.RoundedPanel roundedPanel2;
         private Class.Design.Custom_Items.RoundedPanel roundedPanel3;
+        private Class.Design.Custom_Items.RoundedPanel roundedPanel4;
+        private Label lblDifference;
+        private Label lblLatestTotal;
+        private Label lblLastRunTime;
+        private Label label4;
+        private DataGridView dataGridViewCompanies;
+        private TableLayoutPanel tableLayoutPanel3;
+        private Class.Design.Custom_Items.RoundedPanel roundedPanel7;
+        private Label label12;
     }
 }

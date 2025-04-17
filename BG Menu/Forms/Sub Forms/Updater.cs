@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 using System.Windows.Forms;
 using Timer = System.Windows.Forms.Timer;
 using BG_Menu.Data;
+using BG_Menu.Class.Sales_Summary;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -18,7 +19,7 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             InitializeComponent();
 
-            salesRepository = new SalesRepository();
+            salesRepository = GlobalInstances.SalesRepository;
 
             SetupDataGridViewColumns();
 

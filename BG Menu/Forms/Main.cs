@@ -48,6 +48,7 @@ namespace BG_Menu
             btnSalesSummary.MouseUp += btnSalesSummary_MouseUp;
 
             SetButtonVisibility();
+
         }
 
         #region Overrides
@@ -351,8 +352,6 @@ namespace BG_Menu
                 btnCreditcard.Visible = true;
                 btnActiveDirector.Visible = true;
                 HidePanels();
-                Pagelbl.Text = "DashBoard";
-                LoadFormInPanel(new DashBoard());
             }
             else
             {

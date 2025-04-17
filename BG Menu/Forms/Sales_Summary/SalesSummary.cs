@@ -18,9 +18,11 @@ namespace BG_Menu.Forms.Sales_Summary
 {
     public partial class SalesSummary : Form
     {
-        private DataTable dataTable;
+        // Remove the local instance for HANA data; we will use GlobalInstances.GlobalSalesData instead.
+        // private DataTable dataTable;
         private StoreInfo StoreInfo;
         private WeekDateManager weekDateManager;
+        private SalesRepository salesRepository;
         private List<StoreTarget> storeTargets;
         // Instead of hardcoded sales lists, we now use a dictionary keyed by year.
         private Dictionary<string, List<StoreSales>> salesByYear = new Dictionary<string, List<StoreSales>>();
@@ -32,7 +34,6 @@ namespace BG_Menu.Forms.Sales_Summary
         private AuthService authService;
         private DateTime selectedDate = DateTime.Now;
         FirestoreDb db;
-        private SalesRepository salesRepository = new SalesRepository();
 
         public bool OpenedInNewWindow { get; set; } = false;
         private System.Windows.Forms.Timer autoTimer;
@@ -50,9 +51,7 @@ namespace BG_Menu.Forms.Sales_Summary
             StoreInfo = new StoreInfo();
 
             InitializeComboBox();
-            InitializeListBox();
-
-            LoadStaticData();
+            InitializeListBox();            
 
             ContextMenuStrip contextMenu = new ContextMenuStrip();
             ToolStripMenuItem showTodayDateMenuItem = new ToolStripMenuItem("Todays Data");
@@ -65,10 +64,12 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private async void SalesSummary_Load(object sender, EventArgs e)
         {
-            salesRepository = new SalesRepository();
-            await salesRepository.InitializeAsync();
-            weekDateManager = await WeekDateManager.CreateAsync();
-            progressCalculator = new ProgressCalculator(weekDateManager);              
+            // Use the global instances which should already be initialized.
+            weekDateManager = GlobalInstances.WeekDateManager;
+            salesRepository = GlobalInstances.SalesRepository;
+            progressCalculator = new ProgressCalculator(weekDateManager);
+
+            LoadStaticData();
         }
 
         private void InitializeComboBox()
@@ -141,7 +142,7 @@ namespace BG_Menu.Forms.Sales_Summary
         }
 
         private DataTable CalculateNetForStores(
-            DataTable dataTable, DateTime startDate, DateTime endDate,
+            DataTable data, DateTime startDate, DateTime endDate,
             List<StoreInfo> storeInfos,
             List<StoreTarget> storeTargets,
             Dictionary<string, List<StoreSales>> salesByYear,
@@ -177,7 +178,7 @@ namespace BG_Menu.Forms.Sales_Summary
 
                 Debug.WriteLine($"Processing store: {storeName}");
 
-                var filteredRows = dataTable.AsEnumerable()
+                var filteredRows = data.AsEnumerable()
                     .Where(row => row.Field<DateTime>("TaxDate") >= startDate
                                   && row.Field<DateTime>("TaxDate") <= endDate
                                   && warehouseNames.Contains(row.Field<string>("WhsName"), StringComparer.OrdinalIgnoreCase)
@@ -222,7 +223,7 @@ namespace BG_Menu.Forms.Sales_Summary
                     AddYearlySales(summaryRow, year, isChecked, kvp.Value, storeName, startWeek, endWeek);
                 }
 
-                // After adding the yearly sales, calculate the percentage difference for each year.
+                // Calculate percentage differences for each sales year.
                 foreach (var kvp in salesYearCheckBoxes)
                 {
                     string year = kvp.Key;
@@ -240,8 +241,7 @@ namespace BG_Menu.Forms.Sales_Summary
                             }
                             else
                             {
-                                // Handle the case when salesValue is zero
-                                diffFormatted = "N/A"; // or use "0.00" based on your needs
+                                diffFormatted = "N/A";
                             }
                             summaryRow[$"% Diff {year}"] = diffFormatted;
                         }
@@ -263,7 +263,7 @@ namespace BG_Menu.Forms.Sales_Summary
                 }
             }
 
-            // Recalculate "£ to Target" and "% to Target" after adjustments.
+            // Recalculate "£ to Target" and "% to Target"
             foreach (DataRow row in summaryTable.Rows)
             {
                 decimal actual = row.Field<decimal>("Actual");
@@ -277,7 +277,8 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private void AddYearlySales(DataRow row, string columnName, bool isChecked, List<StoreSales> salesData, string storeName, int startWeek, int endWeek)
         {
-            if (!isChecked) return;
+            if (!isChecked)
+                return;
 
             decimal totalSales = salesData
                 .Where(s => s.Store.Equals(storeName, StringComparison.OrdinalIgnoreCase)
@@ -286,13 +287,13 @@ namespace BG_Menu.Forms.Sales_Summary
             row[columnName] = totalSales.ToString("F2");
         }
 
-        private decimal GetEngineeringActual(DataTable dataTable, DateTime startDate, DateTime endDate, StoreInfo store)
+        private decimal GetEngineeringActual(DataTable data, DateTime startDate, DateTime endDate, StoreInfo store)
         {
             string[] warehouseNames = store.WarehouseNames ?? new string[0];
             string excludeItemGroup = store.ExcludeItemGroup;
             decimal totalNet = 0;
 
-            var filteredRows = dataTable.AsEnumerable()
+            var filteredRows = data.AsEnumerable()
                 .Where(row => row.Field<DateTime>("TaxDate") >= startDate
                               && row.Field<DateTime>("TaxDate") <= endDate
                               && warehouseNames.Contains(row.Field<string>("WhsName"), StringComparer.OrdinalIgnoreCase)
@@ -331,9 +332,8 @@ namespace BG_Menu.Forms.Sales_Summary
         {
             if (isComboBoxTriggeredSelection)
             {
-                var selectedMonth = comboBox1.SelectedItem.ToString();
+                string selectedMonth = comboBox1.SelectedItem.ToString();
                 var weeks = weekDateManager.GetWeeksForMonth(selectedMonth);
-
                 if (AreAllWeeksSelected(weeks))
                 {
                     await UpdateData();
@@ -350,9 +350,7 @@ namespace BG_Menu.Forms.Sales_Summary
             while (true)
             {
                 if (AreAllWeeksSelected(weeks))
-                {
                     break;
-                }
                 await Task.Delay(50);
             }
         }
@@ -384,15 +382,15 @@ namespace BG_Menu.Forms.Sales_Summary
             decimal engineeringActual = 0;
             if (engineeringStore != null)
             {
-                engineeringActual = GetEngineeringActual(dataTable, startDate, endDate, engineeringStore);
+                engineeringActual = GetEngineeringActual(GlobalInstances.GlobalSalesData, startDate, endDate, engineeringStore);
             }
 
             var ukStoreSummaryTableTask = Task.Run(() =>
-                CalculateNetForStores(dataTable, startDate, endDate, ukStoreMapping, storeTargets, salesByYear, engineeringActual, true));
+                CalculateNetForStores(GlobalInstances.GlobalSalesData, startDate, endDate, ukStoreMapping, storeTargets, salesByYear, engineeringActual, true));
             var franchiseStoreSummaryTableTask = Task.Run(() =>
-                CalculateNetForStores(dataTable, startDate, endDate, franchiseStoreMapping, storeTargets, salesByYear, engineeringActual, false));
+                CalculateNetForStores(GlobalInstances.GlobalSalesData, startDate, endDate, franchiseStoreMapping, storeTargets, salesByYear, engineeringActual, false));
             var companySummaryTableTask = Task.Run(() =>
-                CalculateNetForStores(dataTable, startDate, endDate, companyMapping, storeTargets, salesByYear, engineeringActual, false));
+                CalculateNetForStores(GlobalInstances.GlobalSalesData, startDate, endDate, companyMapping, storeTargets, salesByYear, engineeringActual, false));
 
             DataTable ukStoreSummaryTable = await ukStoreSummaryTableTask;
             DataTable franchiseStoreSummaryTable = await franchiseStoreSummaryTableTask;
@@ -435,9 +433,7 @@ namespace BG_Menu.Forms.Sales_Summary
             {
                 if (column.Name != "Name")
                 {
-                    // Align the text to the right
                     column.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
-                    // Format numeric values to 0 decimal places with thousands separators
                     column.DefaultCellStyle.Format = "N0";
                 }
             }
@@ -455,7 +451,6 @@ namespace BG_Menu.Forms.Sales_Summary
                 decimal aggregatedTarget = 0m;
                 Dictionary<string, decimal> aggregatedSales = new Dictionary<string, decimal>();
 
-                // Initialize aggregated sales per dynamic year.
                 foreach (var year in salesYearCheckBoxes.Keys)
                 {
                     if (salesYearCheckBoxes[year].Checked)
@@ -493,7 +488,9 @@ namespace BG_Menu.Forms.Sales_Summary
                                 aggregatedTarget += targetOnlyStoreRow.Field<decimal>("Target");
                                 foreach (var year in aggregatedSales.Keys.ToList())
                                 {
-                                    aggregatedSales[year] += targetOnlyStoreRow.Table.Columns.Contains(year) ? targetOnlyStoreRow.Field<decimal>(year) : 0m;
+                                    aggregatedSales[year] += targetOnlyStoreRow.Table.Columns.Contains(year)
+                                        ? targetOnlyStoreRow.Field<decimal>(year)
+                                        : 0m;
                                 }
                             }
                         }
@@ -509,10 +506,7 @@ namespace BG_Menu.Forms.Sales_Summary
                 foreach (var kvp in aggregatedSales)
                 {
                     newRow[kvp.Key] = kvp.Value;
-                    // Calculate the difference percentage for the aggregated row as well.
-                    decimal diff = kvp.Value != 0
-                    ? ((aggregatedActual - kvp.Value) / kvp.Value) * 100
-                    : 0;
+                    decimal diff = kvp.Value != 0 ? ((aggregatedActual - kvp.Value) / kvp.Value) * 100 : 0;
                     newRow[$"% Diff {kvp.Key}"] = diff.ToString("F2");
                 }
 
@@ -524,18 +518,15 @@ namespace BG_Menu.Forms.Sales_Summary
         {
             try
             {
-                // Retrieve the SQL sales data which includes the dynamic Sales columns.
                 DataTable salesData = salesRepository.GetSalesDataFromSQL();
 
                 if (salesData != null && salesData.Rows.Count > 0)
                 {
-                    // Discover all columns whose names start with "Sales" (e.g. Sales2020, Sales2021, etc.)
                     var salesColumns = salesData.Columns.Cast<DataColumn>()
                         .Select(c => c.ColumnName)
                         .Where(name => name.StartsWith("Sales") && name.Length > "Sales".Length)
                         .ToList();
 
-                    // Initialize the salesByYear dictionary based on discovered columns.
                     foreach (var col in salesColumns)
                     {
                         string year = col.Substring("Sales".Length);
@@ -545,7 +536,6 @@ namespace BG_Menu.Forms.Sales_Summary
                         }
                     }
 
-                    // Create dynamic checkboxes for each sales year.
                     InitializeYearOptionsPanelDynamic(salesByYear.Keys.ToList());
 
                     storeTargets = new List<StoreTarget>();
@@ -596,7 +586,8 @@ namespace BG_Menu.Forms.Sales_Summary
             comboBox1.Enabled = true;
             listBoxWeeks.Enabled = true;
 
-            dataTable = await salesRepository.GetHanaSalesDataAsync();            
+            // Update the global HANA sales data.
+            GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync();
 
             SelectCurrentMonthInComboBox();
             UpdateData();
@@ -605,7 +596,7 @@ namespace BG_Menu.Forms.Sales_Summary
             {
                 try
                 {
-                    salesRepository.UpdateSalesDataCache(dataTable);
+                    salesRepository.UpdateSalesDataCache(GlobalInstances.GlobalSalesData);
                 }
                 catch (Exception ex)
                 {
@@ -711,18 +702,18 @@ namespace BG_Menu.Forms.Sales_Summary
             }
         }
 
-        private DataTable FilterDataTableByAllowedStores(DataTable dataTable, List<string> allowedStores)
+        private DataTable FilterDataTableByAllowedStores(DataTable data, List<string> allowedStores)
         {
             if (allowedStores == null || allowedStores.Count == 0)
             {
-                return dataTable;
+                return data;
             }
 
-            if (dataTable.Columns.Contains("Name"))
+            if (data.Columns.Contains("Name"))
             {
                 List<DataRow> rowsToDelete = new List<DataRow>();
 
-                foreach (DataRow row in dataTable.Rows)
+                foreach (DataRow row in data.Rows)
                 {
                     if (!allowedStores.Contains(row["Name"].ToString()))
                     {
@@ -735,13 +726,13 @@ namespace BG_Menu.Forms.Sales_Summary
                     row.Delete();
                 }
 
-                dataTable.AcceptChanges();
+                data.AcceptChanges();
             }
             else
             {
                 MessageBox.Show("The DataTable does not contain the 'Name' column.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-            return dataTable;
+            return data;
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -764,7 +755,8 @@ namespace BG_Menu.Forms.Sales_Summary
         private void AdjustGridViewFontSize(DataGridView dataGridView, int adjustment)
         {
             float newFontSize = dataGridView.Font.Size + adjustment;
-            if (newFontSize < 1) return;
+            if (newFontSize < 1)
+                return;
             Font newFont = new Font(dataGridView.Font.FontFamily, newFontSize);
             dataGridView.Font = newFont;
             dataGridView.ColumnHeadersDefaultCellStyle.Font = newFont;
@@ -774,7 +766,7 @@ namespace BG_Menu.Forms.Sales_Summary
         private async void ShowTodayDateMenuItem_Click(object sender, EventArgs e)
         {
             selectedDate = DateTime.Now.Date;
-            dataTable = await salesRepository.GetHanaSalesDataAsync(selectedDate);
+            GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync(selectedDate);
             SelectCurrentMonthInComboBox();
             UpdateData();
         }
@@ -802,21 +794,18 @@ namespace BG_Menu.Forms.Sales_Summary
             // Initialize the timer.
             autoTimer = new System.Windows.Forms.Timer
             {
-                Interval = 1000 * 60 * 5// Timer interval set to 30 seconds.
+                Interval = 1000 * 60 * 5 // Set timer interval to 5 minutes; adjust as needed.
             };
 
             autoTimer.Tick += async (s, args) =>
             {
-                // Stop the timer to prevent overlapping calls.
                 autoTimer.Stop();
-
                 try
                 {
                     await RunAutoRefreshAsync();
                 }
                 finally
                 {
-                    // Restart the timer regardless of whether the refresh succeeded.
                     autoTimer.Start();
                 }
             };
@@ -826,17 +815,16 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private async Task RunAutoRefreshAsync()
         {
-            // Run your asynchronous code to fetch and update sales data.
-            DataTable dataTable = await salesRepository.GetHanaSalesDataAsync();
+            GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync();
             await Task.Run(() =>
             {
                 try
                 {
-                    salesRepository.UpdateSalesDataCache(dataTable);
+                    salesRepository.UpdateSalesDataCache(GlobalInstances.GlobalSalesData);
                 }
                 catch (Exception ex)
                 {
-                    // Log exception if needed.
+                    // Optionally log the error.
                 }
             });
         }

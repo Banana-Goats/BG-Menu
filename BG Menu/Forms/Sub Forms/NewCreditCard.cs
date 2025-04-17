@@ -13,6 +13,7 @@ using UglyToad.PdfPig;
 using UglyToad.PdfPig.DocumentLayoutAnalysis.TextExtractor;
 using BG_Menu.Data;
 using System.Data;
+using BG_Menu.Class.Sales_Summary;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
@@ -26,7 +27,7 @@ namespace BG_Menu.Forms.Sub_Forms
             InitializeComponent();
             InitializeDataGridView();
 
-            salesRepository = new SalesRepository();
+            salesRepository = GlobalInstances.SalesRepository;
 
             // Load supplier configurations from the database
             SupplierConfigLoader.LoadSuppliers();

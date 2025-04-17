@@ -7,9 +7,6 @@ public class WeekDateManager
     private Dictionary<int, DateTime> weekToStartDate;
     private Dictionary<string, int[]> quarterToWeeks;
 
-    public WeekDateManager()
-    {
-    }
 
     public static async Task<WeekDateManager> CreateAsync()
     {

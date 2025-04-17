@@ -6,12 +6,13 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using BG_Menu.Data;
+using BG_Menu.Class.Sales_Summary;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class Refunds : Form
     {
-        private SalesRepository salesRepository = new SalesRepository();
+        private SalesRepository salesRepository;
         private DataTable dataTable;
 
         public Refunds()
@@ -20,6 +21,7 @@ namespace BG_Menu.Forms.Sub_Forms
             Environment.SetEnvironmentVariable("PATH", hanaClientPath + ";" + Environment.GetEnvironmentVariable("PATH"));
 
             InitializeComponent();
+            salesRepository = GlobalInstances.SalesRepository;
         }
 
         private void btnRun_Click(object sender, EventArgs e)

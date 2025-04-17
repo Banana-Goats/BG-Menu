@@ -37,7 +37,7 @@ namespace BG_Menu.Class.Sales_Summary
 
                 // Engineering
                 new StoreInfo { StoreName = "Engineering", WarehouseNames = new[]
-                {   "Ableworld Birkenhead Engineering  W/shop",
+                {  "Ableworld Birkenhead Engineering  W/shop",
                     "Ableworld Birkenhead Engineering  W/shop Off-line",
                     "Ableworld Burton Engineering  W/shop",
                     "Ableworld Burton Engineering  W/shop Off-line",
@@ -70,7 +70,7 @@ namespace BG_Menu.Class.Sales_Summary
                     "Ableworld Stafford Engineering  W/shop",
                     "Ableworld Stafford Engineering  W/shop Off-line",
                     "Ableworld Stapeley Engineering  W/shop",
-                    "Ableworld Stapeley Engineering  W/shop Off-line",
+                    "Ableworld Stapeley Engineering W/shop Off-line",
                     "Ableworld Stockport Engineering  W/shop",
                     "Ableworld Stockport Engineering  W/shop Off-line",
                     "Ableworld Stockton Engineering W/shop",
@@ -184,7 +184,8 @@ namespace BG_Menu.Class.Sales_Summary
                 new StoreInfo { StoreName = "AMD", WarehouseNames = new[] { "Broxburn", "Broxburn Off-Line", "Maeko dropship warehouse - AMD" } },
                 new StoreInfo { StoreName = "GRMR", WarehouseNames = new[] { "Colchester", "Colchester Off-Line", "Colchester Stairlifts", "Colchester Stairlifts Off-Line", "Maeko dropship warehouse - GRMR" } },
                 new StoreInfo { StoreName = "JSCD", WarehouseNames = new[] { "Cardiff", "Bridgend", "Newport Wales", "Cardiff Off-Line", "Bridgend Off-Line", "JSCD Stairlifts", "Newport Wales Off-Line", "Maeko Dropship Warehouse - JSCD", "JSCD Stairlifts - Offline" } },
-                new StoreInfo { StoreName = "Mobility GB", WarehouseNames = new[] { "Ableworld Wavertree", "Ableworld Wigan", "Ableworld Southport", "Ableworld St Helens", "Ableworld Salford", "Ableworld Blackpool", "Ableworld Hyde", "Hyde Offline", "Southport Offline", "MGB Stairlifts", "MGB Engineering", "Maeko Dropship Warehouse - MGB", "Wigan Offline", "Blackpool Offline", "St Helens Offline", "Wavertree Offline" } },
+                new StoreInfo { StoreName = "Mobility GB", WarehouseNames = new[] { "Ableworld Wavertree", "Ableworld Wigan", "Ableworld Southport", "Ableworld St Helens", "Ableworld Salford", "Ableworld Blackpool", "Ableworld Hyde", 
+                    "Hyde Offline", "Southport Offline", "MGB Stairlifts", "MGB Engineering", "Maeko Dropship Warehouse - MGB", "Wigan Offline", "Blackpool Offline", "St Helens Offline", "Wavertree Offline", "Salford Offline" } },
                 new StoreInfo { StoreName = "SJLK", WarehouseNames = new[] { "Paisley", "Paisley Off-Line", "Maeko Dropship Warehouse - SJLK" } },
                 new StoreInfo { StoreName = "SML", WarehouseNames = new[] { "SML Stairlifts", "SML Stairlifts - Offline", "Christchurch", "Christchurch Off-Line", "Southampton", "Southampton Off-Line", "Maeko dropship warehouse - SML" } },
             };
@@ -202,7 +203,7 @@ namespace BG_Menu.Class.Sales_Summary
              new StoreInfo { StoreName = "Franchise Total", StoreNames = new[] { "AWG", "AMD", "GRMR", "JSCD", "Mobility GB", "SJLK", "SML"} },
              new StoreInfo { StoreName = "Company Total", StoreNames = new[] { "UK", "Franchise Total"} },
 
-             new StoreInfo { StoreName = "North Region", StoreNames = new[] { "AMD", "Darlington", "Lincoln", "Newark", "Northwich", "SJLK", "Queensferry", "Stockton", "Birkenhead", "Chester", "AWG", "Llandudno", "Rhyl", "Runcorn", "Stockport", "Mobility GB" } },
+             new StoreInfo { StoreName = "North Region", StoreNames = new[] { "AMD", "Darlington", "Lincoln", "Newark", "Northwich", "SJLK", "Queensferry", "Stockton", "Birkenhead", "Chester", "AWG", "Llandudno", "Rhyl", "Stockport", "Mobility GB" } },
              new StoreInfo { StoreName = "South Region", StoreNames = new[] { "Burton", "SML", "GRMR", "Congleton", "Crewe", "Hanley", "Shrewsbury", "Stafford", "Gloucester", "Nantwich", "Newport", "JSCD", "Oswestry", "Reading", "Thatcham", "Wrexham" , "Cheltenham" } },
 
             };

@@ -151,7 +151,7 @@
             label1.Name = "label1";
             label1.Size = new Size(342, 37);
             label1.TabIndex = 16;
-            label1.Text = "Version : 2.9.3";
+            label1.Text = "Version : 2.9.4";
             label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // hoVpnStatusLabel

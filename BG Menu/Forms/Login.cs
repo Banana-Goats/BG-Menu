@@ -14,6 +14,7 @@ using BG_Menu.Class.Design;
 using Google.Cloud.Firestore;
 using Microsoft.Extensions.Logging;
 using BG_Menu.Class.Sales_Summary;
+using static BG_Menu.Class.Sales_Summary.GlobalInstances;
 
 namespace BG_Menu
 {
@@ -330,24 +331,42 @@ namespace BG_Menu
 
         private async void Login_Shown(object sender, EventArgs e)
         {
-            statusLabel.Text = "Connecting to HANA…";
+            statusLabel.Text = "Checking HANA server…";
             statusLabel.Visible = true;
             statusLabel.Refresh();
 
-            try
-            {
-                // 2) Initialize & load sales data
-                await GlobalInstances.InitializeAsync();
-                await GlobalInstances.TryLoadSalesDataAsync();
+            // ① Reachability check
+            bool hanaUp = await HanaHealthCheck
+                .IsServerReachableAsync("10.100.230.6");   // ← replace with your HANA IP or hostname
 
-                statusLabel.Text = "Connected!";
-            }
-            catch (Exception ex)
+            if (!hanaUp)
             {
-                // 3) Log + inform user
-                statusLabel.Text = "Offline mode. Some features disabled.";
-                // Fall back
+                // flip offline mode
                 GlobalInstances.UseOfflineMode();
+
+                // inform user and skip async init
+                statusLabel.Text = "- Offline Mode -";
+                statusLabel.Refresh();
+            }
+            else
+            {
+                statusLabel.Text = "Connecting to HANA…";
+                statusLabel.Refresh();
+
+                try
+                {
+                    await GlobalInstances.InitializeAsync();
+                    await GlobalInstances.TryLoadSalesDataAsync();
+                    statusLabel.Text = "Connected!";
+                    statusLabel.Refresh();
+                    await Task.Delay(500);
+                }
+                catch (Exception ex)
+                {
+                    statusLabel.Text = "Error – offline mode.";
+                    statusLabel.Refresh();
+                    GlobalInstances.UseOfflineMode();
+                }
             }
         }
     }

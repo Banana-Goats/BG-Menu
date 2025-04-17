@@ -70,6 +70,11 @@ namespace BG_Menu.Forms.Sales_Summary
             progressCalculator = new ProgressCalculator(weekDateManager);
 
             LoadStaticData();
+
+            if (GlobalInstances.IsOfflineMode)
+            {
+                btnToggleYearOptions.Enabled = false;
+            }
         }
 
         private void InitializeComboBox()
@@ -360,8 +365,28 @@ namespace BG_Menu.Forms.Sales_Summary
             return weeks.All(week => listBoxWeeks.SelectedItems.Contains(week));
         }
 
+        private void ClearAllGrids()
+        {
+            dataGridViewUKStores.DataSource = null;
+            dataGridViewFranchiseStores.DataSource = null;
+            dataGridViewCompanyStores.DataSource = null;
+        }
+
         private async Task UpdateData()
         {
+            if (GlobalInstances.IsOfflineMode)
+            {
+                // Optionally clear grids or show a message label on the form
+                Invoke((Action)(() =>
+                {
+                    ClearAllGrids();
+                    MessageBox.Show("Offline mode is enabled. No data will be loaded.", "Information",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                }));
+                return;
+            }
+
             var selectedWeeks = listBoxWeeks.SelectedItems.Cast<int>().ToList();
             if (selectedWeeks.Count == 0)
             {
@@ -516,6 +541,9 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private async void LoadStaticData()
         {
+            if (GlobalInstances.IsOfflineMode)
+                return;
+
             try
             {
                 DataTable salesData = salesRepository.GetSalesDataFromSQL();
@@ -582,6 +610,12 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private async void button1_Click(object sender, EventArgs e)
         {
+            if (GlobalInstances.IsOfflineMode)
+            {
+                MessageBox.Show("Offline mode – cannot refresh HANA data.", "Information",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
             button1.Enabled = false;
             comboBox1.Enabled = true;
             listBoxWeeks.Enabled = true;
@@ -765,68 +799,18 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private async void ShowTodayDateMenuItem_Click(object sender, EventArgs e)
         {
+            if (GlobalInstances.IsOfflineMode)
+            {
+                MessageBox.Show("Offline mode – cannot load today’s HANA data.", "Information",
+                                MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             selectedDate = DateTime.Now.Date;
             GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync(selectedDate);
             SelectCurrentMonthInComboBox();
             UpdateData();
-        }
+        }  
 
-        protected override void OnLoad(EventArgs e)
-        {
-            base.OnLoad(e);
-
-            if (OpenedInNewWindow)
-            {
-                btnAuto.Visible = true;
-            }
-            else
-            {
-                btnAuto.Visible = false;
-            }
-        }
-
-        private async void btnAuto_Click(object sender, EventArgs e)
-        {
-            btnAuto.Enabled = false;
-
-            await RunAutoRefreshAsync();
-
-            // Initialize the timer.
-            autoTimer = new System.Windows.Forms.Timer
-            {
-                Interval = 1000 * 60 * 5 // Set timer interval to 5 minutes; adjust as needed.
-            };
-
-            autoTimer.Tick += async (s, args) =>
-            {
-                autoTimer.Stop();
-                try
-                {
-                    await RunAutoRefreshAsync();
-                }
-                finally
-                {
-                    autoTimer.Start();
-                }
-            };
-
-            autoTimer.Start();
-        }
-
-        private async Task RunAutoRefreshAsync()
-        {
-            GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync();
-            await Task.Run(() =>
-            {
-                try
-                {
-                    salesRepository.UpdateSalesDataCache(GlobalInstances.GlobalSalesData);
-                }
-                catch (Exception ex)
-                {
-                    // Optionally log the error.
-                }
-            });
-        }
     }
 }

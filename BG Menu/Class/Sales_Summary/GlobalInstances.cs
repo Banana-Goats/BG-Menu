@@ -1,6 +1,7 @@
 ﻿using BG_Menu.Data;
 using System;
 using System.Data;
+using System.Net.NetworkInformation;
 using System.Threading.Tasks;
 
 namespace BG_Menu.Class.Sales_Summary
@@ -19,16 +20,7 @@ namespace BG_Menu.Class.Sales_Summary
         public static DataTable GlobalSalesData { get; set; }
 
         public static async Task InitializeAsync()
-        {
-            if (IsOfflineMode)
-            {
-                // Still create the WeekDateManager so date logic works,
-                // but don’t wire up the repository connection.
-                WeekDateManager = await WeekDateManager.CreateAsync();
-                SalesRepository = new SalesRepository(WeekDateManager);
-                return;
-            }
-
+        {            
             WeekDateManager = await WeekDateManager.CreateAsync();
             SalesRepository = new SalesRepository(WeekDateManager);
         }
@@ -39,6 +31,7 @@ namespace BG_Menu.Class.Sales_Summary
             {
                 // In offline mode, just give an empty table
                 GlobalSalesData = new DataTable();
+                MessageBox.Show("Offline mode is enabled. No data will be loaded.");
                 return;
             }
 
@@ -53,6 +46,26 @@ namespace BG_Menu.Class.Sales_Summary
 
                 // Set GlobalSalesData to an empty DataTable or cached data.
                 GlobalSalesData = new DataTable();
+            }
+        }
+
+        public static class HanaHealthCheck
+        {
+
+            public static async Task<bool> IsServerReachableAsync(string hostnameOrIp, int timeoutMs = 1000)
+            {
+                try
+                {
+                    using (var p = new Ping())
+                    {
+                        var reply = await p.SendPingAsync(hostnameOrIp, timeoutMs);
+                        return reply.Status == IPStatus.Success;
+                    }
+                }
+                catch
+                {
+                    return false;
+                }
             }
         }
     }

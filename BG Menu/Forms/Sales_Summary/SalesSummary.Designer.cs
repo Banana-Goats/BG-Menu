@@ -45,7 +45,6 @@
             tableLayoutPanel1 = new TableLayoutPanel();
             listBoxWeeks = new ListBox();
             tableLayoutPanel2 = new TableLayoutPanel();
-            btnAuto = new Button();
             button3 = new Button();
             button4 = new Button();
             btnToggleYearOptions = new Button();
@@ -284,7 +283,6 @@
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
             tableLayoutPanel2.ColumnStyles.Add(new ColumnStyle(SizeType.Absolute, 40F));
-            tableLayoutPanel2.Controls.Add(btnAuto, 4, 0);
             tableLayoutPanel2.Controls.Add(comboBox1, 0, 0);
             tableLayoutPanel2.Controls.Add(button1, 1, 0);
             tableLayoutPanel2.Controls.Add(button3, 5, 0);
@@ -299,18 +297,6 @@
             tableLayoutPanel2.RowStyles.Add(new RowStyle(SizeType.Absolute, 30F));
             tableLayoutPanel2.Size = new Size(1358, 37);
             tableLayoutPanel2.TabIndex = 26;
-            // 
-            // btnAuto
-            // 
-            btnAuto.Dock = DockStyle.Right;
-            btnAuto.Font = new Font("Microsoft Sans Serif", 8.25F, FontStyle.Bold);
-            btnAuto.Location = new Point(1173, 3);
-            btnAuto.Name = "btnAuto";
-            btnAuto.Size = new Size(62, 31);
-            btnAuto.TabIndex = 30;
-            btnAuto.Text = "Auto";
-            btnAuto.UseVisualStyleBackColor = true;
-            btnAuto.Click += btnAuto_Click;
             // 
             // button3
             // 
@@ -410,7 +396,6 @@
         private Button button4;
         private Button btnToggleYearOptions;
         private Button button2;        
-        private Button btnAuto;
         private ListBox listBoxWeeks;
     }
 }

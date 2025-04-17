@@ -2,6 +2,7 @@
 using System.Data;
 using Microsoft.Data.SqlClient;
 using BG_Menu.Data;
+using BG_Menu.Class.Sales_Summary;
 
 
 namespace BG_Menu.Forms.Sub_Forms

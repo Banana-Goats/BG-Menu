@@ -39,8 +39,7 @@
             panel1 = new Panel();
             pictureBox3 = new PictureBox();
             label1 = new Label();
-            hoVpnStatusLabel = new Label();
-            sapVpnStatusLabel = new Label();
+            statusLabel = new Label();
             networkTestListView = new ListView();
             button1 = new Button();
             ((System.ComponentModel.ISupportInitialize)pictureBox2).BeginInit();
@@ -154,29 +153,16 @@
             label1.Text = "Version : 2.9.4";
             label1.TextAlign = ContentAlignment.MiddleCenter;
             // 
-            // hoVpnStatusLabel
+            // statusLabel
             // 
-            hoVpnStatusLabel.BorderStyle = BorderStyle.FixedSingle;
-            hoVpnStatusLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            hoVpnStatusLabel.ForeColor = Color.FromArgb(46, 51, 73);
-            hoVpnStatusLabel.Location = new Point(56, 252);
-            hoVpnStatusLabel.Name = "hoVpnStatusLabel";
-            hoVpnStatusLabel.Size = new Size(160, 34);
-            hoVpnStatusLabel.TabIndex = 17;
-            hoVpnStatusLabel.Text = "label2";
-            hoVpnStatusLabel.TextAlign = ContentAlignment.MiddleCenter;
-            // 
-            // sapVpnStatusLabel
-            // 
-            sapVpnStatusLabel.BorderStyle = BorderStyle.FixedSingle;
-            sapVpnStatusLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            sapVpnStatusLabel.ForeColor = Color.FromArgb(46, 51, 73);
-            sapVpnStatusLabel.Location = new Point(238, 252);
-            sapVpnStatusLabel.Name = "sapVpnStatusLabel";
-            sapVpnStatusLabel.Size = new Size(160, 34);
-            sapVpnStatusLabel.TabIndex = 18;
-            sapVpnStatusLabel.Text = "label2";
-            sapVpnStatusLabel.TextAlign = ContentAlignment.MiddleCenter;
+            statusLabel.BorderStyle = BorderStyle.FixedSingle;
+            statusLabel.Font = new Font("Segoe UI", 15.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
+            statusLabel.ForeColor = Color.White;
+            statusLabel.Location = new Point(56, 252);
+            statusLabel.Name = "statusLabel";
+            statusLabel.Size = new Size(342, 34);
+            statusLabel.TabIndex = 17;
+            statusLabel.TextAlign = ContentAlignment.MiddleCenter;
             // 
             // networkTestListView
             // 
@@ -212,8 +198,7 @@
             ClientSize = new Size(458, 566);
             Controls.Add(button1);
             Controls.Add(networkTestListView);
-            Controls.Add(sapVpnStatusLabel);
-            Controls.Add(hoVpnStatusLabel);
+            Controls.Add(statusLabel);
             Controls.Add(label1);
             Controls.Add(pictureBox3);
             Controls.Add(panel1);
@@ -248,8 +233,7 @@
         private Panel panel1;
         private PictureBox pictureBox3;
         private Label label1;
-        private Label hoVpnStatusLabel;
-        private Label sapVpnStatusLabel;
+        private Label statusLabel;
         private ListView networkTestListView;
         private Button button1;
     }

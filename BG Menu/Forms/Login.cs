@@ -12,6 +12,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using BG_Menu.Class.Design;
 using Google.Cloud.Firestore;
+using Microsoft.Extensions.Logging;
+using BG_Menu.Class.Sales_Summary;
 
 namespace BG_Menu
 {
@@ -32,8 +34,7 @@ namespace BG_Menu
             this.DoubleBuffered = true;
             var roundedCorners = new RoundedCorners(this, 70, 3, Color.Yellow);
             var LoginDraggable = new Draggable(this, this);
-            var labelDraggable = new Draggable(sapVpnStatusLabel, this);
-            var label1Draggable = new Draggable(hoVpnStatusLabel, this);
+            var label1Draggable = new Draggable(statusLabel, this);
             var label2Draggable = new Draggable(networkTestListView, this);
 
 
@@ -44,53 +45,10 @@ namespace BG_Menu
 
             this.KeyDown += new KeyEventHandler(YourForm_KeyDown);
 
-            Task.Run(() => PingVPNsAsync());
+            this.Shown += Login_Shown;
 
-        }
+        }      
 
-        private async Task PingVPNsAsync()
-        {
-            await PingVPNAsync("able-fs03", hoVpnStatusLabel, "HO VPN Online", "HO VPN");
-            await PingVPNAsync("10.100.230.6", sapVpnStatusLabel, "SAP VPN Online", "SAP VPN");
-        }
-
-        private async Task PingVPNAsync(string ipAddress, Label statusLabel, string onlineMessage, string offlineMessage)
-        {
-            Ping ping = new Ping();
-
-            try
-            {
-                PingReply reply = await ping.SendPingAsync(ipAddress);
-
-                if (reply.Status == IPStatus.Success)
-                {
-                    // Ping successful, update UI with Online message in green
-                    statusLabel.Invoke((Action)(() =>
-                    {
-                        statusLabel.Text = onlineMessage;
-                        statusLabel.ForeColor = Color.Green;
-                    }));
-                }
-                else
-                {
-                    // Ping failed, update UI with Offline message in red
-                    statusLabel.Invoke((Action)(() =>
-                    {
-                        statusLabel.Text = offlineMessage;
-                        statusLabel.ForeColor = Color.Red;
-                    }));
-                }
-            }
-            catch (Exception)
-            {
-                // Exception occurred, update UI with Offline message in red
-                statusLabel.Invoke((Action)(() =>
-                {
-                    statusLabel.Text = offlineMessage;
-                    statusLabel.ForeColor = Color.Red;
-                }));
-            }
-        }
 
         private void pictureBox1_MouseClickToggle(object sender, MouseEventArgs e)
         {
@@ -262,7 +220,6 @@ namespace BG_Menu
             return interfaces.Any(nic => nic.OperationalStatus == OperationalStatus.Up);
         }
 
-
         private bool HasValidIPConfiguration()
         {
             var interfaces = NetworkInterface.GetAllNetworkInterfaces()
@@ -284,7 +241,6 @@ namespace BG_Menu
             }
             return false;
         }
-
 
         private string GetDefaultGatewayIP()
         {
@@ -367,10 +323,32 @@ namespace BG_Menu
             }
         }
 
-
         private async void button1_Click(object sender, EventArgs e)
         {
             await RunNetworkTestsAsync();
+        }
+
+        private async void Login_Shown(object sender, EventArgs e)
+        {
+            statusLabel.Text = "Connecting to HANA…";
+            statusLabel.Visible = true;
+            statusLabel.Refresh();
+
+            try
+            {
+                // 2) Initialize & load sales data
+                await GlobalInstances.InitializeAsync();
+                await GlobalInstances.TryLoadSalesDataAsync();
+
+                statusLabel.Text = "Connected!";
+            }
+            catch (Exception ex)
+            {
+                // 3) Log + inform user
+                statusLabel.Text = "Offline mode. Some features disabled.";
+                // Fall back
+                GlobalInstances.UseOfflineMode();
+            }
         }
     }
 }

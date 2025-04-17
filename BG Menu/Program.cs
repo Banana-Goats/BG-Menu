@@ -37,8 +37,8 @@ namespace BG_Menu
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            GlobalInstances.InitializeAsync().GetAwaiter().GetResult();
-            GlobalInstances.TryLoadSalesDataAsync().GetAwaiter().GetResult();
+            //GlobalInstances.InitializeAsync().GetAwaiter().GetResult();
+            //GlobalInstances.TryLoadSalesDataAsync().GetAwaiter().GetResult();
 
             // Start the application
             Application.Run(new Login());

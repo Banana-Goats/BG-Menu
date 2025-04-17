@@ -20,7 +20,8 @@ namespace BG_Menu.Class.Sales_Summary
         public static DataTable GlobalSalesData { get; set; }
 
         public static async Task InitializeAsync()
-        {            
+        {
+            if (IsOfflineMode) return;
             WeekDateManager = await WeekDateManager.CreateAsync();
             SalesRepository = new SalesRepository(WeekDateManager);
         }

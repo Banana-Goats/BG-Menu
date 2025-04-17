@@ -331,43 +331,66 @@ namespace BG_Menu
 
         private async void Login_Shown(object sender, EventArgs e)
         {
-            statusLabel.Text = "Checking HANA server…";
-            statusLabel.Visible = true;
-            statusLabel.Refresh();
+            _ = CheckAndInitializeHanaAsync();
+        }
 
-            // ① Reachability check
-            bool hanaUp = await HanaHealthCheck
-                .IsServerReachableAsync("10.100.230.6");   // ← replace with your HANA IP or hostname
+        private async Task CheckAndInitializeHanaAsync()
+        {
+            // 1) Tell the user we’re checking
+            this.Invoke((Action)(() =>
+            {
+                statusLabel.Text = "Checking HANA server…";
+                statusLabel.Visible = true;
+                statusLabel.Refresh();
+            }));
+
+            // 2) Do the reachability check on the pool
+            bool hanaUp = await Task.Run(() =>
+                HanaHealthCheck.IsServerReachableAsync("10.100.230.6", 1000)
+                    .GetAwaiter().GetResult()
+            );
 
             if (!hanaUp)
             {
-                // flip offline mode
                 GlobalInstances.UseOfflineMode();
-
-                // inform user and skip async init
-                statusLabel.Text = "- Offline Mode -";
-                statusLabel.Refresh();
+                this.Invoke((Action)(() =>
+                {
+                    statusLabel.Text = "Hana Is Offline";
+                }));
+                return;
             }
-            else
-            {
-                statusLabel.Text = "Connecting to HANA…";
-                statusLabel.Refresh();
 
+            var initResult = await Task.Run(async () =>
+            {
                 try
                 {
-                    await GlobalInstances.InitializeAsync();
-                    await GlobalInstances.TryLoadSalesDataAsync();
-                    statusLabel.Text = "Connected!";
-                    statusLabel.Refresh();
-                    await Task.Delay(500);
+                    await GlobalInstances.InitializeAsync().ConfigureAwait(false);
+                    await GlobalInstances.TryLoadSalesDataAsync().ConfigureAwait(false);
+                    return true;
                 }
-                catch (Exception ex)
+                catch
                 {
-                    statusLabel.Text = "Error – offline mode.";
-                    statusLabel.Refresh();
-                    GlobalInstances.UseOfflineMode();
+                    return false;
                 }
-            }
+            });
+
+            // 4) Back to UI
+            this.Invoke((Action)(() =>
+            {
+                if (initResult)
+                {
+                    statusLabel.Text = "Connected to HANA!";
+                    statusLabel.Refresh();
+                    Task.Delay(500).ContinueWith(_ => statusLabel.Visible = false,
+                                                 TaskScheduler.FromCurrentSynchronizationContext());
+                }
+                else
+                {
+                    GlobalInstances.UseOfflineMode();
+                    statusLabel.Text = "Init failed — offline mode.";
+                }
+            }));
         }
+
     }
 }

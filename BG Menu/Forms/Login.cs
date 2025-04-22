@@ -339,7 +339,7 @@ namespace BG_Menu
             // 1) Tell the user we’re checking
             this.Invoke((Action)(() =>
             {
-                statusLabel.Text = "Checking HANA server…";
+                statusLabel.Text = "Checking HANA Server…";
                 statusLabel.Visible = true;
                 statusLabel.Refresh();
             }));
@@ -381,8 +381,6 @@ namespace BG_Menu
                 {
                     statusLabel.Text = "Connected to HANA!";
                     statusLabel.Refresh();
-                    Task.Delay(500).ContinueWith(_ => statusLabel.Visible = false,
-                                                 TaskScheduler.FromCurrentSynchronizationContext());
                 }
                 else
                 {

@@ -69,7 +69,7 @@
             // cmbMerchant
             // 
             cmbMerchant.FormattingEnabled = true;
-            cmbMerchant.Items.AddRange(new object[] { "Elavon", "Worldpay" });
+            cmbMerchant.Items.AddRange(new object[] { "Elavon", "Worldpay", "Dojo" });
             cmbMerchant.Location = new Point(179, 61);
             cmbMerchant.Name = "cmbMerchant";
             cmbMerchant.Size = new Size(200, 23);

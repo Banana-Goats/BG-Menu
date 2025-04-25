@@ -132,9 +132,7 @@ namespace BG_Menu.Forms.Sub_Forms
         }
 
         private void FormatDataGridView()
-        {
-            // Auto-size columns for better visibility
-            dataGridViewResults.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.AllCells;
+        {           
 
             // Set column headers
             dataGridViewResults.Columns["IndexID"].HeaderText = "Index ID";

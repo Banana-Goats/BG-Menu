@@ -237,8 +237,8 @@ namespace BG_Menu
 
         private void paymentdevices_Click(object sender, EventArgs e)
         {
-            PaymentDevicesApp paymentDevicesApp = new PaymentDevicesApp(currentUsername);
-            paymentDevicesApp.Show();
+            Pagelbl.Text = "MIDS / TIDS";
+            LoadFormInPanel(new Forms.Sub_Forms.PaymentDevicesApp(currentUsername));
         }
 
         private void btnRefunds_Click(object sender, EventArgs e)

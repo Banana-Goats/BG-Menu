@@ -212,7 +212,8 @@ namespace BG_Menu.Data
             // Combine all store mappings (UK, Franchise, Company)
             var allStores = StoreWarehouseMapping.GetUKStoreMapping()
                 .Concat(StoreWarehouseMapping.GetFranchiseStoreMapping())
-                .Concat(StoreWarehouseMapping.GetCompanyMapping());
+                .Concat(StoreWarehouseMapping.GetCompanyMapping())
+                .Concat(StoreWarehouseMapping.GetAggregatedStoreMapping());
 
             foreach (var storeInfo in allStores)
             {
@@ -264,7 +265,7 @@ namespace BG_Menu.Data
             ExecuteSqlNonQuery(query);
         }
 
-        private List<StoreSales> GetWeeklySalesFromHanaData(DataTable hanaData, string storeName, StoreInfo storeInfo)
+        private List<StoreSales> GetWeeklySalesFromHanaData1(DataTable hanaData, string storeName, StoreInfo storeInfo)
         {
             Dictionary<int, decimal> weekToSales = new Dictionary<int, decimal>();
             var warehouseNames = storeInfo?.WarehouseNames ?? Array.Empty<string>();
@@ -309,6 +310,93 @@ namespace BG_Menu.Data
                         Sales = kvp.Value
                     })
                     .ToList();
+        }
+
+        private List<StoreSales> GetWeeklySalesFromHanaData(DataTable hanaData, string storeName, StoreInfo storeInfo)
+        {
+            // 1) Collect all warehouse names for this store (leaf + aggregates)
+            var warehouseSet = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+            // 1a) Direct warehouses on this StoreInfo
+            if (storeInfo?.WarehouseNames != null)
+                foreach (var wh in storeInfo.WarehouseNames)
+                    warehouseSet.Add(wh);
+
+            // We'll need the three leaf lists to look up children:
+            var leafStores = StoreWarehouseMapping
+                                .GetUKStoreMapping()
+                                .Concat(StoreWarehouseMapping.GetFranchiseStoreMapping())
+                                .Concat(StoreWarehouseMapping.GetCompanyMapping());
+
+            // 1b) Expand any StoreNames (for aggregated entries)
+            if (storeInfo?.StoreNames != null)
+            {
+                foreach (var childName in storeInfo.StoreNames)
+                {
+                    var child = leafStores
+                        .FirstOrDefault(si =>
+                            si.StoreName.Equals(childName, StringComparison.OrdinalIgnoreCase));
+                    if (child?.WarehouseNames != null)
+                        foreach (var wh in child.WarehouseNames)
+                            warehouseSet.Add(wh);
+                }
+            }
+
+            // 1c) Also expand IncludeTargetOnlyStoreNames (e.g. Engineering group)
+            if (storeInfo?.IncludeTargetOnlyStoreNames != null)
+            {
+                foreach (var onlyName in storeInfo.IncludeTargetOnlyStoreNames)
+                {
+                    var child = leafStores
+                        .FirstOrDefault(si =>
+                            si.StoreName.Equals(onlyName, StringComparison.OrdinalIgnoreCase));
+                    if (child?.WarehouseNames != null)
+                        foreach (var wh in child.WarehouseNames)
+                            warehouseSet.Add(wh);
+                }
+            }
+
+            // 2) Now apply your existing loop + exclude logic
+            var weekToSales = new Dictionary<int, decimal>();
+            string excludeItemGroup = storeInfo?.ExcludeItemGroup;
+
+            foreach (DataRow row in hanaData.Rows)
+            {
+                var whsName = row["WhsName"].ToString();
+                if (!warehouseSet.Contains(whsName))
+                    continue;
+
+                if (!string.IsNullOrEmpty(excludeItemGroup))
+                {
+                    var grp = row["ItmsGrpNam"].ToString();
+                    if (grp.Equals(excludeItemGroup, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                }
+
+                if (row["TaxDate"] is DateTime taxDate)
+                {
+                    int wk = weekDateManager.GetWeekNumber(taxDate);
+                    if (wk < 0) continue;
+
+                    if (decimal.TryParse(row["NET"].ToString(), out var net))
+                    {
+                        if (!weekToSales.ContainsKey(wk))
+                            weekToSales[wk] = 0;
+                        weekToSales[wk] += net;
+                    }
+                }
+            }
+
+            // 3) Project into your DTO and return
+            return weekToSales
+                .OrderBy(kvp => kvp.Key)
+                .Select(kvp => new StoreSales
+                {
+                    Store = storeName,
+                    Week = kvp.Key,
+                    Sales = kvp.Value
+                })
+                .ToList();
         }
     }
 }

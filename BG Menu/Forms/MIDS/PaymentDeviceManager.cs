@@ -95,45 +95,96 @@ namespace BG_Menu.Forms.Sub_Forms
                     using (SqlCommand cmd = new SqlCommand(query, connection))
                     {
                         cmd.Parameters.AddWithValue("@IndexID", existingIndexID.Value);
+
                         using (SqlDataReader reader = cmd.ExecuteReader())
                         {
                             if (reader.Read())
                             {
-                                // Populate form fields with existing data
-                                txtMerchantID.Text = reader["MerchantID"].ToString();
-                                cmbMerchant.SelectedItem = reader["Merchant"].ToString();
-                                txtTID.Text = reader["TID"] != DBNull.Value ? reader["TID"].ToString() : string.Empty;
-                                txtPTID.Text = reader["PTID"] != DBNull.Value ? reader["PTID"].ToString() : string.Empty;
-                                txtDevice.Text = reader["Device"] != DBNull.Value ? reader["Device"].ToString() : string.Empty;
-                                txtSerialNumber.Text = reader["SerialNumber"] != DBNull.Value ? reader["SerialNumber"].ToString() : string.Empty;
-                                txtCompany.Text = reader["Company"].ToString();
-                                txtAssignedUser.Text = reader["AssignedUser"].ToString();
-                                txtDepartmentStore.Text = reader["DepartmentStore"].ToString();
+                                // MerchantID
+                                var mId = reader["MerchantID"].ToString();
+                                txtMerchantID.Text = mId;
+                                originalMerchantID = mId;
 
+                                // Merchant
+                                var merch = reader["Merchant"].ToString();
+                                cmbMerchant.SelectedItem = merch;
+                                originalMerchant = merch;
+
+                                // TID
+                                var tid = reader["TID"] != DBNull.Value ? reader["TID"].ToString() : string.Empty;
+                                txtTID.Text = tid;
+                                originalTID = tid;
+
+                                // PTID
+                                var ptid = reader["PTID"] != DBNull.Value ? reader["PTID"].ToString() : string.Empty;
+                                txtPTID.Text = ptid;
+                                originalPTID = ptid;
+
+                                // Device
+                                var dev = reader["Device"] != DBNull.Value ? reader["Device"].ToString() : string.Empty;
+                                txtDevice.Text = dev;
+                                originalDevice = dev;
+
+                                // SerialNumber
+                                var sn = reader["SerialNumber"] != DBNull.Value ? reader["SerialNumber"].ToString() : string.Empty;
+                                txtSerialNumber.Text = sn;
+                                originalSerialNumber = sn;
+
+                                // Company
+                                var comp = reader["Company"].ToString();
+                                txtCompany.Text = comp;
+                                originalCompany = comp;
+
+                                // AssignedUser
+                                var user = reader["AssignedUser"].ToString();
+                                txtAssignedUser.Text = user;
+                                originalAssignedUser = user;
+
+                                // DepartmentStore
+                                var dept = reader["DepartmentStore"].ToString();
+                                txtDepartmentStore.Text = dept;
+                                originalDepartmentStore = dept;
+
+                                // PCIDSSDate
                                 if (reader["PCIDSSDate"] != DBNull.Value)
-                                    dtpPCIDSSDate.Value = Convert.ToDateTime(reader["PCIDSSDate"]);
+                                {
+                                    var dt = Convert.ToDateTime(reader["PCIDSSDate"]);
+                                    dtpPCIDSSDate.Value = dt;
+                                    originalPCIDSSDate = dt;
+                                }
                                 else
+                                {
                                     dtpPCIDSSDate.Value = DateTime.Today;
+                                    originalPCIDSSDate = null;
+                                }
 
-                                txtPCIDSSVersion.Text = reader["PCIDSSVersion"].ToString();
-                                txtPCIDSSPassword.Text = reader["PCIDSSPassword"].ToString();
+                                // PCIDSSVersion
+                                var ver = reader["PCIDSSVersion"].ToString();
+                                txtPCIDSSVersion.Text = ver;
+                                originalPCIDSSVersion = ver;
+
+                                // PCIDSSPassword
+                                var pwd = reader["PCIDSSPassword"].ToString();
+                                txtPCIDSSPassword.Text = pwd;
+                                originalPCIDSSPassword = pwd;
                             }
                             else
                             {
                                 MessageBox.Show("Selected payment device not found.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                                 this.Close();
+                                return;
                             }
                         }
                     }
 
                     // Query the last change details from the PaymentDevicesAudit table
                     string auditQuery = @"
-                            SELECT TOP 1
-                                ChangedBy,
-                                ChangeDate
-                            FROM PaymentDevicesAudit
-                            WHERE IndexID = @IndexID
-                            ORDER BY ChangeDate DESC";
+                SELECT TOP 1
+                    ChangedBy,
+                    ChangeDate
+                FROM PaymentDevicesAudit
+                WHERE IndexID = @IndexID
+                ORDER BY ChangeDate DESC";
 
                     using (SqlCommand cmdAudit = new SqlCommand(auditQuery, connection))
                     {
@@ -163,6 +214,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 this.Close();
             }
         }
+
 
         // Method to insert audit logs
         private void InsertAuditLog(int indexID, string operationType, string fieldName, string oldValue, string newValue)
@@ -382,18 +434,7 @@ namespace BG_Menu.Forms.Sub_Forms
                 MessageBox.Show("Merchant is a required field.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 cmbMerchant.Focus();
                 return;
-            }
-
-            // Optional: Validate MerchantID format if necessary
-            // Example: Ensure MerchantID is alphanumeric and within a certain length
-            /*
-            if (!System.Text.RegularExpressions.Regex.IsMatch(merchantID, @"^[a-zA-Z0-9]{5,10}$"))
-            {
-                MessageBox.Show("MerchantID must be alphanumeric and 5-10 characters long.", "Validation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                txtMerchantID.Focus();
-                return;
-            }
-            */
+            }            
 
             try
             {

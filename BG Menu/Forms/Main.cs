@@ -247,6 +247,12 @@ namespace BG_Menu
             Refunds.Show();
         }
 
+        private void button2_Click_1(object sender, EventArgs e)
+        {
+            Pagelbl.Text = "VAT Data Export";
+            LoadFormInPanel(new VATData());
+        }
+
         // Tray Buttons
 
         private void button10_Click(object sender, EventArgs e)
@@ -440,10 +446,6 @@ namespace BG_Menu
             currentForm = form;
         }
 
-        private void button2_Click_1(object sender, EventArgs e)
-        {
-            Pagelbl.Text = "VAT Data Export";
-            LoadFormInPanel(new VATData());
-        }
+        
     }
 }

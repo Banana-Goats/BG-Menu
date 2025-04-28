@@ -69,12 +69,7 @@ namespace BG_Menu.Forms.Sales_Summary
             salesRepository = GlobalInstances.SalesRepository;
             progressCalculator = new ProgressCalculator(weekDateManager);
 
-            LoadStaticData();
-
-            if (GlobalInstances.IsOfflineMode)
-            {
-                btnToggleYearOptions.Enabled = false;
-            }
+            LoadStaticData();            
         }
 
         private void InitializeComboBox()
@@ -373,19 +368,7 @@ namespace BG_Menu.Forms.Sales_Summary
         }
 
         private async Task UpdateData()
-        {
-            if (GlobalInstances.IsOfflineMode)
-            {
-                // Optionally clear grids or show a message label on the form
-                Invoke((Action)(() =>
-                {
-                    ClearAllGrids();
-                    MessageBox.Show("Offline mode is enabled. No data will be loaded.", "Information",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-
-                }));
-                return;
-            }
+        {          
 
             var selectedWeeks = listBoxWeeks.SelectedItems.Cast<int>().ToList();
             if (selectedWeeks.Count == 0)
@@ -540,9 +523,7 @@ namespace BG_Menu.Forms.Sales_Summary
         }
 
         private async void LoadStaticData()
-        {
-            if (GlobalInstances.IsOfflineMode)
-                return;
+        {           
 
             try
             {
@@ -610,12 +591,7 @@ namespace BG_Menu.Forms.Sales_Summary
 
         private async void button1_Click(object sender, EventArgs e)
         {
-            if (GlobalInstances.IsOfflineMode)
-            {
-                MessageBox.Show("Offline mode – cannot refresh HANA data.", "Information",
-                                MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            
             button1.Enabled = false;
             comboBox1.Enabled = true;
             listBoxWeeks.Enabled = true;
@@ -798,14 +774,7 @@ namespace BG_Menu.Forms.Sales_Summary
         }
 
         private async void ShowTodayDateMenuItem_Click(object sender, EventArgs e)
-        {
-            if (GlobalInstances.IsOfflineMode)
-            {
-                MessageBox.Show("Offline mode – cannot load today’s HANA data.", "Information",
-                                MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
+        {          
             selectedDate = DateTime.Now.Date;
             GlobalInstances.GlobalSalesData = await salesRepository.GetHanaSalesDataAsync(selectedDate);
             SelectCurrentMonthInComboBox();

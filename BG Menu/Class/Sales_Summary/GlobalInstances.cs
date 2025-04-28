@@ -8,31 +8,31 @@ namespace BG_Menu.Class.Sales_Summary
 {
     public static class GlobalInstances
     {
-        public static bool IsOfflineMode { get; private set; } = false;
+        public static bool IsHanaOffline { get; private set; } = false;
 
-        public static void UseOfflineMode()
+        public static void SetHanaOfflineMode()
         {
-            IsOfflineMode = true;
+            IsHanaOffline = true;
         }
 
         public static WeekDateManager WeekDateManager { get; private set; }
         public static SalesRepository SalesRepository { get; private set; }
         public static DataTable GlobalSalesData { get; set; }
 
+
         public static async Task InitializeAsync()
         {
-            if (IsOfflineMode) return;
+            if (IsHanaOffline) return;
             WeekDateManager = await WeekDateManager.CreateAsync();
             SalesRepository = new SalesRepository(WeekDateManager);
         }
 
         public static async Task TryLoadSalesDataAsync()
         {
-            if (IsOfflineMode)
+            if (IsHanaOffline)
             {
-                // In offline mode, just give an empty table
                 GlobalSalesData = new DataTable();
-                MessageBox.Show("Offline mode is enabled. No data will be loaded.");
+                MessageBox.Show("HANA offline mode is enabled. No HANA data loaded.");
                 return;
             }
 
@@ -42,17 +42,13 @@ namespace BG_Menu.Class.Sales_Summary
             }
             catch (Exception ex)
             {
-                // Log the error and potentially update UI to alert the user.
                 System.Diagnostics.Debug.WriteLine($"Error retrieving HANA sales data: {ex.Message}");
-
-                // Set GlobalSalesData to an empty DataTable or cached data.
                 GlobalSalesData = new DataTable();
             }
         }
 
         public static class HanaHealthCheck
         {
-
             public static async Task<bool> IsServerReachableAsync(string hostnameOrIp, int timeoutMs = 1000)
             {
                 try

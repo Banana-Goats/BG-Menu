@@ -336,7 +336,6 @@ namespace BG_Menu
 
         private async Task CheckAndInitializeHanaAsync()
         {
-            // 1) Tell the user we’re checking
             this.Invoke((Action)(() =>
             {
                 statusLabel.Text = "Checking HANA Server…";
@@ -344,18 +343,14 @@ namespace BG_Menu
                 statusLabel.Refresh();
             }));
 
-            // 2) Do the reachability check on the pool
-            bool hanaUp = await Task.Run(() =>
-                HanaHealthCheck.IsServerReachableAsync("10.100.230.6", 1000)
-                    .GetAwaiter().GetResult()
-            );
+            bool hanaUp = await GlobalInstances.HanaHealthCheck.IsServerReachableAsync("10.100.230.6", 1000);
 
             if (!hanaUp)
             {
-                GlobalInstances.UseOfflineMode();
+                GlobalInstances.SetHanaOfflineMode();
                 this.Invoke((Action)(() =>
                 {
-                    statusLabel.Text = "Hana Is Offline";
+                    statusLabel.Text = "HANA is Offline";
                 }));
                 return;
             }
@@ -374,19 +369,10 @@ namespace BG_Menu
                 }
             });
 
-            // 4) Back to UI
             this.Invoke((Action)(() =>
             {
-                if (initResult)
-                {
-                    statusLabel.Text = "Connected to HANA!";
-                    statusLabel.Refresh();
-                }
-                else
-                {
-                    GlobalInstances.UseOfflineMode();
-                    statusLabel.Text = "Init failed — offline mode.";
-                }
+                statusLabel.Text = initResult ? "Connected to HANA!" : "Init failed — HANA offline mode.";
+                statusLabel.Refresh();
             }));
         }
 

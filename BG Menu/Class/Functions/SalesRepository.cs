@@ -23,14 +23,15 @@ namespace BG_Menu.Data
 
         public async Task<DataTable> GetHanaSalesDataAsync(DateTime? selectedDate = null)
         {
+            if (GlobalInstances.IsHanaOffline)
+                return new DataTable(); // Empty table if HANA is offline
+
             DataTable dt = new DataTable();
             using (var connection = new HanaConnection(hanaConnectionString))
             {
                 try
                 {
-                    // If your HanaConnection supports asynchronous operations:
                     await connection.OpenAsync();
-
                     DateTime effectiveDate = selectedDate ?? await GetDefaultStartDateAsyncFromSql();
 
                     string query = $@"
@@ -46,18 +47,13 @@ namespace BG_Menu.Data
                 ORDER BY 
                     T1.""TaxDate"" ASC";
 
-                    // If an async adapter is available, use it. Otherwise, consider wrapping synchronous calls.
                     HanaDataAdapter adapter = new HanaDataAdapter(query, connection);
                     adapter.Fill(dt);
                     dt.Columns["TaxDate"].DataType = typeof(DateTime);
                 }
                 catch (Exception ex)
                 {
-                    // Instead of directly showing a MessageBox from a background thread, consider:
-                    // - Logging the error 
-                    // - Or, marshaling the call to the UI thread if you need to display an error.
-                    // For example:
-                    System.Diagnostics.Debug.WriteLine($"Error: {ex}");
+                    System.Diagnostics.Debug.WriteLine($"HANA Error: {ex.Message}");
                 }
             }
             return dt;

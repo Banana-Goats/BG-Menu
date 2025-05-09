@@ -81,7 +81,7 @@
             tableLayoutPanel1.RowCount = 1;
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 100F));
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Absolute, 20F));
-            tableLayoutPanel1.Size = new Size(1536, 648);
+            tableLayoutPanel1.Size = new Size(1478, 692);
             tableLayoutPanel1.TabIndex = 0;
             // 
             // tableLayoutPanel3
@@ -90,13 +90,13 @@
             tableLayoutPanel3.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100F));
             tableLayoutPanel3.Controls.Add(roundedPanel7, 0, 0);
             tableLayoutPanel3.Dock = DockStyle.Fill;
-            tableLayoutPanel3.Location = new Point(370, 3);
+            tableLayoutPanel3.Location = new Point(341, 3);
             tableLayoutPanel3.Name = "tableLayoutPanel3";
             tableLayoutPanel3.RowCount = 3;
             tableLayoutPanel3.RowStyles.Add(new RowStyle());
             tableLayoutPanel3.RowStyles.Add(new RowStyle());
             tableLayoutPanel3.RowStyles.Add(new RowStyle());
-            tableLayoutPanel3.Size = new Size(362, 642);
+            tableLayoutPanel3.Size = new Size(333, 686);
             tableLayoutPanel3.TabIndex = 5;
             // 
             // roundedPanel7
@@ -111,7 +111,7 @@
             roundedPanel7.Location = new Point(3, 3);
             roundedPanel7.Name = "roundedPanel7";
             roundedPanel7.Padding = new Padding(10);
-            roundedPanel7.Size = new Size(356, 349);
+            roundedPanel7.Size = new Size(327, 349);
             roundedPanel7.TabIndex = 3;
             // 
             // label12
@@ -121,7 +121,7 @@
             label12.ForeColor = Color.White;
             label12.Location = new Point(10, 10);
             label12.Name = "label12";
-            label12.Size = new Size(336, 50);
+            label12.Size = new Size(307, 50);
             label12.TabIndex = 6;
             label12.Text = "* FSM Users *";
             label12.TextAlign = ContentAlignment.MiddleCenter;
@@ -159,7 +159,7 @@
             dataGridViewCompanies.Name = "dataGridViewCompanies";
             dataGridViewCompanies.ReadOnly = true;
             dataGridViewCompanies.RowHeadersVisible = false;
-            dataGridViewCompanies.Size = new Size(336, 279);
+            dataGridViewCompanies.Size = new Size(307, 279);
             dataGridViewCompanies.TabIndex = 4;
             // 
             // tableLayoutPanel2
@@ -170,13 +170,13 @@
             tableLayoutPanel2.Controls.Add(roundedPanel2, 0, 1);
             tableLayoutPanel2.Controls.Add(roundedPanel1, 0, 0);
             tableLayoutPanel2.Dock = DockStyle.Fill;
-            tableLayoutPanel2.Location = new Point(738, 3);
+            tableLayoutPanel2.Location = new Point(680, 3);
             tableLayoutPanel2.Name = "tableLayoutPanel2";
             tableLayoutPanel2.RowCount = 3;
             tableLayoutPanel2.RowStyles.Add(new RowStyle());
             tableLayoutPanel2.RowStyles.Add(new RowStyle());
             tableLayoutPanel2.RowStyles.Add(new RowStyle());
-            tableLayoutPanel2.Size = new Size(394, 642);
+            tableLayoutPanel2.Size = new Size(394, 686);
             tableLayoutPanel2.TabIndex = 2;
             // 
             // roundedPanel4
@@ -391,10 +391,10 @@
             roundedPanel3.BorderWidth = 3;
             roundedPanel3.Controls.Add(flowLayoutPanelTiles);
             roundedPanel3.Dock = DockStyle.Fill;
-            roundedPanel3.Location = new Point(1138, 3);
+            roundedPanel3.Location = new Point(1080, 3);
             roundedPanel3.Name = "roundedPanel3";
             roundedPanel3.Padding = new Padding(10);
-            roundedPanel3.Size = new Size(395, 642);
+            roundedPanel3.Size = new Size(395, 686);
             roundedPanel3.TabIndex = 3;
             // 
             // flowLayoutPanelTiles
@@ -402,14 +402,14 @@
             flowLayoutPanelTiles.Dock = DockStyle.Fill;
             flowLayoutPanelTiles.Location = new Point(10, 10);
             flowLayoutPanelTiles.Name = "flowLayoutPanelTiles";
-            flowLayoutPanelTiles.Size = new Size(375, 622);
+            flowLayoutPanelTiles.Size = new Size(375, 666);
             flowLayoutPanelTiles.TabIndex = 0;
             // 
             // Display
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(1536, 648);
+            ClientSize = new Size(1478, 692);
             Controls.Add(tableLayoutPanel1);
             Name = "Display";
             Text = "Display";

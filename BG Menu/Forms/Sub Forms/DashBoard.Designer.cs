@@ -34,24 +34,28 @@ namespace BG_Menu.Forms.Sub_Forms
             DataGridViewCellStyle dataGridViewCellStyle5 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle2 = new DataGridViewCellStyle();
             DataGridViewCellStyle dataGridViewCellStyle3 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle6 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle7 = new DataGridViewCellStyle();
+            DataGridViewCellStyle dataGridViewCellStyle8 = new DataGridViewCellStyle();
             tableLayoutPanel1 = new TableLayoutPanel();
-            listView1 = new ListView();
             dataGridViewFaults = new DataGridView();
             machineNameColumn = new DataGridViewTextBoxColumn();
             locationColumn = new DataGridViewTextBoxColumn();
             faultColumn = new DataGridViewTextBoxColumn();
+            dataGridView1 = new DataGridView();
             tableLayoutPanel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
             // 
             // tableLayoutPanel1
             // 
             tableLayoutPanel1.ColumnCount = 3;
             tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42.5F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 15F));
-            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 42.5F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 20.5257835F));
+            tableLayoutPanel1.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 37.0070763F));
             tableLayoutPanel1.Controls.Add(dataGridViewFaults, 0, 0);
-            tableLayoutPanel1.Controls.Add(listView1, 2, 0);
+            tableLayoutPanel1.Controls.Add(dataGridView1, 1, 0);
             tableLayoutPanel1.Dock = DockStyle.Fill;
             tableLayoutPanel1.Location = new Point(0, 0);
             tableLayoutPanel1.Name = "tableLayoutPanel1";
@@ -59,21 +63,6 @@ namespace BG_Menu.Forms.Sub_Forms
             tableLayoutPanel1.RowStyles.Add(new RowStyle(SizeType.Percent, 50F));
             tableLayoutPanel1.Size = new Size(989, 608);
             tableLayoutPanel1.TabIndex = 3;
-            // 
-            // listView1
-            // 
-            listView1.BackColor = Color.FromArgb(46, 51, 73);
-            listView1.BorderStyle = BorderStyle.None;
-            listView1.Dock = DockStyle.Fill;
-            listView1.Font = new Font("Segoe UI", 9.75F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            listView1.ForeColor = Color.White;
-            listView1.Location = new Point(571, 3);
-            listView1.Name = "listView1";
-            listView1.Size = new Size(415, 602);
-            listView1.TabIndex = 0;
-            listView1.UseCompatibleStateImageBehavior = false;
-            listView1.View = View.List;
-            listView1.DoubleClick += listView1_DoubleClick;
             // 
             // dataGridViewFaults
             // 
@@ -150,6 +139,45 @@ namespace BG_Menu.Forms.Sub_Forms
             faultColumn.Name = "faultColumn";
             faultColumn.ReadOnly = true;
             // 
+            // dataGridView1
+            // 
+            dataGridView1.AllowUserToAddRows = false;
+            dataGridView1.AllowUserToDeleteRows = false;
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+            dataGridView1.BackgroundColor = Color.FromArgb(46, 51, 73);
+            dataGridView1.BorderStyle = BorderStyle.None;
+            dataGridViewCellStyle6.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle6.BackColor = SystemColors.Control;
+            dataGridViewCellStyle6.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle6.ForeColor = SystemColors.WindowText;
+            dataGridViewCellStyle6.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle6.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle6.WrapMode = DataGridViewTriState.True;
+            dataGridView1.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            dataGridView1.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dataGridViewCellStyle7.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle7.BackColor = SystemColors.Window;
+            dataGridViewCellStyle7.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle7.ForeColor = SystemColors.ControlText;
+            dataGridViewCellStyle7.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle7.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle7.WrapMode = DataGridViewTriState.False;
+            dataGridView1.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridView1.Dock = DockStyle.Fill;
+            dataGridView1.Location = new Point(423, 3);
+            dataGridView1.Name = "dataGridView1";
+            dataGridViewCellStyle8.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle8.BackColor = SystemColors.Control;
+            dataGridViewCellStyle8.Font = new Font("Segoe UI", 9F);
+            dataGridViewCellStyle8.ForeColor = SystemColors.WindowText;
+            dataGridViewCellStyle8.SelectionBackColor = SystemColors.Highlight;
+            dataGridViewCellStyle8.SelectionForeColor = SystemColors.HighlightText;
+            dataGridViewCellStyle8.WrapMode = DataGridViewTriState.True;
+            dataGridView1.RowHeadersDefaultCellStyle = dataGridViewCellStyle8;
+            dataGridView1.RowHeadersVisible = false;
+            dataGridView1.Size = new Size(196, 602);
+            dataGridView1.TabIndex = 4;
+            // 
             // DashBoard
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -160,9 +188,9 @@ namespace BG_Menu.Forms.Sub_Forms
             FormBorderStyle = FormBorderStyle.None;
             Name = "DashBoard";
             Text = "DashBoard";
-            Load += DashBoard_Load;
             tableLayoutPanel1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)dataGridViewFaults).EndInit();
+            ((System.ComponentModel.ISupportInitialize)dataGridView1).EndInit();
             ResumeLayout(false);
         }
 
@@ -172,6 +200,6 @@ namespace BG_Menu.Forms.Sub_Forms
         private DataGridViewTextBoxColumn machineNameColumn;
         private DataGridViewTextBoxColumn locationColumn;
         private DataGridViewTextBoxColumn faultColumn;
-        private ListView listView1;
+        private DataGridView dataGridView1;
     }
 }

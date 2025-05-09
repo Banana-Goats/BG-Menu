@@ -352,7 +352,6 @@ namespace BG_Menu
                 {
                     statusLabel.Text = "HANA is Offline";
                 }));
-                return;
             }
 
             var initResult = await Task.Run(async () =>
@@ -360,7 +359,8 @@ namespace BG_Menu
                 try
                 {
                     await GlobalInstances.InitializeAsync().ConfigureAwait(false);
-                    await GlobalInstances.TryLoadSalesDataAsync().ConfigureAwait(false);
+                    if (!GlobalInstances.IsHanaOffline)
+                        await GlobalInstances.TryLoadSalesDataAsync().ConfigureAwait(false);
                     return true;
                 }
                 catch
@@ -371,7 +371,9 @@ namespace BG_Menu
 
             this.Invoke((Action)(() =>
             {
-                statusLabel.Text = initResult ? "Connected to HANA!" : "Init failed — HANA offline mode.";
+                statusLabel.Text = initResult ?
+                    (GlobalInstances.IsHanaOffline ? "HANA offline mode initialized" : "Connected to HANA!")
+                    : "Initialization failed.";
                 statusLabel.Refresh();
             }));
         }

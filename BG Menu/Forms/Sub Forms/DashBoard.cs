@@ -3,6 +3,7 @@ using System.Data;
 using Microsoft.Data.SqlClient;
 using BG_Menu.Data;
 using BG_Menu.Class.Sales_Summary;
+using System.Windows.Forms;
 
 
 namespace BG_Menu.Forms.Sub_Forms
@@ -17,20 +18,11 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             InitializeComponent();
             salesRepository = GlobalInstances.SalesRepository;
-        }
+            LoadFaultsAsync();
 
-        private async void DashBoard_Load(object sender, EventArgs e)
-        {
-            try
-            {
-                await LoadFaultsAsync();
-                UpdateListViewData();
-            }
-            catch (Exception ex)
-            {
-
-            }
-        }
+            SetupGrid();
+            LoadUnknownEntries();
+        }        
 
         #region Faults + Servers               
 
@@ -220,170 +212,6 @@ namespace BG_Menu.Forms.Sub_Forms
                    machineName.StartsWith("WS-", StringComparison.OrdinalIgnoreCase);
         }
 
-        #endregion
-
-        #region DisplaySums
-
-        private void listView1_DoubleClick(object sender, EventArgs e)
-        {
-            if (listView1.SelectedItems.Count == 0)
-                return;
-
-            var selectedItem = listView1.SelectedItems[0];
-            string detailQuery = selectedItem.Tag as string;
-
-            if (!string.IsNullOrEmpty(detailQuery))
-            {
-                try
-                {
-                    Form detailForm = new Form
-                    {
-                        Text = "Detail View",
-                        Width = 600,
-                        Height = 400,
-                        StartPosition = FormStartPosition.CenterParent
-                    };
-
-                    DataGridView dgv = new DataGridView
-                    {
-                        Dock = DockStyle.Fill,
-                        AllowUserToAddRows = false,
-                        ReadOnly = true,
-                        RowHeadersVisible = false,
-                        AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-                    };
-
-                    detailForm.Controls.Add(dgv);
-
-                    string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        using (SqlDataAdapter adapter = new SqlDataAdapter(detailQuery, connection))
-                        {
-                            DataTable dt = new DataTable();
-                            adapter.Fill(dt);
-                            dgv.DataSource = dt;
-                        }
-                    }
-
-                    detailForm.ShowDialog();
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show($"Error displaying detail data:\n{ex.Message}",
-                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
-
-        public void AddRowToListView(string description, string query, string detailQuery)
-        {
-            try
-            {
-                SetupListView();
-                DataTable dt = salesRepository.ExecuteSqlQuery(query);
-                if (dt.Rows.Count > 0)
-                {
-                    int count1 = dt.Rows[0].IsNull(0) ? 0 : Convert.ToInt32(dt.Rows[0][0]);
-                    int count2 = dt.Rows[0].IsNull(1) ? 0 : Convert.ToInt32(dt.Rows[0][1]);
-
-                    var item = new ListViewItem(description);
-                    item.SubItems.Add($"{count2} / {count1}");
-                    item.Tag = detailQuery;
-                    listView1.Items.Add(item);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"An error occurred: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void SetupListView(string column1Name = "Description", string column2Name = "Count")
-        {
-            if (listView1.Columns.Count == 0)
-            {
-                listView1.Clear();
-                listView1.View = View.Details;
-                listView1.FullRowSelect = true;
-                // Fully qualify HorizontalAlignment to resolve ambiguity.
-                listView1.Columns.Add(column1Name, 200, System.Windows.Forms.HorizontalAlignment.Left);
-                listView1.Columns.Add(column2Name, 150, System.Windows.Forms.HorizontalAlignment.Left);
-            }
-        }
-
-        public void UpdateListViewData()
-        {
-            string query1 = @"
-            SELECT
-                SUM(CASE WHEN Name LIKE '%ABL%' THEN 1 ELSE 0 END) AS [RowsWithABL],
-                SUM(CASE WHEN OS_Updates IS NOT NULL AND OS_Updates NOT LIKE '%No%' THEN 1 ELSE 0 END) AS [RowsWithValidPendingUpdates]
-            FROM [TBPC];";
-
-            string detailQuery1 = @"
-            SELECT Name AS MachineName, Store AS Location, CPU AS CPUInfo, Ram AS RAMInfo, HHD AS StorageInfo, 
-                   OS AS WindowsOS, OS_Version AS BuildNumber, OS_Updates AS PendingUpdates
-            FROM [TBPC]
-            WHERE OS_Updates IS NOT NULL AND OS_Updates NOT LIKE '%None%';";
-
-            AddRowToListView("Store Pending Updates", query1, detailQuery1);
-
-            string query2 = @"
-            SELECT
-                SUM(CASE WHEN Name LIKE 'ABLL%' THEN 1 ELSE 0 END) AS [RowsWithABLL],
-                SUM(CASE WHEN ISNUMERIC(REPLACE(Ram, 'GB', '')) = 1 AND CAST(REPLACE(Ram, 'GB', '') AS INT) < 7 THEN 1 ELSE 0 END) AS [RowsWithLowRam]
-            FROM [TBPC];";
-
-            string detailQuery2 = @"
-            SELECT Name AS MachineName, Store AS Location, CPU AS CPUInfo, Ram AS RAMInfo, HHD AS StorageInfo, 
-                   OS AS WindowsOS, OS_Version AS BuildNumber, OS_Updates AS PendingUpdates
-            FROM [TBPC]
-            WHERE Name LIKE 'ABLL%' AND ISNUMERIC(REPLACE(Ram, 'GB', '')) = 1 AND CAST(REPLACE(Ram, 'GB', '') AS INT) < 7;";
-            AddRowToListView("Unusable Queuebusters", query2, detailQuery2);
-
-            string query3 = @"
-            SELECT
-                COUNT(*) AS [TotalRows],
-                SUM(CASE WHEN AppUpdate = 'Yes' THEN 1 ELSE 0 END) AS [RowsWithAppUpdateYes]
-            FROM [Computers]
-            WHERE MachineName LIKE '%ABL%';";
-
-            string detailQuery3 = @"
-            SELECT MachineName, Location, Company, Type, AppUpdate, TillUpdater, CallPopLite
-            FROM [Computers]
-            WHERE AppUpdate = 'Yes' AND MachineName LIKE '%ABL%';";
-            AddRowToListView("AppUpdate Status", query3, detailQuery3);
-
-            string query4 = @"
-            SELECT
-                SUM(CASE WHEN Name LIKE '%ABL%' THEN 1 ELSE 0 END) AS [TotalRowsWithABL],
-                SUM(CASE WHEN Name LIKE '%ABL%' AND OS_Version LIKE '%26100%' THEN 1 ELSE 0 END) AS [RowsWithBuildNumber26100AndABL]
-            FROM [TBPC];";
-
-            string detailQuery4 = @"
-            SELECT Name AS MachineName, Store AS Location, CPU AS CPUInfo, Ram AS RAMInfo, HHD AS StorageInfo, 
-                   OS AS WindowsOS, OS_Version AS BuildNumber, Client_Version AS SenderVersion
-            FROM [TBPC]
-            WHERE Name LIKE 'ABL%' AND OS_Version NOT LIKE '%26100%';";
-            AddRowToListView("Store Machines on 24H2", query4, detailQuery4);
-
-            string query5 = @"
-            SELECT
-                SUM(CASE WHEN Name LIKE '%WS-%' THEN 1 ELSE 0 END) AS [TotalRowsWithWS],
-                SUM(CASE WHEN Name LIKE '%WS-%' AND OS_Version LIKE '%26100%' THEN 1 ELSE 0 END) AS [RowsWithBuildNumber26100AndWS]
-            FROM [HOPC];";
-
-            string detailQuery5 = @"
-            SELECT Name AS MachineName, Store AS Location, CPU AS CPUInfo, Ram AS RAMInfo, HHD AS StorageInfo, 
-                   OS AS WindowsOS, OS_Version AS BuildNumber
-            FROM [HOPC]
-            WHERE Name LIKE 'WS-%' AND OS_Version NOT LIKE '%26100%';";
-            AddRowToListView("Head Office Machines on 24H2", query5, detailQuery5);
-        }
-
-        #endregion
-
         // Data classes
 
         public class MachineFault
@@ -411,17 +239,106 @@ namespace BG_Menu.Forms.Sub_Forms
             public string TableSource { get; set; } // Indicates whether the data is from TBPC or HOPC
         }
 
-        public class HostData
+        #endregion
+
+        #region Unknown Machines
+
+        private void SetupGrid()
         {
-            public string Hostname { get; set; }
-            public string IPAddress { get; set; }
-            public bool IsOnline { get; set; } // Indicates if the host is reachable
-            public bool IsSqlServer { get; set; }
-            public string Username { get; set; } // SQL Server username
-            public string Password { get; set; }
-            public string DatabaseName { get; set; }
-            public string Uptime { get; set; } // Store uptime or "N/A"
-            public bool CheckUptime { get; set; } // Indicates whether to check uptime
+            dataGridView1.AutoGenerateColumns = false;
+            dataGridView1.Columns.Clear();
+
+            // hidden “Source” column (so we know which table to edit)
+            var srcCol = new DataGridViewTextBoxColumn
+            {
+                Name = "Source",
+                DataPropertyName = "Source",
+                Visible = false
+            };
+            dataGridView1.Columns.Add(srcCol);
+
+            // MachineName (or Machine) column
+            var nameCol = new DataGridViewTextBoxColumn
+            {
+                Name = "MachineName",
+                HeaderText = "Machine",
+                DataPropertyName = "MachineName",
+                ReadOnly = true
+            };
+            dataGridView1.Columns.Add(nameCol);
+
+            // Edit button
+            var btnCol = new DataGridViewButtonColumn
+            {
+                Name = "Edit",
+                HeaderText = "",
+                Text = "Edit…",
+                UseColumnTextForButtonValue = true
+            };
+            dataGridView1.Columns.Add(btnCol);
+
+            dataGridView1.CellClick += dataGridView1_CellClick;
         }
+
+        private void LoadUnknownEntries()
+        {
+            dataGridView1.DataSource = GetUnknownEntries();
+        }
+
+        private DataTable GetUnknownEntries()
+        {
+            var dt = new DataTable();
+            dt.Columns.Add("Source", typeof(string));
+            dt.Columns.Add("MachineName", typeof(string));
+
+            // 1) Computers where Location, Company or Type = 'Unknown' OR CompanyName IS NULL
+            const string sqlComputers = @"
+        SELECT MachineName
+        FROM dbo.Computers
+        WHERE 
+            Location    = @unk
+         OR Company     = @unk
+         OR Type        = @unk
+         OR CompanyName IS NULL;
+    ";
+            var p = new Dictionary<string, object> { { "@unk", "Unknown" } };
+            var dtComp = salesRepository.ExecuteSqlQuery(sqlComputers, p);
+            foreach (DataRow r in dtComp.Rows)
+                dt.Rows.Add("Computers", r["MachineName"]);
+
+            // 2) SalesSheetMapping as before...
+            const string sqlMapping = @"
+        SELECT Machine    AS MachineName
+        FROM Sales.SalesSheetMapping
+        WHERE Company = @unk
+           OR Mapping = @unk;
+    ";
+            var dtMap = salesRepository.ExecuteSqlQuery(sqlMapping, p);
+            foreach (DataRow r in dtMap.Rows)
+                dt.Rows.Add("SalesSheetMapping", r["MachineName"]);
+
+            return dt;
+        }
+
+        private void dataGridView1_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || dataGridView1.Columns[e.ColumnIndex].Name != "Edit")
+                return;
+
+            var source = dataGridView1.Rows[e.RowIndex].Cells["Source"].Value.ToString();
+            var machineName = dataGridView1.Rows[e.RowIndex].Cells["MachineName"].Value.ToString();
+
+            Form editor;
+            if (source == "Computers")
+                editor = new EditComputerForm(machineName, salesRepository);
+            else
+                editor = new EditMappingForm(machineName, salesRepository);
+
+            if (editor.ShowDialog(this) == DialogResult.OK)
+                LoadUnknownEntries();
+        }
+
+        #endregion
+
     }
 }

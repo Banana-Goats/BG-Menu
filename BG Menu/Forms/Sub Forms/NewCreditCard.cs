@@ -29,7 +29,6 @@ namespace BG_Menu.Forms.Sub_Forms
 
             salesRepository = GlobalInstances.SalesRepository;
 
-            // Load supplier configurations from the database
             SupplierConfigLoader.LoadSuppliers();
 
             InitializeContextMenu();
@@ -46,7 +45,6 @@ namespace BG_Menu.Forms.Sub_Forms
             reloadSuppliersItem.Click += ReloadSuppliersItem_Click;
             loadButtonContextMenu.Items.Add(reloadSuppliersItem);
 
-            // Associate the context menu with the Load button
             btnLoad.ContextMenuStrip = loadButtonContextMenu;
         }
 
@@ -54,11 +52,8 @@ namespace BG_Menu.Forms.Sub_Forms
         {
             try
             {
-                // Reload suppliers from the database
                 SupplierConfigLoader.LoadSuppliers();
 
-                // Optionally, refresh any UI elements that depend on supplier data
-                // For example, re-apply logic to existing rows if necessary
                 RefreshSupplierDependentLogic();
                 
                 LogMessage("Suppliers successfully reloaded.");
@@ -82,11 +77,9 @@ namespace BG_Menu.Forms.Sub_Forms
 
                 if (string.IsNullOrEmpty(description) || string.IsNullOrEmpty(totalStr))
                 {
-                    // Skip rows with incomplete data
                     continue;
                 }
 
-                // Re-apply logic based on the updated supplier configurations
                 ApplyLogicForRow(row.Index);
             }
         }

@@ -51,8 +51,12 @@ namespace BG_Menu.Forms.Sub_Forms
         }
 
         private void ExecuteAndDisplayQuery(string query)
-        {          
-
+        {
+            if (GlobalInstances.IsHanaOffline)
+            {
+                MessageBox.Show("HANA offline mode is enabled. No HANA data loaded.", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
             try
             {
                 // Delegate query execution to the repository

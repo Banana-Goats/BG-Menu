@@ -71,6 +71,8 @@ namespace BG_Menu.Forms.Sub_Forms
 
             InitializeFSM();
 
+            _ = LoadVatApiSettingsAsync();
+
         }
 
         private void SetupDailyFolderProcessingTimer()
@@ -617,6 +619,24 @@ namespace BG_Menu.Forms.Sub_Forms
 
         #region Vat Forms
 
+        private string VatApiBaseUrl;
+        private string VatApiAuthKey;
+        private string VatApiJsonTemplate;
+
+        private async Task LoadVatApiSettingsAsync()
+        {
+            VatApiBaseUrl = await GetAppConfigAsync("VatApiBaseUrl");
+            VatApiAuthKey = await GetAppConfigAsync("VatApiAuthKey");
+            VatApiJsonTemplate = await GetAppConfigAsync("VatApiJsonTemplate");
+
+            if (string.IsNullOrWhiteSpace(VatApiBaseUrl) ||
+                string.IsNullOrWhiteSpace(VatApiAuthKey) ||
+                string.IsNullOrWhiteSpace(VatApiJsonTemplate))
+            {
+                throw new InvalidOperationException("Missing one or more VAT API settings in Config.AppConfigs");
+            }
+        }
+
         private async void button1_Click(object sender, EventArgs e)
         {
             // Create the date range form on the fly.
@@ -676,10 +696,8 @@ namespace BG_Menu.Forms.Sub_Forms
             progressBarSAP.Visible = true;
             button1.Enabled = false;
 
-            // Declare an effective date variable to show what date is used.
             DateTime effectiveDate;
 
-            // Use previous day values when no dates are provided.
             if (string.IsNullOrWhiteSpace(startDate) || string.IsNullOrWhiteSpace(endDate))
             {
                 effectiveDate = DateTime.Now.Date.AddDays(-1);
@@ -696,8 +714,14 @@ namespace BG_Menu.Forms.Sub_Forms
                 }
             }
 
-            // Build the API URL using the effective or provided date values.
-            string requestUrl = $"https://ableworldapp.apollyon.online/API_Webservice/AbleWebServiceShared.asmx/ReturnCompletedOrderVATExemptCustomers?JSONString={{\"Authentication_Key\": \"2MzbGDerb5Qr7GSNpHEDPLfKu5pbuvjCkSGirqd5\", \"start_date\": \"{startDate}\", \"end_date\": \"{endDate}\"}}";
+            string jsonPayload = VatApiJsonTemplate
+                .Replace("{auth_key}", VatApiAuthKey)
+                .Replace("{start_date}", startDate)
+                .Replace("{end_date}", endDate);
+
+            string encodedJson = WebUtility.UrlEncode(jsonPayload);
+
+            string requestUrl = $"{VatApiBaseUrl}?JSONString={encodedJson}";            
 
             List<VatExempt> vatRecords = new List<VatExempt>();
 
@@ -740,7 +764,7 @@ namespace BG_Menu.Forms.Sub_Forms
                     }
                     else
                     {
-                        MessageBox.Show("No items in vat_exempt_collection");
+                        labelVatFormCount.Text = "No records found in Date Range.";
                         return;
                     }
                 }
@@ -754,6 +778,7 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 progressBarSAP.Style = ProgressBarStyle.Blocks;
                 progressBarSAP.Value = progressBarSAP.Maximum;
+                button1.Enabled = true;
             }
 
             try
@@ -771,6 +796,7 @@ namespace BG_Menu.Forms.Sub_Forms
             catch (Exception ex)
             {
                 MessageBox.Show($"Error during processing: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
             }
             finally
             {
@@ -1075,9 +1101,6 @@ namespace BG_Menu.Forms.Sub_Forms
         }
 
 
-        // ====================================
-        // Classes for deserializing API data
-        // ====================================
         public class Root
         {
             public string message { get; set; }
@@ -1209,11 +1232,10 @@ namespace BG_Menu.Forms.Sub_Forms
 
         #region FSM
 
-        private const string TokenUrl = "https://eu.fsm.cloud.sap/api/oauth2/v2/token";
-        private const string ClientId = "00016ccf-5e51-4e97-adcc-c5b42533cbe7";
-        private const string ClientSecret = "568b27f0-7ff8-4c50-b156-98aab1f61e43";
-
-        private const string UsersUrl = "https://eu.fsm.cloud.sap/api/user/v1/users?account=Ableworld_P1";
+        private string TokenUrl;
+        private string ClientId;
+        private string ClientSecret;
+        private string UsersUrl;
 
         private readonly string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
@@ -1222,9 +1244,46 @@ namespace BG_Menu.Forms.Sub_Forms
 
         private Timer refreshFSMTimer;
 
+        private async Task<string> GetAppConfigAsync(string configName)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                await connection.OpenAsync();
+                using (var cmd = new SqlCommand(
+                    @"SELECT [Value]
+              FROM [Config].[AppConfigs]
+              WHERE [Application] = @app
+                AND [Config]      = @config",
+                    connection))
+                {
+                    cmd.Parameters.AddWithValue("@app", "BG Menu");
+                    cmd.Parameters.AddWithValue("@config", configName);
+                    var result = await cmd.ExecuteScalarAsync();
+                    return result as string; // null if not found
+                }
+            }
+        }
+
+        private async Task LoadFsmSettingsAsync()
+        {
+            TokenUrl = await GetAppConfigAsync("FSM Token URL");
+            ClientId = await GetAppConfigAsync("FSM Client ID");
+            ClientSecret = await GetAppConfigAsync("FSM Client Secret");
+            UsersUrl = await GetAppConfigAsync("FSM Users URL");
+
+            // Optionally validate:
+            if (string.IsNullOrEmpty(TokenUrl) ||
+                string.IsNullOrEmpty(ClientId) ||
+                string.IsNullOrEmpty(ClientSecret) ||
+                string.IsNullOrEmpty(UsersUrl))
+            {
+                throw new InvalidOperationException("One or more FSM settings are missing in Config.AppConfigs");
+            }
+        }
 
         private async void InitializeFSM()
         {
+            await LoadFsmSettingsAsync();
 
             await GetToken();
 

@@ -8,11 +8,16 @@ using System.Threading.Tasks;
 using System.Threading.Tasks.Dataflow;  // <-- TPL Dataflow
 using System.Windows.Forms;
 using System.Net.NetworkInformation;   // <-- For Ping
+using System.ComponentModel;
 
 namespace BG_Menu.Forms.Sub_Forms
 {
     public partial class HO_Computers : Form
     {
+        private CancellationTokenSource _cts = new CancellationTokenSource();
+        private bool _isDomainAvailable;
+
+
         public HO_Computers()
         {
             InitializeComponent();
@@ -66,145 +71,122 @@ namespace BG_Menu.Forms.Sub_Forms
                 SortMode = DataGridViewColumnSortMode.Automatic
             });
 
-            PopulateDataGrid();
+            _isDomainAvailable = CheckDomainAvailability();
+            PopulateDataGridAsync(_cts.Token);
         }
 
-        private async void PopulateDataGrid()
+        private bool CheckDomainAvailability()
         {
-            dataGridViewPCInfo.Rows.Clear(); // Clear existing rows before adding new data
-
-            var patternConfigurations = new List<(string pattern, int start, int end)>
+            try
             {
-                ("WS-{0:D2}", 1, 80) // WS-01 to WS-80
-            };
-
-            var generatedMachineNames = new List<string>();
-            foreach (var (pattern, start, end) in patternConfigurations)
-            {
-                for (int i = start; i <= end; i++)
+                using (var context = new PrincipalContext(ContextType.Domain))
                 {
-                    generatedMachineNames.Add(string.Format(pattern, i));
+                    return context.ConnectedServer != null;
                 }
             }
+            catch
+            {
+                return false;
+            }
+        }
 
-            var staticMachines = new List<string> { 
-                "LT-71",
-                "WS-54-Primary"
+        private async Task PopulateDataGridAsync(CancellationToken ct)
+        {
+            dataGridViewPCInfo.Rows.Clear();
+
+            var allMachineNames = Enumerable.Range(1, 80)
+                .Select(i => $"WS-{i:D2}")
+                .Concat(new[] { "LT-71", "WS-54-Primary" })
+                .ToList();
+
+            var options = new ExecutionDataflowBlockOptions
+            {
+                MaxDegreeOfParallelism = Environment.ProcessorCount,
+                CancellationToken = ct
             };
-            var allMachineNames = new List<string>();
-            allMachineNames.AddRange(generatedMachineNames);
-            allMachineNames.AddRange(staticMachines);
 
-            var getInfoBlock = new TransformBlock<string, (string, Dictionary<string, string>)>(
-                async machineName =>
+            var getInfoBlock = new TransformBlock<string, (string Machine, Dictionary<string, string> Info)>(
+                async machine =>
                 {
-                    if (!IsMachineReachable(machineName, 1000)) return (machineName, null);
-                    var info = GetMachineInfo(machineName);
-                    return (machineName, info);
-                },
-                new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 10 }
+                    if (ct.IsCancellationRequested) return (machine, null);
+                    if (!await PingAsync(machine, 500, ct)) return (machine, null);
+                    var info = await Task.Run(() => GetMachineInfo(machine), ct);
+                    return (machine, info);
+                }, options
             );
 
-            var processInfoBlock = new ActionBlock<(string, Dictionary<string, string>)>(
+            var processInfoBlock = new ActionBlock<(string Machine, Dictionary<string, string> Info)>(
                 async tuple =>
                 {
-                    var (machineName, info) = tuple;
-                    if (info == null || info["CPU"] == "N/A") return;
+                    if (tuple.Info == null || ct.IsCancellationRequested) return;
 
-                    this.Invoke(new Action(() =>
+                    Invoke((Action)(() =>
                     {
                         dataGridViewPCInfo.Rows.Add(
-                            machineName,
-                            info["User"],
-                            info["Description"],
-                            info["CPU"],
-                            info["RAM"],
-                            info["HDD"],
-                            info["OS"],
-                            info["Build"]
+                            tuple.Machine,
+                            tuple.Info["User"],
+                            tuple.Info["Description"],
+                            tuple.Info["CPU"],
+                            tuple.Info["RAM"],
+                            tuple.Info["HDD"],
+                            tuple.Info["OS"],
+                            tuple.Info["Build"]
                         );
                     }));
 
-                    await SaveToDatabaseAsync(
-                        machineName,
-                        info["User"],
-                        info["CPU"],
-                        info["RAM"],
-                        info["HDD"],
-                        info["OS"],
-                        info["Build"]
-                    );
-                },
-                new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 1 }
-            );
+                    await SaveToDatabaseAsync(tuple.Machine, tuple.Info, ct);
+                }, new ExecutionDataflowBlockOptions { MaxDegreeOfParallelism = 2, CancellationToken = ct });
 
             getInfoBlock.LinkTo(processInfoBlock, new DataflowLinkOptions { PropagateCompletion = true });
 
             foreach (var machineName in allMachineNames)
             {
-                await getInfoBlock.SendAsync(machineName);
+                if (ct.IsCancellationRequested) break;
+                await getInfoBlock.SendAsync(machineName, ct);
             }
 
             getInfoBlock.Complete();
             await processInfoBlock.Completion;
 
-            dataGridViewPCInfo.Sort(
-                dataGridViewPCInfo.Columns["MachineName"],
-                System.ComponentModel.ListSortDirection.Ascending
-            );
-
-            MessageBox.Show(
-                "All machines have been processed!",
-                "Finished",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information
-            );
+            if (!ct.IsCancellationRequested)
+            {
+                Invoke((Action)(() =>
+                {
+                    dataGridViewPCInfo.Sort(dataGridViewPCInfo.Columns["MachineName"], ListSortDirection.Ascending);
+                    MessageBox.Show("All machines processed!", "Finished", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }));
+            }
         }
 
-        private async Task SaveToDatabaseAsync(string machineName, string location, string cpu, string ram,
-                                       string storageInfo, string os, string buildNumber)
+        private async Task SaveToDatabaseAsync(string machineName, Dictionary<string, string> info, CancellationToken ct)
         {
-            string connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
+            var connectionString = ConfigurationManager.ConnectionStrings["SQL"].ConnectionString;
 
-            string query = @"
+            const string query = @"
         MERGE INTO HOPC AS target
         USING (SELECT @MachineName AS Name) AS source
         ON target.Name = source.Name
         WHEN MATCHED THEN
             UPDATE SET
-                Store = @Location,
-                CPU = @CPU,
-                Ram = @RAM,
-                HHD = @StorageInfo,
-                OS = @OS,
-                OS_Version = @BuildNumber
+                Store = @Location, CPU = @CPU, Ram = @RAM, 
+                HHD = @StorageInfo, OS = @OS, OS_Version = @BuildNumber
         WHEN NOT MATCHED THEN
             INSERT (Name, Store, CPU, Ram, HHD, OS, OS_Version)
-            VALUES (@MachineName, @Location, @CPU, @RAM, @StorageInfo, @OS, @BuildNumber);
-    ";
+            VALUES (@MachineName, @Location, @CPU, @RAM, @StorageInfo, @OS, @BuildNumber);";
 
-            try
+            using (var connection = new SqlConnection(connectionString))
+            using (var command = new SqlCommand(query, connection))
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                using (SqlCommand command = new SqlCommand(query, connection))
-                {
-                    // Add parameters
-                    command.Parameters.AddWithValue("@MachineName", machineName ?? (object)DBNull.Value);
-                    command.Parameters.AddWithValue("@Location", location ?? (object)DBNull.Value);
-                    command.Parameters.AddWithValue("@CPU", cpu ?? (object)DBNull.Value);
-                    command.Parameters.AddWithValue("@RAM", ram ?? (object)DBNull.Value);
-                    command.Parameters.AddWithValue("@StorageInfo", storageInfo ?? (object)DBNull.Value);
-                    command.Parameters.AddWithValue("@OS", os ?? (object)DBNull.Value);
-                    command.Parameters.AddWithValue("@BuildNumber", buildNumber ?? (object)DBNull.Value);
+                command.Parameters.AddWithValue("@MachineName", machineName);
+                command.Parameters.AddWithValue("@Location", info["User"]);
+                command.Parameters.AddWithValue("@CPU", info["CPU"]);
+                command.Parameters.AddWithValue("@RAM", info["RAM"]);
+                command.Parameters.AddWithValue("@StorageInfo", info["HDD"]);
+                command.Parameters.AddWithValue("@OS", info["OS"]);
+                command.Parameters.AddWithValue("@BuildNumber", info["Build"]);
 
-                    await connection.OpenAsync();
-                    await command.ExecuteNonQueryAsync();
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saving to database: {ex.Message}",
-                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                await connection.OpenAsync(ct);
+                await command.ExecuteNonQueryAsync(ct);
             }
         }
 
@@ -223,37 +205,22 @@ namespace BG_Menu.Forms.Sub_Forms
 
             try
             {
-                // Connect to WMI
-                ConnectionOptions options = new ConnectionOptions();
-                // If desired, you can shorten the WMI timeout here:
-                // options.Timeout = new TimeSpan(0,0,2);
-
-                ManagementScope scope = new ManagementScope($@"\\{machineName}\root\cimv2", options);
+                var scope = new ManagementScope($@"\\{machineName}\root\cimv2");
                 scope.Connect();
 
-                // CPU
                 machineInfo["CPU"] = GetCPUInfo(scope);
-
-                // RAM
                 machineInfo["RAM"] = GetRamInfo(scope);
-
-                // Storage
                 machineInfo["HDD"] = GetStorageInfo(scope);
-
-                // OS
                 machineInfo["OS"] = GetWindowsOS(scope);
-
-                // Build
                 machineInfo["Build"] = GetBuildNumber(scope);
 
-                // User
-                var (user, description) = GetLoggedInUser(scope);
+                var (user, desc) = _isDomainAvailable ? GetLoggedInUser(scope) : ("Domain Unavailable", "N/A");
                 machineInfo["User"] = user;
-                machineInfo["Description"] = description;
+                machineInfo["Description"] = desc;
             }
             catch
             {
-                // If we fail to connect, we keep "N/A" values
+                // Fail silently; already set to "N/A"
             }
 
             return machineInfo;
@@ -492,6 +459,28 @@ namespace BG_Menu.Forms.Sub_Forms
             {
                 return false;
             }
+        }
+
+        private async Task<bool> PingAsync(string host, int timeout, CancellationToken ct)
+        {
+            try
+            {
+                using (var ping = new Ping())
+                {
+                    var reply = await ping.SendPingAsync(host, timeout);
+                    return reply.Status == IPStatus.Success;
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            base.OnFormClosing(e);
+            _cts.Cancel();
         }
     }
 }

@@ -21,8 +21,7 @@ namespace BG_Menu.Class.Sales_Summary
 
 
         public static async Task InitializeAsync()
-        {
-            if (IsHanaOffline) return;
+        {            
             WeekDateManager = await WeekDateManager.CreateAsync();
             SalesRepository = new SalesRepository(WeekDateManager);
         }

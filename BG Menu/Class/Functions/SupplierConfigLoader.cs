@@ -1,116 +1,170 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
-using Microsoft.Data.SqlClient;
+using System.Data;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using BG_Menu.Class.Sales_Summary;
+using Microsoft.Data.SqlClient;
 
 namespace BG_Menu.Class.Functions
 {
-
     public static class SupplierConfigLoader
     {
         private static readonly object SuppliersLock = new object();
+
+        /// <summary>
+        /// The in-memory cache of supplier configs for the app to use.
+        /// </summary>
         public static List<Supplier> Suppliers { get; private set; } = new List<Supplier>();
 
+        /// <summary>
+        /// Reloads the Suppliers list from the single Suppliers table.
+        /// Expects two pipe-delimited columns: DetectionKeywords and TotalExtractionRegexes.
+        /// </summary>
         public static void LoadSuppliers()
         {
             string connectionString = ConfigurationManager.ConnectionStrings["SQL"]?.ConnectionString;
-
             if (string.IsNullOrEmpty(connectionString))
             {
-                MessageBox.Show("Database connection string 'SQL' is missing or empty.", "Configuration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show(
+                    "Database connection string 'SQL' is missing or empty.",
+                    "Configuration Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
                 LogMessage("Connection string 'SQL' is missing or empty.");
                 return;
             }
 
-            string combinedQuery = @"
-                SELECT 
-                    s.SupplierID, s.Name, s.GLAccount, s.GLName, s.VATCode, s.DescriptionPattern, s.FilenamePattern, 
-                    s.TotalExtractionRegex, -- Include the regex column
-                    sk.Keyword
-                FROM 
-                    Suppliers s
-                LEFT JOIN 
-                    SupplierDetectionKeywords sk ON s.SupplierID = sk.SupplierID";
+            const string sql = @"
+                SELECT
+                    SupplierID,
+                    Name,
+                    GLAccount,
+                    GLName,
+                    VATCode,
+                    DescriptionPattern,
+                    FilenamePattern,
+                    DetectionKeywords,
+                    TotalExtractionRegexes
+                  FROM Suppliers";
 
             try
             {
+                // Execute the query into a DataTable
+                DataTable dt = GlobalInstances.SalesRepository.ExecuteSqlQuery(sql);
+
+                // Build a new list from the results
+                var newList = new List<Supplier>();
+                foreach (DataRow row in dt.Rows)
+                {
+                    var sup = new Supplier
+                    {
+                        SupplierID = (int)row["SupplierID"],
+                        Name = row.Field<string>("Name"),
+                        GLAccount = row.Field<string>("GLAccount"),
+                        GLName = row.Field<string>("GLName"),
+                        VATCode = row.Field<string>("VATCode"),
+                        DescriptionPattern = row.Field<string>("DescriptionPattern"),
+                        FilenamePattern = row.Field<string>("FilenamePattern"),
+                        DetectionKeywords = (row.Field<string>("DetectionKeywords") ?? "")
+                                                    .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                    .ToList(),
+                        TotalExtractionRegexes = (row.Field<string>("TotalExtractionRegexes") ?? "")
+                                                    .Split(new[] { '|' }, StringSplitOptions.RemoveEmptyEntries)
+                                                    .ToList()
+                    };
+
+                    newList.Add(sup);
+                    LogMessage($"Loaded Supplier: ID={sup.SupplierID}, Name='{sup.Name}'");
+                }
+
+                // Swap in the new list under lock
                 lock (SuppliersLock)
                 {
                     Suppliers.Clear();
-
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    using (SqlCommand cmd = new SqlCommand(combinedQuery, conn))
-                    {
-                        conn.Open();
-
-                        using (SqlDataReader reader = cmd.ExecuteReader())
-                        {
-                            while (reader.Read())
-                            {
-                                int supplierID = reader.GetInt32(reader.GetOrdinal("SupplierID"));
-
-                                // Check if supplier already exists in the list
-                                Supplier supplier = Suppliers.FirstOrDefault(s => s.SupplierID == supplierID);
-                                if (supplier == null)
-                                {
-                                    // Initialize a new Supplier
-                                    supplier = new Supplier
-                                    {
-                                        SupplierID = supplierID,
-                                        Name = reader.GetString(reader.GetOrdinal("Name")),
-                                        GLAccount = reader.GetString(reader.GetOrdinal("GLAccount")),
-                                        GLName = reader.GetString(reader.GetOrdinal("GLName")),
-                                        VATCode = reader.GetString(reader.GetOrdinal("VATCode")),
-                                        DescriptionPattern = reader.GetString(reader.GetOrdinal("DescriptionPattern")),
-                                        FilenamePattern = reader.GetString(reader.GetOrdinal("FilenamePattern")),
-                                        DetectionKeywords = new List<string>(),
-                                        TotalExtractionRegexes = reader.IsDBNull(reader.GetOrdinal("TotalExtractionRegex"))
-                                        ? new List<string>()
-                                        : reader.GetString(reader.GetOrdinal("TotalExtractionRegex")).Split(';').ToList() // Handle multiple regex patterns
-                                    };
-
-                                    Suppliers.Add(supplier);
-                                    LogMessage($"Loaded Supplier: ID={supplier.SupplierID}, Name={supplier.Name}, GLAccount={supplier.GLAccount}, GLName={supplier.GLName}");
-                                }
-
-                                // Add Detection Keyword if exists
-                                if (!reader.IsDBNull(reader.GetOrdinal("Keyword")))
-                                {
-                                    string keyword = reader.GetString(reader.GetOrdinal("Keyword"));
-                                    supplier.DetectionKeywords.Add(keyword);
-                                    LogMessage($"Added Keyword for Supplier ID={supplier.SupplierID}: {keyword}");
-                                }
-                            }
-                        }
-                    }
-
-                    LogMessage($"Successfully loaded {Suppliers.Count} suppliers from the database.");
+                    Suppliers.AddRange(newList);
                 }
+
+                LogMessage($"Successfully loaded {Suppliers.Count} suppliers from the database.");
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading supplier configurations from SQL Server:\n{ex.Message}", "Configuration Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                LogMessage($"Error loading suppliers from database: {ex.ToString()}");
+                MessageBox.Show(
+                    $"Error loading supplier configurations:\n{ex.Message}",
+                    "Configuration Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+                LogMessage($"Error loading suppliers: {ex}");
             }
         }
 
         /// <summary>
-        /// Logs messages to a text file for auditing and troubleshooting.
+        /// Appends a line to ImportLog.txt for audit and troubleshooting.
         /// </summary>
-        /// <param name="message">Message to log.</param>
         private static void LogMessage(string message)
         {
-            string logFilePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ImportLog.txt");
             try
             {
-                File.AppendAllText(logFilePath, $"{DateTime.Now}: {message}{Environment.NewLine}");
+                string path = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "ImportLog.txt");
+                File.AppendAllText(path, $"{DateTime.Now:yyyy-MM-dd HH:mm:ss} {message}{Environment.NewLine}");
             }
             catch
             {
-                // If logging fails, silently ignore to prevent user disruption.
+                // Swallow logging errors
             }
+        }
+
+        public static void AddOrUpdateSupplier(
+    string name,
+    string keyword,
+    string totalRegex,
+    string glAccount,
+    string glName,
+    string vatCode)
+        {
+            // 1) Grab your connection string
+            var connectionString = ConfigurationManager.ConnectionStrings["SQL"]?.ConnectionString;
+            if (string.IsNullOrEmpty(connectionString))
+                throw new InvalidOperationException("Missing 'SQL' connection string.");
+
+            // 2) Define your MERGE (upsert) statement
+            const string upsert = @"
+    MERGE INTO Suppliers AS target
+    USING (SELECT @Name AS Name) AS src
+      ON target.Name = src.Name
+    WHEN NOT MATCHED THEN
+      INSERT (Name, GLAccount, GLName, VATCode, DescriptionPattern, FilenamePattern, DetectionKeywords, TotalExtractionRegexes)
+      VALUES (@Name, @GLAccount, @GLName, @VATCode,
+              '{SupplierName} {Number}', '{Description}.pdf',
+              @Keyword, @Regex)
+    WHEN MATCHED THEN
+      UPDATE
+         SET GLAccount              = @GLAccount,
+             GLName                 = @GLName,
+             VATCode                = @VATCode,
+             DetectionKeywords      = CASE WHEN ISNULL(DetectionKeywords,'') = '' THEN @Keyword ELSE DetectionKeywords      + '|' + @Keyword END,
+             TotalExtractionRegexes = CASE WHEN ISNULL(TotalExtractionRegexes,'') = '' THEN @Regex   ELSE TotalExtractionRegexes + '|' + @Regex   END;";
+
+            // 3) Open the connection & execute
+            using (var conn = new Microsoft.Data.SqlClient.SqlConnection(connectionString))
+            using (var cmd = new Microsoft.Data.SqlClient.SqlCommand(upsert, conn))
+            {
+                conn.Open();
+
+                cmd.Parameters.AddWithValue("@Name", name);
+                cmd.Parameters.AddWithValue("@GLAccount", glAccount);
+                cmd.Parameters.AddWithValue("@GLName", glName);
+                cmd.Parameters.AddWithValue("@VATCode", vatCode);
+                cmd.Parameters.AddWithValue("@Keyword", keyword);
+                cmd.Parameters.AddWithValue("@Regex", totalRegex);
+
+                cmd.ExecuteNonQuery();
+            }
+
+            // 4) Log for diagnostics
+            LogMessage($"Upserted supplier '{name}' (GL: {glAccount}/{glName}, VAT: {vatCode}), added keyword '{keyword}' and regex '{totalRegex}'.");
         }
     }
 }

@@ -29,13 +29,12 @@
         private void InitializeComponent()
         {
             panel1 = new Panel();
+            button1 = new Button();
             btnUpdate = new Button();
             btnImport = new Button();
             ComboMonth = new ComboBox();
-            ComboDepartment = new ComboBox();
             btnLoad = new Button();
             dataGridView1 = new DataGridView();
-            button1 = new Button();
             panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)dataGridView1).BeginInit();
             SuspendLayout();
@@ -46,7 +45,6 @@
             panel1.Controls.Add(btnUpdate);
             panel1.Controls.Add(btnImport);
             panel1.Controls.Add(ComboMonth);
-            panel1.Controls.Add(ComboDepartment);
             panel1.Controls.Add(btnLoad);
             panel1.Dock = DockStyle.Top;
             panel1.Location = new Point(0, 0);
@@ -54,10 +52,21 @@
             panel1.Size = new Size(945, 23);
             panel1.TabIndex = 0;
             // 
+            // button1
+            // 
+            button1.Dock = DockStyle.Left;
+            button1.Location = new Point(346, 0);
+            button1.Name = "button1";
+            button1.Size = new Size(75, 23);
+            button1.TabIndex = 5;
+            button1.Text = "Clear";
+            button1.UseVisualStyleBackColor = true;
+            button1.Click += button1_Click;
+            // 
             // btnUpdate
             // 
             btnUpdate.Dock = DockStyle.Left;
-            btnUpdate.Location = new Point(392, 0);
+            btnUpdate.Location = new Point(271, 0);
             btnUpdate.Name = "btnUpdate";
             btnUpdate.Size = new Size(75, 23);
             btnUpdate.TabIndex = 4;
@@ -68,7 +77,7 @@
             // btnImport
             // 
             btnImport.Dock = DockStyle.Left;
-            btnImport.Location = new Point(317, 0);
+            btnImport.Location = new Point(196, 0);
             btnImport.Name = "btnImport";
             btnImport.Size = new Size(75, 23);
             btnImport.TabIndex = 3;
@@ -80,21 +89,10 @@
             // 
             ComboMonth.Dock = DockStyle.Left;
             ComboMonth.FormattingEnabled = true;
-            ComboMonth.Location = new Point(196, 0);
+            ComboMonth.Location = new Point(75, 0);
             ComboMonth.Name = "ComboMonth";
             ComboMonth.Size = new Size(121, 23);
             ComboMonth.TabIndex = 2;
-            // 
-            // ComboDepartment
-            // 
-            ComboDepartment.Dock = DockStyle.Left;
-            ComboDepartment.FormattingEnabled = true;
-            ComboDepartment.Items.AddRange(new object[] { "IT", "Operations" });
-            ComboDepartment.Location = new Point(75, 0);
-            ComboDepartment.Name = "ComboDepartment";
-            ComboDepartment.Size = new Size(121, 23);
-            ComboDepartment.TabIndex = 1;
-            ComboDepartment.Text = "IT";
             // 
             // btnLoad
             // 
@@ -120,16 +118,6 @@
             dataGridView1.Size = new Size(945, 504);
             dataGridView1.TabIndex = 1;
             // 
-            // button1
-            // 
-            button1.Dock = DockStyle.Left;
-            button1.Location = new Point(467, 0);
-            button1.Name = "button1";
-            button1.Size = new Size(75, 23);
-            button1.TabIndex = 5;
-            button1.Text = "Combine";
-            button1.UseVisualStyleBackColor = true;
-            // 
             // NewCreditCard
             // 
             AutoScaleDimensions = new SizeF(7F, 15F);
@@ -150,7 +138,6 @@
         private Button btnLoad;
         private Button btnImport;
         private ComboBox ComboMonth;
-        private ComboBox ComboDepartment;
         private DataGridView dataGridView1;
         private Button btnUpdate;
         private Button button1;
